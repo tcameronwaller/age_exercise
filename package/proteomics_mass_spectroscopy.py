@@ -404,6 +404,13 @@ def define_row_test_filter():
     """
     Defines a row to test filter operations.
 
+    values: 0.4526, 0.3325, 0.2953, 0.3015, 0.4379, 0.3127, 0.1578, 0.2351
+    mean: 0.3157
+    standard deviation: 0.0971
+    (mean - (3 * standard deviation)): 0.0243
+    minimum: 0.1578
+    (minimum / 2): 0.0789
+
     arguments:
 
     raises:
@@ -422,16 +429,16 @@ def define_row_test_filter():
             "confidence": "High",
             "coverage_peptides": 2,
             "coverage_peptides_unique": 2,
-            "control_1": 0.5321,
-            "control_2": 0.5321,
+            "control_1": 0.4526,
+            "control_2": 0.3325,
             "control_3": float("nan"),
-            "control_4": 0.5321,
-            "control_5": 0.5321,
+            "control_4": 0.2953,
+            "control_5": 0.3015,
             "intervention_1": float("nan"),
-            "intervention_2": 0.5321,
-            "intervention_3": 0.5321,
-            "intervention_4": 0.5321,
-            "intervention_5": 0.5321,
+            "intervention_2": 0.4379,
+            "intervention_3": 0.3127,
+            "intervention_4": 0.1578,
+            "intervention_5": 0.2351,
         },
         index=[
             "identifier_protein_uniprot",
@@ -521,7 +528,7 @@ def match_keep_table_row_quantification(
     arguments:
         row (object): Pandas series of values of intensity across samples for
             a single protein
-        columns_intensity (list<str>): names of columns corresdponding to values
+        columns_intensity (list<str>): names of columns corresponding to values
             of intensity
         proportion_validity (float): proportion of values of intensity that must
             have valid, non-missing values to keep the row for each protein
@@ -580,7 +587,7 @@ def filter_table_main(
     arguments:
         table (object): Pandas data-frame table of values of intensity across
             samples in columns and proteins in rows
-        columns_intensity (list<str>): names of columns corresdponding to values
+        columns_intensity (list<str>): names of columns corresponding to values
             of intensity
         proportion_validity (float): proportion of values of intensity that must
             have valid, non-missing values to keep the row for each protein
@@ -596,6 +603,8 @@ def filter_table_main(
 
     # Copy information in table.
     table_filter = table.copy(deep=True)
+    # Copy other information.
+    columns_intensity = copy.deepcopy(columns_intensity)
 
     # Filter information in table.
 
@@ -695,9 +704,9 @@ def split_table_main_columns(
     arguments:
         table (object): Pandas data-frame table of values of intensity across
             samples in columns and proteins in rows
-        columns_protein (list<str>): names of columns corresdponding to
+        columns_protein (list<str>): names of columns corresponding to
             information about proteins
-        columns_intensity (list<str>): names of columns corresdponding to values
+        columns_intensity (list<str>): names of columns corresponding to values
             of intensity
         report (bool): whether to print reports
 
@@ -711,6 +720,8 @@ def split_table_main_columns(
 
     # Copy information in table.
     table_split = table.copy(deep=True)
+    # Copy other information.
+    columns_intensity = copy.deepcopy(columns_intensity)
     # Organize information.
     table_split.reset_index(
         level=None,
@@ -759,21 +770,161 @@ def split_table_main_columns(
 # Fill
 
 
-def fill_missing_values_intensity(
+def match_table_row_fill_missing(
+    row=None,
+    columns_intensity=None,
+    report=None,
+):
+    """
+    Determines whether the current row from a table needs fill of missing
+    values.
+
+    arguments:
+        row (object): Pandas series of values of intensity across samples for
+            a single protein
+        columns_intensity (list<str>): names of columns corresponding to values
+            of intensity
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (int): logical binary representation of whether to keep current row
+
+    """
+
+    # Copy information in row.
+    row = row.copy(deep=True)
+    # Extract information for current row from table.
+    array_intensities = row[columns_intensity].to_numpy(
+        dtype="float",
+        na_value=numpy.nan,
+        copy=True,
+    )
+    #array_intensities = array_intensities.astype(numpy.float32)
+    count_missing = numpy.count_nonzero(numpy.isnan(array_intensities))
+    # Determine whether the current row has missing values.
+    if (count_missing > 0):
+        indicator = 1
+    else:
+        indicator = 0
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("Match missing value fill.")
+        print("Indicator: " + str(indicator))
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return indicator
+
+def fill_missing_values_intensity_row(
+    row=None,
+    column=None,
+    columns_intensity=None,
+    method=None,
+    report=None,
+):
+    """
+    Determines whether the current row from a table needs fill of missing
+    values.
+
+    Within a normal distribution, 99.7% of values occur within 3 standard
+    deviations of the mean, either above or below.
+    3 standard deviations: 99.73%
+    2 standard deviations: 95.45%
+    1 standard deviations: 68.27%
+
+    Reference:
+    https://en.wikipedia.org/wiki/68-95-99.7_rule
+
+    arguments:
+        row (object): Pandas series of values of intensity across samples for
+            a single protein
+        column (str): name of current column within row
+        columns_intensity (list<str>): names of columns corresponding to values
+            of intensity
+        method (str): name of method to use for filling missing values, either
+            'triple_standard_deviation_below', 'half_minimum', or 'zero'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (int): logical binary representation of whether to keep current row
+
+    """
+
+    # Copy information in row.
+    row = row.copy(deep=True)
+    # Determine whether the current row has a missing value in the current
+    # column.
+    check_fill = 0
+    if (
+        (row["match_missing"] == 1) and
+        (pandas.isna(row[column]))
+    ):
+        # Fill missing value.
+        check_fill = 1
+        # Extract information for current row from table.
+        array_intensities = row[columns_intensity].to_numpy(
+            dtype="float",
+            na_value=numpy.nan,
+            copy=True,
+        )
+        #array_intensities = array_intensities.astype(numpy.float32)
+        # Determine which method to use for fill.
+        if (method == "triple_standard_deviation_below"):
+            mean = numpy.nanmean(array_intensities)
+            standard_deviation = numpy.nanstd(
+                array_intensities,
+                ddof=1, # divisor is (n - 1) for sample standard deviation
+            )
+            value = float(mean - (3 * standard_deviation))
+            pass
+        elif (method == "half_minimum"):
+            minimum = numpy.nanmin(array_intensities)
+            value = float(minimum / 2)
+            pass
+        elif (method == "zero"):
+            value = float(0)
+            pass
+    else:
+        value = row[column]
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("Fill missing value check: " + str(check_fill))
+        print("Fill value: " + str(value))
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return value
+
+def fill_missing_values_intensity_table(
     table=None,
+    columns_intensity=None,
     method=None,
     report=None,
 ):
     """
     Filters information in table.
 
+    Within a normal distribution, 99.7% of values occur within 3 standard
+    deviations of the mean, either above or below.
+    3 standard deviations: 99.73%
+    2 standard deviations: 95.45%
+    1 standard deviations: 68.27%
+
+    Reference:
+    https://en.wikipedia.org/wiki/68-95-99.7_rule
+
     arguments:
         table (object): Pandas data-frame table of values of intensity across
             samples in columns and proteins in rows
-        columns_intensity (list<str>): names of columns corresdponding to values
+        columns_intensity (list<str>): names of columns corresponding to values
             of intensity
-        proportion_validity (float): proportion of values of intensity that must
-            have valid, non-missing values to keep the row for each protein
+        method (str): name of method to use for filling missing values, either
+            'triple_standard_deviation_below', 'half_minimum', or 'zero'
         report (bool): whether to print reports
 
     raises:
@@ -785,88 +936,73 @@ def fill_missing_values_intensity(
     """
 
     # Copy information in table.
-    table_filter = table.copy(deep=True)
+    table_fill = table.copy(deep=True)
+    # Copy other information.
+    columns_intensity = copy.deepcopy(columns_intensity)
 
-    # Filter information in table.
-
-    # Filter rows in table.
-
-    ##########
-    # Filter rows in table on basis of protein identification.
-    table_filter["match_keep"] = table_filter.apply(
+    # Fill missing values across all rows for sample corresponding to
+    # current column.
+    table_fill["match_missing"] = table_fill.apply(
         lambda row:
-            match_keep_table_row_identification(
-                confidences_keep=["high", "medium",],
-                peptides_keep=1,
-                peptides_unique_keep=1,
-                row_identifier=row["identifier_protein_uniprot"],
-                row_confidence=row["confidence"],
-                row_peptides=row["coverage_peptides"],
-                row_peptides_unique=row["coverage_peptides_unique"],
-                report=False,
-            ),
-        axis="columns", # apply function to each row
-    )
-    table_filter = table_filter.loc[
-        (table_filter["match_keep"] == 1), :
-    ]
-    # Remove unnecessary columns.
-    table_filter.drop(
-        labels=["match_keep",],
-        axis="columns",
-        inplace=True
-    )
-
-    ##########
-    # Filter rows in table on basis of protein quantification.
-    table_filter["match_keep"] = table_filter.apply(
-        lambda row:
-            match_keep_table_row_quantification(
+            match_table_row_fill_missing(
                 row=row,
                 columns_intensity=columns_intensity,
-                proportion_validity=proportion_validity,
                 report=False,
             ),
         axis="columns", # apply function to each row
     )
-    table_filter = table_filter.loc[
-        (table_filter["match_keep"] == 1), :
+    table_fill_actual = table_fill.loc[
+        (table_fill["match_missing"] == 1), :
     ]
+
+    # Iterate across columns for values of intensity in each sample.
+    for column in columns_intensity:
+        # Fill missing values across all rows for sample corresponding to
+        # current column.
+        table_fill[column] = table_fill.apply(
+            lambda row:
+                fill_missing_values_intensity_row(
+                    row=row,
+                    column=column,
+                    columns_intensity=columns_intensity,
+                    method=method,
+                    report=False,
+                ),
+            axis="columns", # apply function to each row
+        )
+        pass
+
     # Remove unnecessary columns.
-    table_filter.drop(
-        labels=["match_keep",],
+    table_fill.drop(
+        labels=["match_missing",],
         axis="columns",
         inplace=True
-    )
-
-    # Filter and sort columns in table.
-    columns_sequence_protein = define_column_sequence_table_protein()
-    columns_sequence = copy.deepcopy(columns_sequence_protein)
-    columns_sequence.extend(columns_intensity)
-    table_filter = porg.filter_sort_table_columns(
-        table=table_filter,
-        columns_sequence=columns_sequence,
-        report=report,
     )
 
     # Report.
     if report:
         putly.print_terminal_partition(level=4)
-        count_rows = (table_filter.shape[0])
-        count_columns = (table_filter.shape[1])
-        columns = copy.deepcopy(table_filter.columns.to_list())
-        print("Count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        putly.print_terminal_partition(level=4)
-        print("Names of columns: ")
-        print(columns)
+        count_rows_missing = (table_fill_actual.shape[0])
+        count_rows_total = (table_fill.shape[0])
+        proportion_missing = round(
+            float(count_rows_missing / count_rows_total), 2
+        )
+        print(
+            "Count of rows requiring missing fill: " + str(count_rows_missing)
+        )
+        print(
+            "Proportion of rows requiring missing fill: " +
+            str(proportion_missing)
+        )
         putly.print_terminal_partition(level=4)
         print("Table: ")
-        print(table_filter)
+        print(table_fill)
         putly.print_terminal_partition(level=4)
 
     # Return information.
-    return table_filter
+    return table_fill
+
+
 
 
 ################################################################################
@@ -921,6 +1057,7 @@ def execute_procedure(
     ##########
     # 3. Filter columns and rows in table.
     if False:
+        # Test.
         row = define_row_test_filter()
         indicator = match_keep_table_row_identification(
             confidences_keep=["high", "medium",],
@@ -934,6 +1071,7 @@ def execute_procedure(
         )
         pass
     if False:
+        # Test.
         row = define_row_test_filter()
         indicator = match_keep_table_row_quantification(
             row=row,
@@ -972,12 +1110,29 @@ def execute_procedure(
     # "half_minimum"
     # "zero"
     if False:
-        table_intensity = fill_missing_values_intensity(
-            table=pail_split["table_intensity"],
+        # Test.
+        # values: 0.4526, 0.3325, 0.2953, 0.3015, 0.4379, 0.3127, 0.1578, 0.2351
+        # mean: 0.3157
+        # standard deviation: 0.0971
+        # (mean - (3 * standard deviation)): 0.0243
+        # minimum: 0.1578
+        # (minimum / 2): 0.0789
+        row = define_row_test_filter()
+        row["match_missing"] = 1
+        value = fill_missing_values_intensity_row(
+            row=row,
+            column="control_3", # "control_3", "intervention_1"
+            columns_intensity=pail_organization["samples"],
             method="triple_standard_deviation_below",
             report=True,
         )
-
+        pass
+    table_intensity = fill_missing_values_intensity_table(
+        table=pail_split["table_intensity"],
+        columns_intensity=pail_organization["samples"],
+        method="triple_standard_deviation_below",
+        report=True,
+    )
 
     ##########
     # 6. Scale values of intensity.
