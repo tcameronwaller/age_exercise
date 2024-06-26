@@ -63,11 +63,13 @@ import numpy
 import scipy.stats
 import pandas
 pandas.options.mode.chained_assignment = None # default = "warn"
+pandas.set_option('future.no_silent_downcasting', True) # set option to suppress warnings
 
 # Custom
 import partner.utility as putly
 import partner.extraction as pextr
 import partner.organization as porg
+import partner.scale as pscl
 import partner.description as pdesc
 #import partner.regression as preg
 #import partner.plot as pplot
@@ -109,7 +111,7 @@ def initialize_directories(
     # Define paths to directories.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", "scratch", str(project), str(set),
+        paths["dock"], "in_data", "exercise", str(project), str(set),
     )
     paths["in_parameters"] = os.path.join(
         paths["dock"], "in_parameters", "scratch", str(project), str(set),
@@ -166,16 +168,16 @@ def define_table_column_types_main():
     types_columns["Protein FDR Confidence: Combined"] = "string"
     types_columns["Accession"] = "string"
     types_columns["Description"] = "string"
-    types_columns["Intensity.1"] = "float32"
-    types_columns["Intensity.2"] = "float32"
-    types_columns["Intensity.3"] = "float32"
-    types_columns["Intensity.4"] = "float32"
-    types_columns["Intensity.5"] = "float32"
-    types_columns["Intensity.6"] = "float32"
-    types_columns["Intensity.7"] = "float32"
-    types_columns["Intensity.8"] = "float32"
-    types_columns["Intensity.9"] = "float32"
-    types_columns["Intensity.10"] = "float32"
+    types_columns["Intensity.1"] = "float64"
+    types_columns["Intensity.2"] = "float64"
+    types_columns["Intensity.3"] = "float64"
+    types_columns["Intensity.4"] = "float64"
+    types_columns["Intensity.5"] = "float64"
+    types_columns["Intensity.6"] = "float64"
+    types_columns["Intensity.7"] = "float64"
+    types_columns["Intensity.8"] = "float64"
+    types_columns["Intensity.9"] = "float64"
+    types_columns["Intensity.10"] = "float64"
     types_columns["# Peptides"] = "int32"
     types_columns["# Unique Peptides"] = "int32"
     types_columns["Gene Symbol"] = "string"
@@ -349,6 +351,15 @@ def organize_table_main(
     table_main.rename(
         columns=translations,
         inplace=True,
+    )
+
+    # Replace values of zero with missing values.
+    # Only replace values within table's columns for samples.
+    # This implementation is more concise than iteration across specific
+    # columns.
+    table_main[samples] = table_main[samples].replace(
+        to_replace=0.0,
+        value=pandas.NA,
     )
 
     # Report.
@@ -546,7 +557,7 @@ def match_keep_table_row_quantification(
     # Extract information for current row from table.
     count_samples = len(columns_intensity)
     array_intensities = row[columns_intensity].to_numpy(
-        dtype="float",
+        dtype="float64",
         na_value=numpy.nan,
         copy=True,
     )
@@ -722,7 +733,7 @@ def split_table_main_columns(
     table_split = table.copy(deep=True)
     # Copy other information.
     columns_intensity = copy.deepcopy(columns_intensity)
-    # Organize information.
+    # Organize information in tables.
     table_split.reset_index(
         level=None,
         inplace=True,
@@ -741,6 +752,16 @@ def split_table_main_columns(
     table_intensity = table_split.loc[
         :, table_split.columns.isin(columns_intensity)
     ]
+    # Organize information in tables.
+    table_protein.columns.rename(
+        "attributes",
+        inplace=True,
+    ) # single-dimensional index
+    table_intensity.columns.rename(
+        "samples",
+        inplace=True,
+    ) # single-dimensional index
+
     # Report.
     if report:
         putly.print_terminal_partition(level=4)
@@ -797,7 +818,7 @@ def match_table_row_fill_missing(
     row = row.copy(deep=True)
     # Extract information for current row from table.
     array_intensities = row[columns_intensity].to_numpy(
-        dtype="float",
+        dtype="float64",
         na_value=numpy.nan,
         copy=True,
     )
@@ -820,7 +841,6 @@ def match_table_row_fill_missing(
 
 def fill_missing_values_intensity_row(
     row=None,
-    column=None,
     columns_intensity=None,
     method=None,
     report=None,
@@ -841,7 +861,6 @@ def fill_missing_values_intensity_row(
     arguments:
         row (object): Pandas series of values of intensity across samples for
             a single protein
-        column (str): name of current column within row
         columns_intensity (list<str>): names of columns corresponding to values
             of intensity
         method (str): name of method to use for filling missing values, either
@@ -851,7 +870,8 @@ def fill_missing_values_intensity_row(
     raises:
 
     returns:
-        (int): logical binary representation of whether to keep current row
+        (object): Pandas series of values of intensity across samples for
+            a single protein
 
     """
 
@@ -860,15 +880,13 @@ def fill_missing_values_intensity_row(
     # Determine whether the current row has a missing value in the current
     # column.
     check_fill = 0
-    if (
-        (row["match_missing"] == 1) and
-        (pandas.isna(row[column]))
-    ):
+    value = float("nan")
+    if (row["match_missing"] == 1):
         # Fill missing value.
         check_fill = 1
         # Extract information for current row from table.
         array_intensities = row[columns_intensity].to_numpy(
-            dtype="float",
+            dtype="float64",
             na_value=numpy.nan,
             copy=True,
         )
@@ -881,24 +899,35 @@ def fill_missing_values_intensity_row(
                 ddof=1, # divisor is (n - 1) for sample standard deviation
             )
             value = float(mean - (3 * standard_deviation))
-            pass
+            row_fill = row.replace(
+                to_replace=pandas.NA,
+                value=value,
+            )
         elif (method == "half_minimum"):
             minimum = numpy.nanmin(array_intensities)
             value = float(minimum / 2)
-            pass
+            row_fill = row.replace(
+                to_replace=pandas.NA,
+                value=value,
+            )
         elif (method == "zero"):
-            value = float(0)
-            pass
+            value = 0.0
+            row_fill = row.replace(
+                to_replace=pandas.NA,
+                value=value,
+            )
     else:
-        value = row[column]
+        row_fill = row
+        pass
     # Report.
     if report:
         putly.print_terminal_partition(level=4)
         print("Fill missing value check: " + str(check_fill))
         print("Fill value: " + str(value))
+        print("Row with fill values: " + str(row_fill))
         putly.print_terminal_partition(level=4)
     # Return information.
-    return value
+    return row_fill
 
 def fill_missing_values_intensity_table(
     table=None,
@@ -908,6 +937,21 @@ def fill_missing_values_intensity_table(
 ):
     """
     Filters information in table.
+
+    Table's format and orientation
+
+    Table has values of intensity for each protein oriented across rows with
+    samples oriented across columns.
+
+                sample_1 sample_2 sample_3 sample_4 sample_5
+    protein_1   ...      ...      ...      ...      ...
+    protein_2   ...      ...      ...      ...      ...
+    protein_3   ...      ...      ...      ...      ...
+    protein_4   ...      ...      ...      ...      ...
+    protein_5   ...      ...      ...      ...      ...
+
+    Refer to function 'calculate_standard_score_gene_signal_by_gene' from module
+    'tissue' within package 'bimodality'.
 
     Within a normal distribution, 99.7% of values occur within 3 standard
     deviations of the mean, either above or below.
@@ -955,23 +999,18 @@ def fill_missing_values_intensity_table(
         (table_fill["match_missing"] == 1), :
     ]
 
-    # Iterate across columns for values of intensity in each sample.
-    for column in columns_intensity:
-        # Fill missing values across all rows for sample corresponding to
-        # current column.
-        table_fill[column] = table_fill.apply(
-            lambda row:
-                fill_missing_values_intensity_row(
-                    row=row,
-                    column=column,
-                    columns_intensity=columns_intensity,
-                    method=method,
-                    report=False,
-                ),
-            axis="columns", # apply function to each row
-        )
-        pass
-
+    # Fill missing values for all columns and across all rows.
+    # Apply the function to each row.
+    table_fill = table_fill.apply(
+        lambda row:
+            fill_missing_values_intensity_row(
+                row=row,
+                columns_intensity=columns_intensity,
+                method=method,
+                report=False,
+            ),
+        axis="columns", # apply function to each row
+    )
     # Remove unnecessary columns.
     table_fill.drop(
         labels=["match_missing",],
@@ -981,6 +1020,8 @@ def fill_missing_values_intensity_table(
 
     # Report.
     if report:
+        putly.print_terminal_partition(level=4)
+        print("Report: Fill missing values")
         putly.print_terminal_partition(level=4)
         count_rows_missing = (table_fill_actual.shape[0])
         count_rows_total = (table_fill.shape[0])
@@ -1001,6 +1042,164 @@ def fill_missing_values_intensity_table(
 
     # Return information.
     return table_fill
+
+
+##########
+# Scale
+
+
+# TODO: TCW; 25 June 2024
+# TODO: This scaling is currently inaccurate.
+
+def scale_values_intensity_row(
+    row=None,
+    columns_intensity=None,
+    method=None,
+    report=None,
+):
+    """
+    Scales values of intensity within the current row from a table.
+
+    Table's format and orientation
+
+    Table has values of intensity for each protein oriented across rows with
+    samples oriented across columns.
+
+                sample_1 sample_2 sample_3 sample_4 sample_5
+    protein_1   ...      ...      ...      ...      ...
+    protein_2   ...      ...      ...      ...      ...
+    protein_3   ...      ...      ...      ...      ...
+    protein_4   ...      ...      ...      ...      ...
+    protein_5   ...      ...      ...      ...      ...
+
+    Refer to function 'calculate_standard_score_gene_signal_by_gene' from module
+    'tissue' within package 'bimodality'.
+
+    arguments:
+        row (object): Pandas series of values of intensity across samples for
+            a single protein
+        columns_intensity (list<str>): names of columns corresponding to values
+            of intensity
+        method (str): name of method to use for filling missing values, either
+            'triple_standard_deviation_below', 'half_minimum', or 'zero'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (int): logical binary representation of whether to keep current row
+
+    """
+
+    # Copy information in row.
+    row = row.copy(deep=True)
+    # Extract information for current row from table.
+    if False:
+        array_intensities = row[columns_intensity].to_numpy(
+            dtype="float",
+            na_value=numpy.nan,
+            copy=True,
+        )
+        median = numpy.nanmean(array_intensities)
+    # Determine which method to use for scale.
+    if (method == "median"):
+        # Apply calculation to all values in row.
+        row_scale = row.apply(
+            lambda value: (value / row.median()),
+        )
+    elif (method == "mean_center"):
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("Row with scaled values: " + str(row_scale))
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return row_scale
+
+
+def scale_values_intensity_table(
+    table=None,
+    method=None,
+    report=None,
+):
+    """
+    Scales values in table.
+
+    Table's format and orientation
+
+    Table has values of intensity for each protein oriented across rows with
+    samples oriented across columns.
+
+                sample_1 sample_2 sample_3 sample_4 sample_5
+    protein_1   ...      ...      ...      ...      ...
+    protein_2   ...      ...      ...      ...      ...
+    protein_3   ...      ...      ...      ...      ...
+    protein_4   ...      ...      ...      ...      ...
+    protein_5   ...      ...      ...      ...      ...
+
+    arguments:
+        table (object): Pandas data-frame table of values of intensity across
+            samples in columns and proteins in rows
+        method (str): name of method to use for scaling values, currently only
+            'median_ratio'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table of values of intensity across
+            samples in columns and proteins in rows
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    # Organize information in tables.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    # Translate names of columns.
+    translations = dict()
+    translations["identifier_protein_uniprot"] = "features"
+    table.rename(
+        columns=translations,
+        inplace=True,
+    )
+    table.set_index(
+        ["features"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    table.columns.rename(
+        "observations",
+        inplace=True,
+    ) # single-dimensional index
+
+    # Determine method for scaling.
+    if (method == "median_ratio"):
+        table_scale = (
+            pscl.scale_feature_values_between_observations_by_median_ratio(
+                table=table,
+                name_columns="observations",
+                name_rows="features",
+                report=report,
+        ))
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("Report: Scale values between samples")
+        putly.print_terminal_partition(level=4)
+        print(table_scale)
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return table_scale
+
 
 
 
@@ -1083,7 +1282,7 @@ def execute_procedure(
     table_filter = filter_table_main(
         table=pail_organization["table_main"],
         columns_intensity=pail_organization["samples"],
-        proportion_validity=0.90,
+        proportion_validity=0.80,
         report=True,
     )
 
@@ -1117,11 +1316,11 @@ def execute_procedure(
         # (mean - (3 * standard deviation)): 0.0243
         # minimum: 0.1578
         # (minimum / 2): 0.0789
+        # Samples with missing values: "control_3", "intervention_1"
         row = define_row_test_filter()
         row["match_missing"] = 1
-        value = fill_missing_values_intensity_row(
+        row_fill = fill_missing_values_intensity_row(
             row=row,
-            column="control_3", # "control_3", "intervention_1"
             columns_intensity=pail_organization["samples"],
             method="triple_standard_deviation_below",
             report=True,
@@ -1135,19 +1334,54 @@ def execute_procedure(
     )
 
     ##########
-    # 6. Scale values of intensity.
-    # - median scaling
+    # 6. Scale values of intensity by batch.
     # - performed row-by-row (protein-by-protein) across columns (samples)
+
+    # TODO: TCW; 25 June 2024
+    # "Batch Scaling"
+    # The goal of this scaling is to make it reasonable to combine samples from separate
+    # batches or "runs" on the mass spec
+    # I think that calculating ratios of each protein in each sample to the corresponding
+    # protein in the pooled bridge sample from the same batch will work.
 
     ##########
     # 7. Combine tables from multiple runs.
     #   This combination must happen after standardizing the scales of each run.
 
 
+    ##########
+    # 8. Scale values of intensity by sample.
 
+    # TODO: TCW; 25 June 2024
+    # "Sample Scaling"
+    # The goal of this scaling is to make the individual samples more comparable
+    # to each other.
+    # There is potential for drift in instrument sensitivity even between runs
+    # of individual samples.
+
+    # Use median ratio scaling
+    # References
+    # median-ratio scaling
+    # https://mbernste.github.io/posts/median_ratio_norm/
+
+    table_scale = scale_values_intensity_table(
+        table=table_intensity,
+        method="median_ratio",
+        report=True,
+    )
 
     ##########
-    # 7. Normalize values of intensity.
+    # 9. Normalize values of intensity.
+
+    # TODO: TCW; 25 June 2024
+    # The goal of this normalization is different than the scaling above.
+    # The goal of this normalization is to make the distributions of intensities
+    # more usable in subsequent analyses.
+    # Methods such as logarithmic transformation, z-score standardization, etc.
+
+    # Implementation of multiple normalization methods in Python
+    # https://medium.com/@reinapeh/16-data-feature-normalization-methods-using-python-with-examples-part-1-of-3-26578b2b8ba6
+
 
 
 
