@@ -1654,21 +1654,18 @@ def execute_procedure(
     # protein in the pooled bridge sample from the same batch will work.
 
     ##########
-    # 7. Combine tables from multiple runs.
+    # 7. Combine tables from multiple batches.
     #   This combination must happen after standardizing the scales of each run.
 
 
     ##########
-    # 8. Scale values of intensity by sample.
-    # The goal of this scaling is to make the individual samples more comparable
-    # to each other.
+    # 8. Scale overall values of intensity by sample.
+    # The goal of this scaling is to make the individual samples more
+    # comparable to each other.
     # There is potential for drift in instrument sensitivity even between runs
     # of individual samples.
-
-    # TODO: TCW; 27 June 2024
-    # TODO: There's a problem in the current implementation of the scale
-    # function, since it disrupts the proportionality of proteins within each
-    # sample.
+    # This scaling can decrease the variance or noise in measurements between
+    # samples.
     table_scale = scale_values_intensity_table(
         table=table_intensity,
         method="median_ratio",
@@ -1683,10 +1680,20 @@ def execute_procedure(
         report=True,
     )
 
+    # TODO: TCW; 27 June 2024
+    # Calculate summary statistics to describe the difference in the data
+    # before and after the median-ratio scaling.
+    # 1. Calculate the mean of all log-transformed protein intensities in each
+    # sample.
+    # 2. Calculate the mean, standard error, 95% CI of those mean intensities
+    # between samples in the same experimental group (control or intevention).
+    # 3. The expectation is that the median-ratio scaling decreases the
+    # variance or noise between the samples within the same experimental group.
 
 
     ##########
     # 9. Normalize values of intensity.
+
 
     # TODO: TCW; 25 June 2024
     # The goal of this normalization is different than the scaling above.
