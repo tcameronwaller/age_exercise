@@ -1296,31 +1296,14 @@ def scale_values_intensity_table(
 
     # Copy information in table.
     table = table.copy(deep=True)
-
-    # Organize information in tables.
-    table.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
+    # Organize indices in table.
+    table = porg.change_names_table_indices_columns_rows(
+        table=table,
+        name_columns_novel="observations",
+        name_rows_original="identifier_protein_uniprot",
+        name_rows_novel="features",
+        report=False,
     )
-    # Translate names of columns.
-    translations = dict()
-    translations["identifier_protein_uniprot"] = "features"
-    table.rename(
-        columns=translations,
-        inplace=True,
-    )
-    table.set_index(
-        ["features"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table.columns.rename(
-        "observations",
-        inplace=True,
-    ) # single-dimensional index
-
     # Determine method for scaling.
     if (method == "median_ratio"):
         table_scale = (
@@ -1330,38 +1313,92 @@ def scale_values_intensity_table(
                 name_rows="features",
                 report=report,
         ))
-    # Organize information in tables.
-    table_scale.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
+    # Organize indices in table.
+    table_scale = porg.change_names_table_indices_columns_rows(
+        table=table_scale,
+        name_columns_novel="samples",
+        name_rows_original="features",
+        name_rows_novel="identifier_protein_uniprot",
+        report=False,
     )
-    # Translate names of columns.
-    translations = dict()
-    translations["features"] = "identifier_protein_uniprot"
-    table_scale.rename(
-        columns=translations,
-        inplace=True,
-    )
-    table_scale.set_index(
-        ["identifier_protein_uniprot"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_scale.columns.rename(
-        "samples",
-        inplace=True,
-    ) # single-dimensional index
     # Report.
     if report:
         putly.print_terminal_partition(level=4)
-        print("Report: Scale values between samples")
+        print("Report:")
+        print("exercise")
+        print("proteomics_mass_spectroscopy")
+        print("scale_values_intensity_table()")
         putly.print_terminal_partition(level=4)
         print(table_scale)
         putly.print_terminal_partition(level=4)
     # Return information.
     return table_scale
+
+
+def compare_least_change_proteins_by_experimental_groups(
+    table=None,
+    name_columns=None,
+    name_rows=None,
+    columns_first=None,
+    columns_second=None,
+    count_quantile=None,
+    report=None,
+):
+    """
+    Compares the sets of proteins that demonstrate the least change between
+    samples corresponding to two experiomental groups, such as control and
+    intervention.
+
+    arguments:
+        table (object): Pandas data-frame table of values of intensity for
+            samples across columns and for proteins across rows
+        name_columns (str): name of single-level index across columns
+        name_rows (str): name of single-level index across rows
+        columns_first (list<str>): names of columns corresponding to samples in
+            first experimental group, such as control or intervention
+        columns_second (list<str>): names of columns corresponding to samples
+            in second experimental group, such as control or intervention
+        count_quantile (int): odd count of quantiles, such as three for
+            tertiles
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Separate table by columns corresponding to samples in each group.
+    table_first = table[columns_first].copy(deep=True)
+    table_second = table[columns_second].copy(deep=True)
+    # Compare sets of proteins that demonstrate least change between samples in
+    # each experimental group.
+    pail = (
+        pscl.compare_middle_quantile_feature_sets_by_ratio_to_geometric_mean(
+            table_first=table_first,
+            table_second=table_second,
+            name_columns=name_columns,
+            name_rows=name_rows,
+            count_quantile=count_quantile,
+            report=report,
+    ))
+    # For the sets of proteins that demonstrate Describe the variance of the ratios of change across all samples.
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=2)
+        print("Report:")
+        print("exercise")
+        print("proteomics_mass_spectroscopy")
+        print("compare_constant_proteins_by_experimental_groups()")
+        putly.print_terminal_partition(level=4)
+        print("Columns for samples in first group:")
+        print(columns_first)
+        print("Columns for samples in second group:")
+        print(columns_second)
+    # Return information.
+    pass
 
 
 ##########
@@ -1408,7 +1445,7 @@ def create_write_figure_histogram(
         array=values,
         title=name_figure,
         bin_method="count",
-        bin_count=10,
+        bin_count=30,
         bar_width=0.5,
         label_bins="Natural Log (Intensity)",
         label_counts="Protein Instances per bin",
@@ -1533,6 +1570,7 @@ def execute_procedure(
         restore=True,
     )
 
+
     ##########
     # 1. Read source information from file.
     pail_source = read_source(
@@ -1540,11 +1578,13 @@ def execute_procedure(
         report=True,
     )
 
+
     ##########
     # TODO: TCW; 25 June 2024
     # Steps 2-6 will need to be performed separately on the raw table from each
-    # separate run before combination in step 7.
+    # separate batch run before combination in step 7.
     ##########
+
 
     ##########
     # 2. Organize information from source.
@@ -1553,6 +1593,7 @@ def execute_procedure(
         table_main=pail_source["table_main"],
         report=True,
     )
+
 
     ##########
     # 3. Filter columns and rows in table.
@@ -1586,6 +1627,7 @@ def execute_procedure(
         report=True,
     )
 
+
     ##########
     # 4. Separate tables for information of discrete types.
     # table_sample
@@ -1600,6 +1642,7 @@ def execute_procedure(
         report=True,
     )
 
+
     ##########
     # 5. Fill missing values of intensity.
     # - performed row-by-row (protein-by-protein) across columns (samples)
@@ -1608,6 +1651,9 @@ def execute_procedure(
     # "triple_standard_deviation_below"
     # "half_minimum"
     # "zero"
+    putly.print_terminal_partition(level=3)
+    print("Step 5: Fill missing values of intensity.")
+    putly.print_terminal_partition(level=3)
     if False:
         # Test.
         # values: 0.4526, 0.3325, 0.2953, 0.3015, 0.4379, 0.3127, 0.1578, 0.2351
@@ -1632,14 +1678,47 @@ def execute_procedure(
         method="triple_standard_deviation_below",
         report=True,
     )
-    plot_histogram_values_across_proteins_each_sample(
-        table=table_intensity,
-        name_columns="samples",
-        name_rows="identifier_protein_uniprot",
-        logarithm=True,
-        path_directory_parent=paths["out_plot_raw"],
-        report=True,
-    )
+    if True:
+        # Describe variance of ratios to geometric mean across the proteins that
+        # demonstrate the least change.
+        pail = pscl.describe_variance_across_features_with_least_change(
+            table=table_intensity,
+            name_columns="samples",
+            name_rows="identifier_protein_uniprot",
+            count_quantile=7,
+            report=True,
+        )
+        # Compare sets of proteins that demonstrate least change.
+        compare_least_change_proteins_by_experimental_groups(
+            table=table_intensity,
+            name_columns="samples",
+            name_rows="identifier_protein_uniprot",
+            columns_first=[
+                "control_1",
+                "control_2",
+                "control_3",
+                "control_4",
+                "control_5",
+            ],
+            columns_second=[
+                "intervention_1",
+                "intervention_2",
+                "intervention_3",
+                "intervention_4",
+                "intervention_5",
+            ],
+            count_quantile=7,
+            report=True,
+        )
+        plot_histogram_values_across_proteins_each_sample(
+            table=table_intensity,
+            name_columns="samples",
+            name_rows="identifier_protein_uniprot",
+            logarithm=True,
+            path_directory_parent=paths["out_plot_raw"],
+            report=True,
+        )
+        pass
 
 
     ##########
@@ -1657,6 +1736,11 @@ def execute_procedure(
     # 7. Combine tables from multiple batches.
     #   This combination must happen after standardizing the scales of each run.
 
+    # TODO: TCW; 1 July 2024
+    # Use the protein identifiers as index keys
+    # Combine the two, batch-specific tables by addition columns
+    # partner.organization.merge_columns_two_tables()
+
 
     ##########
     # 8. Scale overall values of intensity by sample.
@@ -1666,33 +1750,68 @@ def execute_procedure(
     # of individual samples.
     # This scaling can decrease the variance or noise in measurements between
     # samples.
+    putly.print_terminal_partition(level=3)
+    print("Step 8: Scale overall values of intensity by sample.")
+    putly.print_terminal_partition(level=3)
     table_scale = scale_values_intensity_table(
         table=table_intensity,
         method="median_ratio",
         report=True,
     )
-    plot_histogram_values_across_proteins_each_sample(
-        table=table_scale,
-        name_columns="samples",
-        name_rows="identifier_protein_uniprot",
-        logarithm=True,
-        path_directory_parent=paths["out_plot_scale_sample"],
-        report=True,
-    )
-
-    # TODO: TCW; 27 June 2024
-    # Calculate summary statistics to describe the difference in the data
-    # before and after the median-ratio scaling.
-    # 1. Calculate the mean of all log-transformed protein intensities in each
-    # sample.
-    # 2. Calculate the mean, standard error, 95% CI of those mean intensities
-    # between samples in the same experimental group (control or intevention).
-    # 3. The expectation is that the median-ratio scaling decreases the
-    # variance or noise between the samples within the same experimental group.
+    if True:
+        # Describe variance of ratios to geometric mean across the proteins that
+        # demonstrate the least change.
+        pail = pscl.describe_variance_across_features_with_least_change(
+            table=table_scale,
+            name_columns="samples",
+            name_rows="identifier_protein_uniprot",
+            count_quantile=7,
+            report=True,
+        )
+        # Compare sets of proteins that demonstrate least change.
+        compare_least_change_proteins_by_experimental_groups(
+            table=table_scale,
+            name_columns="samples",
+            name_rows="identifier_protein_uniprot",
+            columns_first=[
+                "control_1",
+                "control_2",
+                "control_3",
+                "control_4",
+                "control_5",
+            ],
+            columns_second=[
+                "intervention_1",
+                "intervention_2",
+                "intervention_3",
+                "intervention_4",
+                "intervention_5",
+            ],
+            count_quantile=7,
+            report=True,
+        )
+        plot_histogram_values_across_proteins_each_sample(
+            table=table_scale,
+            name_columns="samples",
+            name_rows="identifier_protein_uniprot",
+            logarithm=True,
+            path_directory_parent=paths["out_plot_scale_sample"],
+            report=True,
+        )
+        pass
 
 
     ##########
     # 9. Normalize values of intensity.
+    putly.print_terminal_partition(level=3)
+    print("Step 9: Normalize distributions of values.")
+    putly.print_terminal_partition(level=3)
+    table_normal = scale_values_intensity_table(
+        table=table_scale,
+        logarithm=True,
+        z_score=True,
+        report=True,
+    )
 
 
     # TODO: TCW; 25 June 2024
@@ -1704,25 +1823,17 @@ def execute_procedure(
     # Implementation of multiple normalization methods in Python
     # https://medium.com/@reinapeh/16-data-feature-normalization-methods-using-python-with-examples-part-1-of-3-26578b2b8ba6
 
+    ##########
+    # 10. Organize information about samples.
+
+    # pair 1 (control: "control_1", intervention: "intervention_1")
+    # pair 2 (control: "control_2", intervention: "intervention_3")
 
 
 
     ##########
     # 8. Transform table of intensities to wide format.
 
-    # TODO: TCW; 24 June 2024
-    # TODO: AFTER filling missing values
-    # TODO: AFTER scaling values (median normalization or scaling).
-    # TODO: AFTER normalizing scaled intensity values
-    #    The median scaling will be performed row-by-row across proteins.
-    #    It will be more convenient for the proteins to be oriented across rows.
-    # TODO: I think that I'll eventually need to have the sample intensities
-    # across rows.
-    # TODO: WHY?????
-    # TODO: 1. I need to transfer more information from the Table-Sample.
-    # TODO:     Specifically "group" and "pair" need to be transfered according to sample identifier (identifier_novel)
-    # TODO: 2. The regression analyses will be more intuitive to design with
-    #          samples across rows.
 
     ##########
     # 9. Transfer information about experimental groups and pairs.
