@@ -125,6 +125,9 @@ def initialize_directories(
     paths["out_test"] = os.path.join(
         paths["out_set"], "test",
     )
+    paths["out_table"] = os.path.join(
+        paths["out_set"], "table",
+    )
     paths["out_plot"] = os.path.join(
         paths["out_set"], "plot",
     )
@@ -139,6 +142,7 @@ def initialize_directories(
         putly.remove_directory(path=paths["out_project"])
         putly.remove_directory(path=paths["out_set"])
         putly.remove_directory(path=paths["out_test"])
+        putly.remove_directory(path=paths["out_table"])
         putly.remove_directory(path=paths["out_plot"])
     # Initialize directories.
     putly.create_directories(
@@ -149,6 +153,9 @@ def initialize_directories(
     )
     putly.create_directories(
         path=paths["out_test"]
+    )
+    putly.create_directories(
+        path=paths["out_table"]
     )
     putly.create_directories(
         path=paths["out_plot"]
@@ -224,14 +231,17 @@ def define_table_column_types_sample():
     types_columns = dict()
     types_columns["inclusion"] = "int32"
     types_columns["sort"] = "int32"
+    types_columns["batch"] = "string"
+    types_columns["sort_batch"] = "int32"
     types_columns["group"] = "string"
     types_columns["sort_group"] = "int32"
-    types_columns["batch"] = "string"
+    types_columns["pair"] = "string"
+    types_columns["sort_pair"] = "int32"
     types_columns["identifier_original"] = "string"
     types_columns["identifier_novel"] = "string"
     types_columns["description"] = "string"
-    types_columns["pair"] = "string"
     types_columns["abbreviation"] = "string"
+    types_columns["quantity"] = "float32"
     # Return information.
     return types_columns
 
@@ -267,7 +277,7 @@ def read_source(
         paths["in_data"], "table_intensity_mouse_zcr_2024-06-21.tsv",
     )
     path_file_table_sample = os.path.join(
-        paths["in_parameters"], "table_samples_attributes_filter_sort.tsv",
+        paths["in_parameters"], "table_samples_attributes.tsv",
     )
 
     # Collect information.
@@ -391,18 +401,28 @@ def organize_table_main(
     table_sample = table_sample.copy(deep=True)
     table_main = table_main.copy(deep=True)
 
-    # Organize information in table.
-
-    # Determine original and novel names for columns representing samples.
     # Filter information about samples.
     table_sample_inclusion = table_sample.loc[
         (table_sample["inclusion"] == 1), :
     ]
+    table_sample_control = table_sample_inclusion.loc[
+        (table_sample_inclusion["group"] == "control"), :
+    ]
+    table_sample_intervention = table_sample_inclusion.loc[
+        (table_sample_inclusion["group"] == "intervention"), :
+    ]
+    # Extract information about samples.
     samples = copy.deepcopy(
         table_sample_inclusion["identifier_novel"].to_list()
     )
+    samples_control = copy.deepcopy(
+        table_sample_control["identifier_novel"].to_list()
+    )
+    samples_intervention = copy.deepcopy(
+        table_sample_intervention["identifier_novel"].to_list()
+    )
 
-    # remove all columns except for "identifier_original" and "identifier_novel"
+    # Determine original and novel names for columns representing samples.
     # Filter and sort table's columns.
     table_sample_translation = porg.filter_sort_table_columns(
         table=table_sample_inclusion,
@@ -465,6 +485,8 @@ def organize_table_main(
     # Collect information.
     pail = dict()
     pail["samples"] = samples
+    pail["samples_control"] = samples_control
+    pail["samples_intervention"] = samples_intervention
     pail["table_main"] = table_main
     # Return information.
     return pail
@@ -840,7 +862,7 @@ def split_table_main_columns(
     table_split = table.copy(deep=True)
     # Copy other information.
     columns_intensity = copy.deepcopy(columns_intensity)
-    # Organize information in tables.
+    # Organize indices in table.
     table_split.reset_index(
         level=None,
         inplace=True,
@@ -859,13 +881,13 @@ def split_table_main_columns(
     table_intensity = table_split.loc[
         :, table_split.columns.isin(columns_intensity)
     ]
-    # Organize information in tables.
+    # Organize indices in table.
     table_protein.columns.rename(
-        "attributes",
+        "attribute",
         inplace=True,
     ) # single-dimensional index
     table_intensity.columns.rename(
-        "samples",
+        "sample",
         inplace=True,
     ) # single-dimensional index
 
@@ -1202,6 +1224,11 @@ def fill_missing_values_intensity_table(
 
 
 ##########
+# Scale by quantity
+
+
+
+##########
 # Scale by Batch
 
 
@@ -1212,7 +1239,7 @@ def fill_missing_values_intensity_table(
 
 
 ##########
-# Scale by Sample
+# 8. Scale overall values of intensity by sample.
 
 
 def shift_values_greater_zero_row(
@@ -1316,7 +1343,7 @@ def scale_values_intensity_table(
     # Organize indices in table.
     table_scale = porg.change_names_table_indices_columns_rows(
         table=table_scale,
-        name_columns_novel="samples",
+        name_columns_novel="sample",
         name_rows_original="features",
         name_rows_novel="identifier_protein_uniprot",
         report=False,
@@ -1399,6 +1426,268 @@ def compare_least_change_proteins_by_experimental_groups(
         print(columns_second)
     # Return information.
     pass
+
+
+##########
+# 9. Normalize distribution in values of intensity.
+
+
+def normalize_values_intensity_table(
+    table=None,
+    columns=None,
+    logarithm=None,
+    z_score=None,
+    report=None,
+):
+    """
+    Normalize values of intensity in table.
+
+    Table's format and orientation
+
+    Table has values of intensity for each protein oriented across rows with
+    samples oriented across columns.
+
+                sample_1 sample_2 sample_3 sample_4 sample_5
+    protein_1   ...      ...      ...      ...      ...
+    protein_2   ...      ...      ...      ...      ...
+    protein_3   ...      ...      ...      ...      ...
+    protein_4   ...      ...      ...      ...      ...
+    protein_5   ...      ...      ...      ...      ...
+
+    arguments:
+        table (object): Pandas data-frame table of values of intensity for
+            samples across columns and for proteins across rows
+        columns (list<str>): names of columns corresponding to values of
+            intensity of each protein across samples
+        logarithm (bool): whether to transform values by logarithm
+        z_score (bool): whether to transform values by z-score standardization
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table of values of intensity across
+            samples in columns and proteins in rows
+
+    """
+
+    # Copy information in table.
+    table_normal = table.copy(deep=True)
+    # Determine method for scaling.
+    if (logarithm):
+        for column in columns:
+            # math.log() # optimal for scalar values
+            # numpy.log() # optimal for array values
+            table_normal[column] = table_normal.apply(
+                lambda row:
+                    math.log(row[column])
+                    if row[column] != 0.0 else pandas.NA,
+                axis="columns", # apply function to each row
+            )
+            pass
+        pass
+    if (z_score):
+        table_normal = table_normal.apply(
+            lambda row:
+                scipy.stats.zscore(
+                    row[columns],
+                    axis=0,
+                    ddof=1, # divisor is (n - 1) for sample standard deviation
+                    nan_policy="omit",
+                ),
+            axis="columns", # apply function to each row
+        )
+        pass
+
+    # Calculate mean values for each protein across samples.
+    means = table_normal.aggregate(
+        lambda row: numpy.nanmean(
+            row.to_numpy(
+                dtype="float64",
+                na_value=numpy.nan,
+                copy=True,
+            )
+        ),
+        axis="columns", # apply function to each row
+    )
+    # Calculate mean values for each protein across samples.
+    standard_deviations = table_normal.aggregate(
+        lambda row: numpy.nanstd(
+            row.to_numpy(
+                dtype="float64",
+                na_value=numpy.nan,
+                copy=True,
+            ),
+            ddof=1, # divisor is (n - 1) for sample standard deviation
+        ),
+        axis="columns", # apply function to each row
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("Report:")
+        print("exercise")
+        print("proteomics_mass_spectroscopy")
+        print("normalize_values_intensity_table()")
+        putly.print_terminal_partition(level=5)
+        print(table_normal)
+        putly.print_terminal_partition(level=5)
+        print("Means across proteins")
+        print(means)
+        putly.print_terminal_partition(level=5)
+        print("Standard deviations across proteins")
+        print(standard_deviations)
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return table_normal
+
+
+##########
+# 10. Prepare information for analysis.
+
+
+def prepare_table_for_analysis(
+    table_sample=None,
+    table_protein=None,
+    table_intensity=None,
+    report=None,
+):
+    """
+    Prepares table of information for analysis.
+
+    arguments:
+        table_sample (object): Pandas data-frame table of information about
+            samples
+        table_protein (object): Pandas data-frame table of information about
+            proteins
+        table_intensity (object): Pandas data-frame table of values of
+            intensity for samples across columns and for proteins across rows
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table of values of intensity across
+            samples in columns and proteins in rows
+
+    """
+
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
+    table_protein = table_protein.copy(deep=True)
+    table_intensity = table_intensity.copy(deep=True)
+    # Extract information.
+    proteins = copy.deepcopy(
+        table_protein.index.get_level_values(
+            "identifier_protein_uniprot"
+        ).to_list()
+    )
+    # Transpose table.
+    table_main = table_intensity.transpose(copy=True)
+    # Organize indices in table.
+    table_sample.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    table_main.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    # Transfer extra attributes of samples.
+    attributes = [
+        "sort", "batch", "group", "pair", "description", "abbreviation",
+    ]
+    table_main = porg.transfer_table_rows_attributes_reference(
+        table_main=table_main,
+        column_main_key="sample",
+        table_reference=table_sample,
+        column_reference_key="identifier_novel",
+        columns_reference_transfer=attributes,
+        prefix_reference_main="",
+        suffix_reference_main="",
+        report=report,
+    )
+    # Sort rows within table.
+    table_main.sort_values(
+        by=["sort",],
+        axis="index",
+        ascending=True,
+        inplace=True,
+    )
+    # Sort columns within table.
+    attributes.remove("sort")
+    attributes.insert(0, "sample")
+    columns = copy.deepcopy(attributes)
+    columns.extend(proteins)
+    table_main = porg.filter_sort_table_columns(
+        table=table_main,
+        columns_sequence=columns,
+        report=report,
+    )
+    # Remove unnecessary columns.
+    if False:
+        table_main.drop(
+            labels=["sort"],
+            axis="columns",
+            inplace=True
+        )
+    # Organize indices in table.
+    table_main.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_main.set_index(
+        ["sample"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    table_main.columns.rename(
+        "protein_attribute",
+        inplace=True,
+    ) # single-dimensional index
+    table_main = porg.change_names_table_indices_columns_rows(
+        table=table_main,
+        name_columns_novel="feature",
+        name_rows_original="sample",
+        name_rows_novel="observation",
+        report=False,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("Report:")
+        print("exercise")
+        print("proteomics_mass_spectroscopy")
+        print("prepare_table_for_analysis()")
+        putly.print_terminal_partition(level=5)
+        print("Table-Sample")
+        print(table_sample)
+        putly.print_terminal_partition(level=5)
+        print("Table-Protein")
+        print(table_protein)
+        putly.print_terminal_partition(level=5)
+        print("Table-Intensity")
+        print(table_intensity)
+        putly.print_terminal_partition(level=5)
+        print("Table-Main")
+        print(table_main)
+        pass
+    # Collect information.
+    pail = dict()
+    pail["table_main"] = table_main
+    pail["columns"] = columns
+    pail["attributes"] = attributes
+    pail["proteins"] = proteins
+    # Return information.
+    return pail
+
+
 
 
 ##########
@@ -1565,7 +1854,7 @@ def execute_procedure(
     # Initialize directories.
     paths = initialize_directories(
         project="2024_exercise_age",
-        set="wrangler_ms",
+        set="preparation",
         path_directory_dock=path_directory_dock,
         restore=True,
     )
@@ -1683,7 +1972,7 @@ def execute_procedure(
         # demonstrate the least change.
         pail = pscl.describe_variance_across_features_with_least_change(
             table=table_intensity,
-            name_columns="samples",
+            name_columns="sample",
             name_rows="identifier_protein_uniprot",
             count_quantile=7,
             report=True,
@@ -1691,28 +1980,16 @@ def execute_procedure(
         # Compare sets of proteins that demonstrate least change.
         compare_least_change_proteins_by_experimental_groups(
             table=table_intensity,
-            name_columns="samples",
+            name_columns="sample",
             name_rows="identifier_protein_uniprot",
-            columns_first=[
-                "control_1",
-                "control_2",
-                "control_3",
-                "control_4",
-                "control_5",
-            ],
-            columns_second=[
-                "intervention_1",
-                "intervention_2",
-                "intervention_3",
-                "intervention_4",
-                "intervention_5",
-            ],
+            columns_first=pail_organization["samples_control"],
+            columns_second=pail_organization["samples_intervention"],
             count_quantile=7,
             report=True,
         )
         plot_histogram_values_across_proteins_each_sample(
             table=table_intensity,
-            name_columns="samples",
+            name_columns="sample",
             name_rows="identifier_protein_uniprot",
             logarithm=True,
             path_directory_parent=paths["out_plot_raw"],
@@ -1763,7 +2040,7 @@ def execute_procedure(
         # demonstrate the least change.
         pail = pscl.describe_variance_across_features_with_least_change(
             table=table_scale,
-            name_columns="samples",
+            name_columns="sample",
             name_rows="identifier_protein_uniprot",
             count_quantile=7,
             report=True,
@@ -1771,28 +2048,16 @@ def execute_procedure(
         # Compare sets of proteins that demonstrate least change.
         compare_least_change_proteins_by_experimental_groups(
             table=table_scale,
-            name_columns="samples",
+            name_columns="sample",
             name_rows="identifier_protein_uniprot",
-            columns_first=[
-                "control_1",
-                "control_2",
-                "control_3",
-                "control_4",
-                "control_5",
-            ],
-            columns_second=[
-                "intervention_1",
-                "intervention_2",
-                "intervention_3",
-                "intervention_4",
-                "intervention_5",
-            ],
+            columns_first=pail_organization["samples_control"],
+            columns_second=pail_organization["samples_intervention"],
             count_quantile=7,
             report=True,
         )
         plot_histogram_values_across_proteins_each_sample(
             table=table_scale,
-            name_columns="samples",
+            name_columns="sample",
             name_rows="identifier_protein_uniprot",
             logarithm=True,
             path_directory_parent=paths["out_plot_scale_sample"],
@@ -1802,41 +2067,46 @@ def execute_procedure(
 
 
     ##########
-    # 9. Normalize values of intensity.
+    # 9. Normalize distribution in values of intensity.
+    # The goal of this normalization is different than the scaling above.
+    # The goal of this normalization is to make the distributions of values of
+    # intensity more usable in subsequent analyses.
+    # Other methods of normalization.
+    # robust scaling ((x - median(x) / interquartile_range(x)))
+    # logarithmic transformation
+    #   mitigate skewness, especially left
+    # square root transformation
+    #   mitigate skewness in presence of zeros
+    # square transformation
+    #   mitigate skewness, especially left
+    # exponential transformation
+    #   mitigate skewness, especially when relationship is exponential
     putly.print_terminal_partition(level=3)
-    print("Step 9: Normalize distributions of values.")
+    print("Step 9: Normalize distribution in values of intensity.")
     putly.print_terminal_partition(level=3)
-    table_normal = scale_values_intensity_table(
+    table_normal = normalize_values_intensity_table(
         table=table_scale,
+        columns=pail_organization["samples"],
         logarithm=True,
         z_score=True,
         report=True,
     )
 
 
-    # TODO: TCW; 25 June 2024
-    # The goal of this normalization is different than the scaling above.
-    # The goal of this normalization is to make the distributions of intensities
-    # more usable in subsequent analyses.
-    # Methods such as logarithmic transformation, z-score standardization, etc.
-
-    # Implementation of multiple normalization methods in Python
-    # https://medium.com/@reinapeh/16-data-feature-normalization-methods-using-python-with-examples-part-1-of-3-26578b2b8ba6
-
     ##########
-    # 10. Organize information about samples.
-
-    # pair 1 (control: "control_1", intervention: "intervention_1")
-    # pair 2 (control: "control_2", intervention: "intervention_3")
-
-
-
-    ##########
-    # 8. Transform table of intensities to wide format.
-
-
-    ##########
-    # 9. Transfer information about experimental groups and pairs.
+    # 10. Prepare information for analysis.
+    # Transpose the table of intensities to orient proteins across columns and
+    # samples across rows.
+    # Transfer information about samples to the table.
+    putly.print_terminal_partition(level=3)
+    print("Step 10: Prepare information for analysis.")
+    putly.print_terminal_partition(level=3)
+    pail_preparation = prepare_table_for_analysis(
+        table_sample=pail_source["table_sample"],
+        table_protein=pail_split["table_protein"],
+        table_intensity=table_normal,
+        report=True,
+    )
 
 
 
@@ -1846,7 +2116,33 @@ def execute_procedure(
     #     - Run this with parallelization across the columns for proteins.
     #     - Pass the list of columns for proteins to the parallel function along with full table
 
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_tables = dict()
+    pail_write_tables[str("table_main")] = pail_preparation["table_main"]
+    pail_write_objects = dict()
+    pail_write_objects[str("columns")] = pail_preparation["columns"]
+    pail_write_objects[str("attributes")] = pail_preparation["attributes"]
+    pail_write_objects[str("proteins")] = pail_preparation["proteins"]
+    pail_write_objects[str("samples")] = pail_organization["samples"]
 
+    ##########
+    # Write product information to file.
+    putly.write_product_tables(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_table"],
+        type="text",
+    )
+    putly.write_product_tables(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_table"],
+        type="pickle",
+    )
+    putly.write_product_objects_to_file_pickle(
+        pail_write=pail_write_objects,
+        path_directory=paths["out_table"],
+    )
     pass
 
 
