@@ -2129,17 +2129,17 @@ def execute_procedure(
 
     ##########
     # Write product information to file.
-    putly.write_product_tables(
+    putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_table"],
         type="text",
     )
-    putly.write_product_tables(
+    putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_table"],
         type="pickle",
     )
-    putly.write_product_objects_to_file_pickle(
+    putly.write_objects_to_file_pickle(
         pail_write=pail_write_objects,
         path_directory=paths["out_table"],
     )
