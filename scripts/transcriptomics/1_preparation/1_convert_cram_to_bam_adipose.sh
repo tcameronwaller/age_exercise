@@ -31,9 +31,9 @@ path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
 #path_directory_source=$("./paths/endocrinology/transcriptomics_muscle.txt")
-path_directory_source="${path_directory_dock}/dock/test_lanza_rnaseq_adipose_2024/raw"
-#path_directory_source="${path_directory_dock}/dock/test_lanza_rnaseq_muscle_2022/raw"
-path_directory_product="${path_directory_dock}/dock/test_lanza_rnaseq_adipose_2024/raw/bam"
+path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
+#path_directory_source="${path_directory_dock}/test_lanza_rnaseq_muscle_2022/raw"
+path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw/bam"
 
 # Executable handles.
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
