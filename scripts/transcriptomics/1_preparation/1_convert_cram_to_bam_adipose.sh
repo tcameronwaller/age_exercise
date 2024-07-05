@@ -44,7 +44,7 @@ path_script_convert_cram_to_bam="${path_directory_process}/partner/scripts/conve
 # Files.
 path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
 path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
-path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
+path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
 
 # Initialize directory.
 #rm $path_directory_product
