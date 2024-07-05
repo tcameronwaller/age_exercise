@@ -18,21 +18,15 @@
 ################################################################################
 # Organize arguments.
 
-path_file_source=${1} # full path to file for source genomic or transcriptomic sequence information in CRAM format
-path_file_product=${2} # full path to file for product genomic or transcriptomic sequence information in BAM format
-path_file_reference_genome=${3} # full path to file for reference genome sequence
-path_execution_samtools=${4} # full path to executable file for SamTools
-report=${5} # whether to print reports
-
 ################################################################################
 # Organize paths.
 
 # Directories.
 cd ~
 path_directory_parent_project=$(<"./paths/endocrinology/parent_tcameronwaller.txt")
-path_directory_reference="${path_directory_parent}/reference"
-path_directory_tool="${path_directory_parent}/tool"
-path_directory_process="${path_directory_parent}/process"
+path_directory_reference="${path_directory_parent_project}/reference"
+path_directory_tool="${path_directory_parent_project}/tool"
+path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
