@@ -39,7 +39,7 @@ path_directory_product="${path_directory_dock}/dock/test_lanza_rnaseq_adipose_20
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
 
 # Scripts.
-path_script_convert_cram_to_bam="${path_directory_process}/partner/scripts/convert_cram_to_bam.sh"
+path_script_convert_cram_to_bam="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam.sh"
 
 # Files.
 path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
