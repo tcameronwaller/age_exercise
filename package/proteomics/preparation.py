@@ -171,7 +171,7 @@ def initialize_directories(
 
 
 ##########
-# Read from source
+# 1. Read information from file.
 
 
 def define_table_column_types_main():
@@ -308,7 +308,7 @@ def read_source(
 
 
 ##########
-# Organization
+# 2. Organize information.
 
 
 def extract_organize_values_from_series(
@@ -493,7 +493,7 @@ def organize_table_main(
 
 
 ##########
-# Filter
+# 3. Filter rows and columns in table.
 
 
 def define_column_sequence_table_protein():
@@ -829,7 +829,7 @@ def filter_table_main(
 
 
 ##########
-# Split
+# 4. Separate tables for information of distinct types.
 
 
 def split_table_main_columns(
@@ -917,7 +917,7 @@ def split_table_main_columns(
 
 
 ##########
-# Fill
+# 5. Fill missing values of intensity.
 
 
 def match_table_row_fill_missing(
@@ -1224,22 +1224,22 @@ def fill_missing_values_intensity_table(
 
 
 ##########
-# Scale by quantity
+# 6. Scale intensity by quantity.
 
 
 
 ##########
-# Scale by Batch
+# 7. Scale intensity by batch.
 
 
 
 ##########
-# Combine by Batch
+# 8. Combine intensities for samples from separate batches.
 
 
 
 ##########
-# 8. Scale overall values of intensity by sample.
+# 9. Scale intensity by sample.
 
 
 def shift_values_greater_zero_row(
@@ -1429,7 +1429,7 @@ def compare_least_change_proteins_by_experimental_groups(
 
 
 ##########
-# 9. Normalize distribution in values of intensity.
+# 10. Normalize distribution in values of intensity.
 
 
 def normalize_values_intensity_table(
@@ -1544,7 +1544,7 @@ def normalize_values_intensity_table(
 
 
 ##########
-# 10. Prepare information for analysis.
+# 11. Prepare information for analysis.
 
 
 def prepare_table_for_analysis(
