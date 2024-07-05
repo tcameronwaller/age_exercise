@@ -68,8 +68,8 @@ set +v # disable print input to standard error
 
 /usr/bin/bash $path_script_convert_cram_to_bam \
 $path_file_source \
-$name_file_product \
-$name_file_reference_genome \
+$path_file_product \
+$path_file_reference_genome \
 $path_execution_samtools \
 $report
 
