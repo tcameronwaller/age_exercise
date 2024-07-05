@@ -58,10 +58,10 @@ mkdir -p $path_directory_product
 
 # Report.
 report="true"
-set -x # enable print commands to standard error
-#set +x # disable print commands to standard error
-set -v # enable print input to standard error
-#set +v # disable print input to standard error
+#set -x # enable print commands to standard error
+set +x # disable print commands to standard error
+#set -v # enable print input to standard error
+set +v # disable print input to standard error
 
 ###############################################################################
 # Execute procedure.
