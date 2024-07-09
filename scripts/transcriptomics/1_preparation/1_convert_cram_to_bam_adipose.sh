@@ -48,6 +48,7 @@ path_script_convert_cram_to_bam="${path_directory_process}/partner/scripts/samto
 # Files.
 #path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
 path_file_reference_genome="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
+path_file_reference_genome_index="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.fai"
 
 path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
 path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
@@ -76,6 +77,7 @@ set +v # disable print input to standard error
 $path_file_source \
 $path_file_product \
 $path_file_reference_genome \
+$path_file_reference_genome_index \
 $path_execution_samtools \
 $report
 
