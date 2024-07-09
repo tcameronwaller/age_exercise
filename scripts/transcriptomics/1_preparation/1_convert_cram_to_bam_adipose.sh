@@ -43,7 +43,9 @@ path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/ra
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
 
 # Scripts.
-path_script_convert_cram_to_bam="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam.sh"
+path_script_convert_cram_to_bam_1="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam_slurm_1.sh"
+path_script_convert_cram_to_bam_2="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam_slurm_2.sh"
+path_script_convert_cram_to_bam_3="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam.sh"
 
 # Files.
 #path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
@@ -63,8 +65,9 @@ mkdir -p $path_directory_product
 ###############################################################################
 # Organize parameters.
 
-# Report.
+threads=2
 report="true"
+
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error
 #set -v # enable print input to standard error
@@ -73,13 +76,18 @@ set +v # disable print input to standard error
 ###############################################################################
 # Execute procedure.
 
-/usr/bin/bash $path_script_convert_cram_to_bam \
-$path_file_source \
-$path_file_product \
-$path_file_reference_genome \
-$path_file_reference_genome_index \
-$path_execution_samtools \
-$report
+# Simple execution.
+if true; then
+  /usr/bin/bash $path_script_convert_cram_to_bam_3 \
+  $path_file_source \
+  $path_file_product \
+  $path_file_reference_genome \
+  $path_file_reference_genome_index \
+  $threads \
+  $report \
+  $path_execution_samtools
+fi
+
 
 ##########
 # Report.
