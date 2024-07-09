@@ -6,11 +6,15 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 5 July 2024
-# Date, last execution or modification: 5 July 2024
-# Review: TCW; 5 July 2024
+# Date, last execution or modification: 9 July 2024
+# Review: TCW; 9 July 2024
 ###############################################################################
 # Note
 
+# View header of file in BAM or CRAM format to discern details of its prior
+# processing.
+# samtools head --headers 100 /path/to/input/file.bam
+# samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
 ################################################################################
 
@@ -42,7 +46,9 @@ path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
 path_script_convert_cram_to_bam="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam.sh"
 
 # Files.
-path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
+#path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
+path_file_reference_genome="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
+
 path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
 path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
 
