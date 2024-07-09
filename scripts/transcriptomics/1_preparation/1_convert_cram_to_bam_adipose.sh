@@ -16,13 +16,13 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
-################################################################################
+###############################################################################
 
 
-################################################################################
+###############################################################################
 # Organize arguments.
 
-################################################################################
+###############################################################################
 # Organize paths.
 
 # Directories.
@@ -38,6 +38,7 @@ path_directory_dock="${path_directory_process}/dock"
 path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
 #path_directory_source="${path_directory_dock}/test_lanza_rnaseq_muscle_2022/raw"
 path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw/bam"
+path_directory_parallel="${path_directory_product}/parallel"
 
 # Executable handles.
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
@@ -51,16 +52,14 @@ path_script_convert_cram_to_bam_3="${path_directory_process}/partner/scripts/sam
 #path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
 path_file_reference_genome="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
 path_file_reference_genome_index="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.fai"
-
-path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
-path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
+path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 
 # Initialize directory.
-#rm $path_directory_product
+rm -r $path_directory_product # caution
 mkdir -p $path_directory_product
-
-# Remove any previous version of the product file.
-#rm $path_file_product
+mkdir -p $path_directory_parallel
+# Initialize file.
+rm $path_file_parallel_instances # caution
 
 ###############################################################################
 # Organize parameters.
@@ -76,8 +75,9 @@ set +v # disable print input to standard error
 ###############################################################################
 # Execute procedure.
 
+##########
 # Simple execution.
-if true; then
+if false; then
   /usr/bin/bash $path_script_convert_cram_to_bam_3 \
   $path_file_source \
   $path_file_product \
@@ -88,6 +88,32 @@ if true; then
   $path_execution_samtools
 fi
 
+##########
+# Parallel batch of job instances
+
+if true; then
+  # Define explicit instances.
+  # Organize information within multi-dimensional array.
+  instances_parallel=()
+  path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
+  path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
+  instances_parallel+=("${path_file_source};${path_file_product}")
+  # Write to file parameters for job instances.
+  for instance in "${instances_parallel[@]}"; do
+    echo $instance >> $path_file_parallel_instances
+  done
+  # Call script to submit parallel batch of job instances.
+  /usr/bin/bash $path_script_convert_cram_to_bam_1 \
+  $path_file_parallel_instances \
+  $path_directory_parallel \
+  $path_file_reference_genome \
+  $path_file_reference_genome_index \
+  $threads \
+  $report \
+  $path_script_convert_cram_to_bam_2 \
+  $path_script_convert_cram_to_bam_3 \
+  $path_execution_samtools
+fi
 
 ##########
 # Report.
@@ -100,14 +126,8 @@ if [ "$report" == "true" ]; then
   echo $0 # Print full file path to script.
   echo "Convert genomic or transcriptomic sequence data from CRAM to BAM file format."
   echo "----------"
-  echo "path to source file: " $path_file_source
-  echo "path to product file: " $path_file_product
-  echo "----------"
 fi
 
-##########
-# Remove temporary, intermediate files.
-#rm -r $path_directory_product_temporary
 
 ###############################################################################
 # End.
