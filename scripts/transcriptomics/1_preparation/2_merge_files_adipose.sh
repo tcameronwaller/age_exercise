@@ -152,6 +152,7 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "count of source files: " $count_paths_file_source
   echo "count of base names of source files: " $count_names_file_base
+  echo "example of base name: " "${names_file_base[0]}"
   echo "count of unique sample identifiers: " $count_identifiers_sample_unique
   echo "example sample identifier: " "${identifiers_sample_unique[0]}"
   echo "----------"
