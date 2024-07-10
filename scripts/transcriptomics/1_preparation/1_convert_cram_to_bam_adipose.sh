@@ -181,6 +181,7 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "Script:"
   echo $0 # Print full file path to script.
+  echo "1_convert_cram_to_bam_adipose.sh"
   echo "Convert genomic or transcriptomic sequence data from CRAM to BAM file format."
   echo "----------"
 fi
