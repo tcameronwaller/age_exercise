@@ -48,11 +48,6 @@ stamp_date=$(date +%Y-%m-%d)
 path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 path_directory_parallel="${path_directory_product}/parallel"
 
-#path_directory_product_temporary="${path_directory_product}/temporary_${name_base_file_product}_${stamp_date}" # hopefully unique
-
-
-
-
 # Executable handles.
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
 
@@ -70,6 +65,7 @@ path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 
 # Initialize directory.
 #rm -r $path_directory_product # caution
+rm -r $path_directory_temporary # caution
 mkdir -p $path_directory_product
 mkdir -p $path_directory_temporary
 #mkdir -p $path_directory_parallel
@@ -123,7 +119,7 @@ input=$path_file_temporary_1
 while IFS=$'\n' read -r -a array_lines; do
   for line in "${array_lines}"; do
     # Separate segments within current line.
-    IFS="_L" read -r -a array_segments <<< "${line}"
+    IFS='_L' read -r -a array_segments <<< "${line}"
     # Select identifier of sample from segments of current file's base name.
     identifier_sample="${array_segments[0]}"
     identifiers_sample+=($identifier_sample)
@@ -164,7 +160,7 @@ fi
 
 ##########
 # Remove temporary, intermediate files.
-#rm -r $path_directory_temporary
+rm -r $path_directory_temporary
 
 ###############################################################################
 # End.
