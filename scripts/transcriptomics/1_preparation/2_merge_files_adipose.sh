@@ -109,6 +109,7 @@ count_names_file_base=${#names_file_base[@]}
 
 # Write array to temporary file.
 for item in "${names_file_base[@]}"; do
+  # Replace multi-character delimiter with single-character delimiter.
   echo $item | sed 's/_L/;/g' >> $path_file_temporary_1
 done
 
@@ -133,8 +134,11 @@ declare -A temporary_unique # initialize an associative array
 for identifier_sample in "${identifiers_sample[@]}"; do
   temporary_unique[$identifier_sample]=0 # assign a key-value pair
 done
-identifiers_sample_unique=${!temporary_unique[@]} # keep only the keys
+#identifiers_sample_unique=${!temporary_unique[@]} # keep only the keys
+# Organize array from keys of associative array.
+IFS=$' ' read -r -a identifiers_sample_unique <<< "${!temporary_unique[@]}"
 count_identifiers_sample_unique=${#identifiers_sample_unique[@]}
+
 
 ##########
 # Report.
@@ -154,7 +158,7 @@ if [ "$report" == "true" ]; then
   echo "count of sample identifiers: " $count_identifiers_sample
   echo "example of sample identifier: " "${identifiers_sample[0]}"
   echo "count of unique sample identifiers: " $count_identifiers_sample_unique
-  echo "example sample identifier: " "${identifiers_sample_unique[0]}"
+  echo "example of unique sample identifier: " "${identifiers_sample_unique[0]}"
   echo "----------"
 fi
 
