@@ -16,6 +16,10 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
+# Slurm batch job: 10474824
+# - instances: 1,232
+# - date: 10 July 2024
+
 ###############################################################################
 
 
@@ -128,7 +132,7 @@ fi
 # Parallel batch of job instances
 if true; then
   # Define explicit instances.
-  # Collect files from source directory.
+  # Collect paths to files from source directory.
   #cd $path_directory_source
   # Bash version 4.4 introduced the "-d" option for "readarray".
   #readarray -d "" -t paths_files_source < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.txt.gz" -print0)
