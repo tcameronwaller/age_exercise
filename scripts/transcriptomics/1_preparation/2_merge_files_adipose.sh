@@ -118,12 +118,16 @@ done
 
 # Extract identifiers of samples from base names of files.
 identifiers_sample=()
-#input=$path_file_temporary_1
-input=$names_file_base
-while IFS=$'_L' read -r -a array; do
-  # Select identifier of sample from segments of current file's base name.
-  identifier_sample="${array[0]}"
-  identifiers_sample+=($identifier_sample)
+#input=$names_file_base
+input=$path_file_temporary_1
+while IFS=$'\n' read -r -a array_lines; do
+  for line in "${array_lines}"; do
+    # Separate segments within current line.
+    IFS="_L" read -r -a array_segments <<< "${line}"
+    # Select identifier of sample from segments of current file's base name.
+    identifier_sample="${array_segments[0]}"
+    identifiers_sample+=($identifier_sample)
+  done
 done <<< "${input}"
 
 # Select unique identifiers of samples.
