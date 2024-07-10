@@ -117,8 +117,6 @@ done
 identifiers_sample_unique=${!temporary_unique[@]} # keep only the keys
 count_identifiers_sample_unique=${#identifiers_sample_unique[@]}
 
-
-
 ##########
 # Report.
 
@@ -133,10 +131,9 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "count of source files: " $count_paths_file_source
   echo "count of unique sample identifiers: " $count_identifiers_sample_unique
-  echo "example sample identifier: " $identifiers_sample_unique[0]
+  echo "example sample identifier: " "${identifiers_sample_unique[0]}"
   echo "----------"
 fi
-
 
 ###############################################################################
 # End.
