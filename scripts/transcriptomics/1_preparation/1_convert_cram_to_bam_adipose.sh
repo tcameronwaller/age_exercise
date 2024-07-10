@@ -90,8 +90,8 @@ fi
 
 ##########
 # Parallel batch of job instances
-
-if true; then
+# Test with three instances.
+if false; then
   # Define explicit instances.
   # Organize information within multi-dimensional array.
   instances_parallel=()
@@ -120,6 +120,57 @@ if true; then
   $path_script_convert_cram_to_bam_3 \
   $path_execution_samtools
 fi
+
+##########
+# Parallel batch of job instances
+if true; then
+  # Define explicit instances.
+  # Collect files from source directory.
+  #cd $path_directory_source
+  # Bash version 4.4 introduced the "-d" option for "readarray".
+  #readarray -d "" -t paths_files_source < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.txt.gz" -print0)
+  paths_file_source=()
+  while IFS= read -r -d $'\0'; do
+    paths_file_source+=("$REPLY")
+  done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.cram" -print0)
+  count_paths_file_source=${#paths_file_source[@]}
+  # Report.
+  if [[ "$report" == "true" ]]; then
+    echo "----------"
+    echo "script:"
+    echo $0 # Print full file path to script.
+    echo "1_convert_cram_to_bam_adipose.sh"
+    echo "----------"
+    echo "count of source files: " $count_paths_file_source
+    echo "----------"
+  fi
+  # Organize information within multi-dimensional array.
+  instances_parallel=()
+  for path_file_source in "${paths_file_source[@]}"; do
+    # Extract base name of file.
+    name_base_file="$(basename $path_file_source .cram)"
+    path_file_product="${path_directory_product}/${name_base_file}.bam" # hopefully unique
+    instance="${path_file_source};${path_file_product}"
+    instances_parallel+=$instance
+  done
+  # Write to file parameters for job instances.
+  for instance in "${instances_parallel[@]}"; do
+    echo $instance >> $path_file_parallel_instances
+  done
+  # Call script to submit parallel batch of job instances.
+  /usr/bin/bash $path_script_convert_cram_to_bam_1 \
+  $path_file_parallel_instances \
+  $path_directory_parallel \
+  $path_file_reference_genome \
+  $path_file_reference_genome_index \
+  $threads \
+  $report \
+  $path_script_convert_cram_to_bam_2 \
+  $path_script_convert_cram_to_bam_3 \
+  $path_execution_samtools
+fi
+
+
 
 ##########
 # Report.
