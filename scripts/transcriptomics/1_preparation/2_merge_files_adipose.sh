@@ -16,6 +16,10 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
+# In next-generation sequencing, each sample was analyzed simultaneously on
+# 8 separate flow cells, such that there are 8 different files in BAM format
+# for each sample. It is necessary to merge these 8 files for each sample.
+
 # Slurm batch job: ___
 # - instances: ___
 # - date: ___
@@ -47,6 +51,7 @@ path_directory_product="${path_directory_dock}/place_holder_temporary"
 stamp_date=$(date +%Y-%m-%d)
 path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 path_directory_parallel="${path_directory_product}/parallel"
+path_directory_parallel_sample_files="${path_directory_product}/parallel/sample_files"
 
 # Executable handles.
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
@@ -68,7 +73,8 @@ path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 rm -r $path_directory_temporary # caution
 mkdir -p $path_directory_product
 mkdir -p $path_directory_temporary
-#mkdir -p $path_directory_parallel
+mkdir -p $path_directory_parallel
+mkdir -p $path_directory_parallel_sample_files
 # Initialize file.
 rm $path_file_temporary_1 # caution
 #rm $path_file_parallel_instances # caution
@@ -87,6 +93,8 @@ set +v # disable print input to standard error
 ###############################################################################
 # Execute procedure.
 
+##########
+# 1. Determine unique identifiers of samples
 
 # Collect paths to files from source directory.
 #cd $path_directory_source
@@ -138,6 +146,86 @@ done
 #identifiers_sample_unique=${!temporary_unique[@]} # transfers a space-delimited list of keys
 IFS=$' ' read -r -a identifiers_sample_unique <<< "${!temporary_unique[@]}"
 count_identifiers_sample_unique=${#identifiers_sample_unique[@]}
+
+##########
+# 2. Define explicit instances for parallel batch of jobs.
+# Organize information within multi-dimensional array.
+instances_parallel=()
+# Determine paths to files for each unique sample identifier.
+for identifier_sample in "${identifiers_sample_unique[@]}"; do
+  # Collect paths to files from source directory corresponding to current sample identifier.
+  paths_file_sample=()
+  while IFS= read -r -d $'\0'; do
+    paths_file_sample+=("$REPLY")
+  done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "${identifier_sample}*.bam" -print0)
+  # Write paths to files to a parameter file.
+  path_file_sample_files="${path_directory_parallel_sample_files}"
+  for item in "${names_file_base[@]}"; do
+    # Replace multi-character delimiter with single-character delimiter.
+    echo $item | sed 's/_L/;/g' >> $path_file_temporary_1
+  done
+
+
+
+  # Extract base name of file.
+  name_base_file="$(basename $path_file_source .cram)"
+  path_file_product="${path_directory_product}/${name_base_file}.bam" # hopefully unique
+  # Define instance.
+  instance="${identifier_sample};${path_file_source};${path_file_product}"
+  instances_parallel+=($instance)
+done
+
+
+##########
+# 3. Parallel batch of job instances
+
+if true; then
+  # Define explicit instances.
+  # Collect paths to files from source directory.
+  #cd $path_directory_source
+  # Bash version 4.4 introduced the "-d" option for "readarray".
+  #readarray -d "" -t paths_files_source < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.txt.gz" -print0)
+  paths_file_source=()
+  while IFS= read -r -d $'\0'; do
+    paths_file_source+=("$REPLY")
+  done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.cram" -print0)
+  count_paths_file_source=${#paths_file_source[@]}
+  # Report.
+  if [[ "$report" == "true" ]]; then
+    echo "----------"
+    echo "script:"
+    echo $0 # Print full file path to script.
+    echo "1_convert_cram_to_bam_adipose.sh"
+    echo "----------"
+    echo "count of source files: " $count_paths_file_source
+    echo "----------"
+  fi
+  # Organize information within multi-dimensional array.
+  instances_parallel=()
+  for path_file_source in "${paths_file_source[@]}"; do
+    # Extract base name of file.
+    name_base_file="$(basename $path_file_source .cram)"
+    path_file_product="${path_directory_product}/${name_base_file}.bam" # hopefully unique
+    instance="${path_file_source};${path_file_product}"
+    instances_parallel+=($instance)
+  done
+  # Write to file parameters for job instances.
+  for instance in "${instances_parallel[@]}"; do
+    echo $instance >> $path_file_parallel_instances
+  done
+  # Call script to submit parallel batch of job instances.
+  /usr/bin/bash $path_script_convert_cram_to_bam_1 \
+  $path_file_parallel_instances \
+  $path_directory_parallel \
+  $path_file_reference_genome \
+  $path_file_reference_genome_index \
+  $threads \
+  $report \
+  $path_script_convert_cram_to_bam_2 \
+  $path_script_convert_cram_to_bam_3 \
+  $path_execution_samtools
+fi
+
 
 
 ##########

@@ -38,11 +38,11 @@ path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
-path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3"
+path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test"
 #path_directory_source=$("./paths/endocrinology/transcriptomics_muscle.txt")
 #path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
 #path_directory_source="${path_directory_dock}/test_lanza_rnaseq_muscle_2022/raw"
-path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/bam"
+path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test/bam_sort"
 #path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/bam"
 path_directory_parallel="${path_directory_product}/parallel"
 
@@ -131,7 +131,7 @@ fi
 ##########
 # Parallel batch of job instances
 if true; then
-  # Define explicit instances.
+  # Define explicit instances for parallel batch of jobs.
   # Collect paths to files from source directory.
   #cd $path_directory_source
   # Bash version 4.4 introduced the "-d" option for "readarray".
