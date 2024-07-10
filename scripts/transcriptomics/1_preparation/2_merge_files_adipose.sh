@@ -119,12 +119,13 @@ input=$path_file_temporary_1
 while IFS=$'\n' read -r -a array_lines; do
   for line in "${array_lines}"; do
     # Separate segments within current line.
-    IFS='_L' read -r -a array_segments <<< "${line}"
+    IFS=$'_L' read -r -a array_segments <<< "${line}"
     # Select identifier of sample from segments of current file's base name.
     identifier_sample="${array_segments[0]}"
     identifiers_sample+=($identifier_sample)
   done
-done <<< "${input}"
+done < "${input}"
+#done <<< "${input}"
 count_identifiers_sample=${#identifiers_sample[@]}
 
 # Select unique identifiers of samples.
