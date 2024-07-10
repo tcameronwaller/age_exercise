@@ -129,6 +129,7 @@ while IFS=$'\n' read -r -a array_lines; do
     identifiers_sample+=($identifier_sample)
   done
 done <<< "${input}"
+count_identifiers_sample=${#identifiers_sample[@]}
 
 # Select unique identifiers of samples.
 declare -A temporary_unique # initialize an associative array
@@ -153,6 +154,8 @@ if [ "$report" == "true" ]; then
   echo "count of source files: " $count_paths_file_source
   echo "count of base names of source files: " $count_names_file_base
   echo "example of base name: " "${names_file_base[0]}"
+  echo "count of sample identifiers: " $count_identifiers_sample
+  echo "example of sample identifier: " "${identifiers_sample[0]}"
   echo "count of unique sample identifiers: " $count_identifiers_sample_unique
   echo "example sample identifier: " "${identifiers_sample_unique[0]}"
   echo "----------"
