@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 5 July 2024
-# Date, last execution or modification: 9 July 2024
-# Review: TCW; 9 July 2024
+# Date, last execution or modification: 10 July 2024
+# Review: TCW; 10 July 2024
 ###############################################################################
 # Note
 
@@ -97,6 +97,12 @@ if true; then
   instances_parallel=()
   path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
   path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
+  instances_parallel+=("${path_file_source};${path_file_product}")
+  path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L2_IAACACTGTTA-GCAAGTCTCA.cram"
+  path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L2_IAACACTGTTA-GCAAGTCTCA.bam"
+  instances_parallel+=("${path_file_source};${path_file_product}")
+  path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L3_IAACACTGTTA-GCAAGTCTCA.cram"
+  path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L3_IAACACTGTTA-GCAAGTCTCA.bam"
   instances_parallel+=("${path_file_source};${path_file_product}")
   # Write to file parameters for job instances.
   for instance in "${instances_parallel[@]}"; do
