@@ -20,8 +20,8 @@
 # 8 separate flow cells, such that there are 8 different files in BAM format
 # for each sample. It is necessary to merge these 8 files for each sample.
 
-# Slurm batch job: ___
-# - instances: ___
+# Slurm batch job: 10484958
+# - instances: 154
 # - date: 10 July 2024
 
 ###############################################################################
