@@ -38,11 +38,11 @@ path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
-path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test"
+path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3"
 #path_directory_source=$("./paths/endocrinology/transcriptomics_muscle.txt")
 #path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
 #path_directory_source="${path_directory_dock}/test_lanza_rnaseq_muscle_2022/raw"
-path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test/bam_sort"
+path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/bam_sort"
 #path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/bam"
 path_directory_parallel="${path_directory_product}/parallel"
 
@@ -176,8 +176,6 @@ if true; then
   $path_script_convert_cram_to_bam_3 \
   $path_execution_samtools
 fi
-
-
 
 ##########
 # Report.
