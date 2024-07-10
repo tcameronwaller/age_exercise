@@ -109,7 +109,7 @@ count_names_file_base=${#names_file_base[@]}
 
 # Write array to temporary file.
 for item in "${names_file_base[@]}"; do
-  echo $item >> $path_file_temporary_1
+  echo $item | sed 's/_L/;/g' >> $path_file_temporary_1
 done
 
 # Extract identifiers of samples from base names of files.
@@ -119,7 +119,7 @@ input=$path_file_temporary_1
 while IFS=$'\n' read -r -a array_lines; do
   for line in "${array_lines}"; do
     # Separate segments within current line.
-    IFS=$'_L' read -r -a array_segments <<< "${line}"
+    IFS=$';' read -r -a array_segments <<< "${line}"
     # Select identifier of sample from segments of current file's base name.
     identifier_sample="${array_segments[0]}"
     identifiers_sample+=($identifier_sample)
