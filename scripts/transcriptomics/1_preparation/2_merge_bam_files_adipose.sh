@@ -5,7 +5,7 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 5 July 2024
+# Date, first execution: 10 July 2024
 # Date, last execution or modification: 10 July 2024
 # Review: TCW; 10 July 2024
 ###############################################################################
@@ -36,35 +36,28 @@
 # Directories.
 cd ~
 path_directory_parent_project=$(<"./paths/endocrinology/parent_tcameronwaller.txt")
-path_directory_reference="${path_directory_parent_project}/reference"
+#path_directory_reference="${path_directory_parent_project}/reference"
 path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
-path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/bam"
-#path_directory_source=$("./paths/endocrinology/transcriptomics_muscle.txt")
-#path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
-#path_directory_source="${path_directory_dock}/test_lanza_rnaseq_muscle_2022/raw"
-path_directory_product="${path_directory_dock}/place_holder_temporary"
-#path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/bam"
+path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test/bam_sort"
+path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test/merge"
 stamp_date=$(date +%Y-%m-%d)
 path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 path_directory_parallel="${path_directory_product}/parallel"
-path_directory_parallel_sample_files="${path_directory_product}/parallel/sample_files"
+path_directory_parallel_sample_files="${path_directory_parallel}/sample_files"
 
 # Executable handles.
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
 
 # Scripts.
-path_script_convert_cram_to_bam_1="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam_slurm_1.sh"
-path_script_convert_cram_to_bam_2="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam_slurm_2.sh"
-path_script_convert_cram_to_bam_3="${path_directory_process}/partner/scripts/samtools/convert_cram_to_bam.sh"
+path_script_merge_bam_1="${path_directory_process}/partner/scripts/samtools/merge_bam_files_slurm_1.sh"
+path_script_merge_bam_2="${path_directory_process}/partner/scripts/samtools/merge_bam_files_slurm_2.sh"
+path_script_merge_bam_3="${path_directory_process}/partner/scripts/samtools/merge_bam_files.sh"
 
 # Files.
-#path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
-#path_file_reference_genome="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
-#path_file_reference_genome_index="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.fai"
 path_file_temporary_1="${path_directory_temporary}/temporary_${stamp_date}_1.txt"
 path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 
@@ -157,76 +150,38 @@ for identifier_sample in "${identifiers_sample_unique[@]}"; do
   paths_file_sample=()
   while IFS= read -r -d $'\0'; do
     paths_file_sample+=("$REPLY")
-  done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "${identifier_sample}*.bam" -print0)
-  # Write paths to files to a parameter file.
-  path_file_sample_files="${path_directory_parallel_sample_files}"
-  for item in "${names_file_base[@]}"; do
-    # Replace multi-character delimiter with single-character delimiter.
-    echo $item | sed 's/_L/;/g' >> $path_file_temporary_1
+  done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "${identifier_sample}_L*.bam" -print0)
+  # Write to file the paths to all files for the current sample.
+  path_file_source="${path_directory_parallel_sample_files}/${identifier_sample}.txt"
+  for path_file_sample in "${paths_file_sample[@]}"; do
+    echo $path_file_sample >> $path_file_source
   done
-
-
-
-  # Extract base name of file.
-  name_base_file="$(basename $path_file_source .cram)"
-  path_file_product="${path_directory_product}/${name_base_file}.bam" # hopefully unique
-  # Define instance.
+  # Determine name and path to product file.
+  path_file_product="${path_directory_product}/${identifier_sample}.bam"
+  # Define instance for parallel batch of jobs.
   instance="${identifier_sample};${path_file_source};${path_file_product}"
   instances_parallel+=($instance)
 done
 
 
 ##########
-# 3. Parallel batch of job instances
+# 3. Execute parallel batch of job instances
 
 if true; then
-  # Define explicit instances.
-  # Collect paths to files from source directory.
-  #cd $path_directory_source
-  # Bash version 4.4 introduced the "-d" option for "readarray".
-  #readarray -d "" -t paths_files_source < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.txt.gz" -print0)
-  paths_file_source=()
-  while IFS= read -r -d $'\0'; do
-    paths_file_source+=("$REPLY")
-  done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.cram" -print0)
-  count_paths_file_source=${#paths_file_source[@]}
-  # Report.
-  if [[ "$report" == "true" ]]; then
-    echo "----------"
-    echo "script:"
-    echo $0 # Print full file path to script.
-    echo "1_convert_cram_to_bam_adipose.sh"
-    echo "----------"
-    echo "count of source files: " $count_paths_file_source
-    echo "----------"
-  fi
-  # Organize information within multi-dimensional array.
-  instances_parallel=()
-  for path_file_source in "${paths_file_source[@]}"; do
-    # Extract base name of file.
-    name_base_file="$(basename $path_file_source .cram)"
-    path_file_product="${path_directory_product}/${name_base_file}.bam" # hopefully unique
-    instance="${path_file_source};${path_file_product}"
-    instances_parallel+=($instance)
-  done
   # Write to file parameters for job instances.
   for instance in "${instances_parallel[@]}"; do
     echo $instance >> $path_file_parallel_instances
   done
   # Call script to submit parallel batch of job instances.
-  /usr/bin/bash $path_script_convert_cram_to_bam_1 \
+  /usr/bin/bash $path_script_merge_bam_1 \
   $path_file_parallel_instances \
   $path_directory_parallel \
-  $path_file_reference_genome \
-  $path_file_reference_genome_index \
   $threads \
   $report \
-  $path_script_convert_cram_to_bam_2 \
-  $path_script_convert_cram_to_bam_3 \
+  $path_script_merge_bam_2 \
+  $path_script_merge_bam_3 \
   $path_execution_samtools
 fi
-
-
 
 ##########
 # Report.
@@ -237,7 +192,7 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "Script:"
   echo $0 # Print full file path to script.
-  echo "2_merge_files_adipose.sh"
+  echo "2_merge_bam_files_adipose.sh"
   echo "Merge files for identical sample analyzed in parallel flow cells."
   echo "----------"
   echo "count of source files: " $count_paths_file_source
