@@ -99,6 +99,7 @@ for path_file_source in "${paths_file_source[@]}"; do
   name_base_file="$(basename $path_file_source .bam)"
   names_file_base+=($name_base_file)
 done
+count_names_file_base=${#names_file_base[@]}
 
 # Extract identifiers of samples from base names of files.
 identifiers_sample=()
@@ -130,6 +131,7 @@ if [ "$report" == "true" ]; then
   echo "Merge files for identical sample analyzed in parallel flow cells."
   echo "----------"
   echo "count of source files: " $count_paths_file_source
+  echo "count of base names of source files: " $count_names_file_base
   echo "count of unique sample identifiers: " $count_identifiers_sample_unique
   echo "example sample identifier: " "${identifiers_sample_unique[0]}"
   echo "----------"
