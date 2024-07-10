@@ -16,7 +16,7 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
-# Slurm batch job: 10479700
+# Slurm batch job: ___
 # - instances: 1,232
 # - date: 10 July 2024
 

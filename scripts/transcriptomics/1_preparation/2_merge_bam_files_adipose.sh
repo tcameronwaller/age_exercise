@@ -22,7 +22,7 @@
 
 # Slurm batch job: ___
 # - instances: ___
-# - date: ___
+# - date: 10 July 2024
 
 ###############################################################################
 
@@ -42,8 +42,8 @@ path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
-path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test/bam_sort"
-path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3_test/merge"
+path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/bam_sort"
+path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/merge"
 stamp_date=$(date +%Y-%m-%d)
 path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 path_directory_parallel="${path_directory_product}/parallel"
