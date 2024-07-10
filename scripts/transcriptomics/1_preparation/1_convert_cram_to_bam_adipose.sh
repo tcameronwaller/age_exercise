@@ -151,7 +151,7 @@ if true; then
     name_base_file="$(basename $path_file_source .cram)"
     path_file_product="${path_directory_product}/${name_base_file}.bam" # hopefully unique
     instance="${path_file_source};${path_file_product}"
-    instances_parallel+=$instance
+    instances_parallel+=($instance)
   done
   # Write to file parameters for job instances.
   for instance in "${instances_parallel[@]}"; do
