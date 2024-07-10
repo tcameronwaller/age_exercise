@@ -34,10 +34,12 @@ path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
 #path_directory_source=$("./paths/endocrinology/transcriptomics_adipose.txt")
+path_directory_source="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3"
 #path_directory_source=$("./paths/endocrinology/transcriptomics_muscle.txt")
-path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
+#path_directory_source="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/raw"
 #path_directory_source="${path_directory_dock}/test_lanza_rnaseq_muscle_2022/raw"
-path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/bam"
+path_directory_product="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/bam"
+#path_directory_product="${path_directory_dock}/test_lanza_rnaseq_adipose_2024/bam"
 path_directory_parallel="${path_directory_product}/parallel"
 
 # Executable handles.
@@ -94,15 +96,16 @@ fi
 if false; then
   # Define explicit instances.
   # Organize information within multi-dimensional array.
+  name_file="test_temporary"
   instances_parallel=()
-  path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.cram"
-  path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L1_IAACACTGTTA-GCAAGTCTCA.bam"
+  path_file_source="${path_directory_source}/${name_file}.cram"
+  path_file_product="${path_directory_product}/${name_file}.bam"
   instances_parallel+=("${path_file_source};${path_file_product}")
-  path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L2_IAACACTGTTA-GCAAGTCTCA.cram"
-  path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L2_IAACACTGTTA-GCAAGTCTCA.bam"
+  path_file_source="${path_directory_source}/${name_file}.cram"
+  path_file_product="${path_directory_product}/${name_file}.bam"
   instances_parallel+=("${path_file_source};${path_file_product}")
-  path_file_source="${path_directory_source}/AAK959-AAT-B.FC22K7H7LT3_L3_IAACACTGTTA-GCAAGTCTCA.cram"
-  path_file_product="${path_directory_product}/AAK959-AAT-B.FC22K7H7LT3_L3_IAACACTGTTA-GCAAGTCTCA.bam"
+  path_file_source="${path_directory_source}/${name_file}.cram"
+  path_file_product="${path_directory_product}/${name_file}.bam"
   instances_parallel+=("${path_file_source};${path_file_product}")
   # Write to file parameters for job instances.
   for instance in "${instances_parallel[@]}"; do
