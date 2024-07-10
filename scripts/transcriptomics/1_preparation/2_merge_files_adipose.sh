@@ -134,8 +134,8 @@ declare -A temporary_unique # initialize an associative array
 for identifier_sample in "${identifiers_sample[@]}"; do
   temporary_unique[$identifier_sample]=0 # assign a key-value pair
 done
-#identifiers_sample_unique=${!temporary_unique[@]} # keep only the keys
 # Organize array from keys of associative array.
+#identifiers_sample_unique=${!temporary_unique[@]} # transfers a space-delimited list of keys
 IFS=$' ' read -r -a identifiers_sample_unique <<< "${!temporary_unique[@]}"
 count_identifiers_sample_unique=${#identifiers_sample_unique[@]}
 
@@ -159,6 +159,10 @@ if [ "$report" == "true" ]; then
   echo "example of sample identifier: " "${identifiers_sample[0]}"
   echo "count of unique sample identifiers: " $count_identifiers_sample_unique
   echo "example of unique sample identifier: " "${identifiers_sample_unique[0]}"
+  echo "example of unique sample identifier: " "${identifiers_sample_unique[1]}"
+  echo "example of unique sample identifier: " "${identifiers_sample_unique[2]}"
+  echo "example of unique sample identifier: " "${identifiers_sample_unique[3]}"
+  echo "example of unique sample identifier: " "${identifiers_sample_unique[-1]}"
   echo "----------"
 fi
 
