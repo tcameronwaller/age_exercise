@@ -74,6 +74,7 @@ mkdir -p $path_directory_product
 mkdir -p $path_directory_temporary
 #mkdir -p $path_directory_parallel
 # Initialize file.
+rm $path_file_temporary_1 # caution
 #rm $path_file_parallel_instances # caution
 
 ###############################################################################
@@ -117,12 +118,13 @@ done
 
 # Extract identifiers of samples from base names of files.
 identifiers_sample=()
-input=$path_file_temporary_1
+#input=$path_file_temporary_1
+input=$names_file_base
 while IFS=$'_L' read -r -a array; do
   # Select identifier of sample from segments of current file's base name.
   identifier_sample="${array[0]}"
   identifiers_sample+=($identifier_sample)
-done < "${input}"
+done <<< "${input}"
 
 # Select unique identifiers of samples.
 declare -A temporary_unique # initialize an associative array
