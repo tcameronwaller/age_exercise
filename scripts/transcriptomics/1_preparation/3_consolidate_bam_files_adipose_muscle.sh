@@ -133,23 +133,21 @@ done
 ##########
 # Report.
 
-if false; then
-  if [ "$report" == "true" ]; then
-    echo "----------"
-    echo "----------"
-    echo "----------"
-    echo "Script:"
-    echo $0 # Print full file path to script.
-    echo "3_consolidate_bam_files_adipose_muscle.sh"
-    echo "Consolidate files for adipose and muscle tissues."
-    echo "----------"
-    echo "Adipose"
-    echo "count of source files: " $count_paths_file_source_adipose
-    echo "----------"
-    echo "Muscle"
-    echo "count of source files: " $count_paths_file_source_muscle
-    echo "----------"
-  fi
+if [ "$report" == "true" ]; then
+  echo "----------"
+  echo "----------"
+  echo "----------"
+  echo "Script:"
+  echo $0 # Print full file path to script.
+  echo "3_consolidate_bam_files_adipose_muscle.sh"
+  echo "Consolidate files for adipose and muscle tissues."
+  echo "----------"
+  echo "Adipose"
+  echo "count of source files: " $count_paths_file_source_adipose
+  echo "----------"
+  echo "Muscle"
+  echo "count of source files: " $count_paths_file_source_muscle
+  echo "----------"
 fi
 
 ##########
