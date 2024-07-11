@@ -70,7 +70,7 @@ mkdir -p $path_directory_parallel
 mkdir -p $path_directory_parallel_sample_files
 # Initialize file.
 rm $path_file_temporary_1 # caution
-#rm $path_file_parallel_instances # caution
+rm $path_file_parallel_instances # caution
 
 ###############################################################################
 # Organize parameters.
