@@ -76,8 +76,8 @@ set +v # disable print input to standard error
 
 ##########
 # 1. Copy files in BAM format to temporary directory.
-cp "${path_directory_source_adipose}/*.bam" $path_directory_temporary_adipose
-cp "${path_directory_source_muscle}/*.bam" $path_directory_temporary_muscle
+cp $path_directory_source_adipose/*.bam $path_directory_temporary_adipose
+cp $path_directory_source_muscle/*.bam $path_directory_temporary_muscle
 
 ##########
 # 2. Modify the names of files.
