@@ -33,8 +33,8 @@ path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
-path_directory_source_adipose="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/merge_test"
-path_directory_source_muscle="${path_directory_dock}/220713_A00938_0293_AHVFVFDSX3/test"
+path_directory_source_adipose="${path_directory_dock}/20240531_LH00386_0066_A22K7H7LT3/merge"
+path_directory_source_muscle="${path_directory_dock}/220713_A00938_0293_AHVFVFDSX3"
 
 path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31"
 path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13"
