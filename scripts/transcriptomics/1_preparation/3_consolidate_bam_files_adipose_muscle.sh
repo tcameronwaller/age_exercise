@@ -118,7 +118,8 @@ for path_file_source in "${paths_file_source[@]}"; do
   # Extract base name of file.
   name_base_file="$(basename $path_file_source .bam)"
   # Replace multi-character delimiter with single-character delimiter.
-  echo $name_base_file | sed 's/_L/;/g' > $name_base_file_simple
+  #echo $name_base_file | sed 's/_L/;/g' > $name_base_file_simple
+  name_base_file_simple="${name_base_file/_L/;}"
   # Separate segments within current line.
   IFS=$';' read -r -a array_segments <<< "${name_base_file_simple}"
   # Select identifier of sample from segments of current file's base name.
