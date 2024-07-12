@@ -48,10 +48,10 @@ path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
-path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31_test_temp"
-path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13_test_temp"
-path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31_test_temp/sort_index"
-path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13_test_temp/sort_index"
+path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31"
+path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13"
+path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/sort_index"
+path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/sort_index"
 path_directory_parallel_adipose="${path_directory_product_adipose}/parallel"
 path_directory_parallel_muscle="${path_directory_product_muscle}/parallel"
 
@@ -176,7 +176,7 @@ if [ "$report" == "true" ]; then
   echo "Script:"
   echo $0 # Print full file path to script.
   echo "4_sort_index_bam_files.sh"
-  echo "Sort coordinates and create index for file in BAM format."
+  echo "Sort coordinates and create index for files in BAM format."
   echo "----------"
   echo "Adipose"
   echo "count of source files: " $count_paths_file_source_adipose
