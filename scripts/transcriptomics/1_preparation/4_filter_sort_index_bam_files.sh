@@ -21,12 +21,12 @@
 # for each sample. It is necessary to merge these 8 files for each sample.
 
 # Adipose
-# Slurm batch job: 10501283
+# Slurm batch job: 10501635
 # - instances: 154
 # - date: 12 July 2024
 
 # Muscle
-# Slurm batch job: 10501284
+# Slurm batch job: 10501636 <-- One sample in this batch failed because it needed longer than 1 hour to run.
 # - instances: 185
 # - date: 12 July 2024
 
