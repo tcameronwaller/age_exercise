@@ -28,7 +28,7 @@
 # Muscle
 # Slurm batch job: 10501636 <-- One sample in this batch failed because it needed longer than 1 hour to run.
 # - instances: 185
-# - date: 12 July 2024
+# - date: 13 July 2024
 
 
 ###############################################################################
@@ -68,14 +68,14 @@ path_script_sort_index_bam_3="${path_directory_process}/partner/scripts/samtools
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
 
 # Initialize directory.
-rm -r $path_directory_product_adipose # caution
+#rm -r $path_directory_product_adipose # caution
+#mkdir -p $path_directory_product_adipose
+#mkdir -p $path_directory_parallel_adipose
 rm -r $path_directory_product_muscle # caution
-mkdir -p $path_directory_product_adipose
 mkdir -p $path_directory_product_muscle
-mkdir -p $path_directory_parallel_adipose
 mkdir -p $path_directory_parallel_muscle
 # Initialize file.
-rm $path_file_parallel_instances_adipose # caution
+#rm $path_file_parallel_instances_adipose # caution
 rm $path_file_parallel_instances_muscle # caution
 
 ###############################################################################
@@ -94,7 +94,7 @@ set +v # disable print input to standard error
 
 ##########
 # Adipose
-if true; then
+if false; then
   # Define explicit instances for parallel batch of jobs.
   # Collect paths to files from source directory.
   #cd $path_directory_source
@@ -179,7 +179,7 @@ if [ "$report" == "true" ]; then
   echo "Filter reads, sort reads by name, and create index for file in BAM format."
   echo "----------"
   echo "Adipose"
-  echo "count of source files: " $count_paths_file_source_adipose
+  #echo "count of source files: " $count_paths_file_source_adipose
   echo "----------"
   echo "Muscle"
   echo "count of source files: " $count_paths_file_source_muscle
