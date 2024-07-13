@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 11 July 2024
-# Date, last execution or modification: 11 July 2024
-# Review: TCW; 11 July 2024
+# Date, last execution or modification: 12 July 2024
+# Review: TCW; 12 July 2024
 ###############################################################################
 # Note
 
@@ -23,12 +23,12 @@
 # Adipose
 # Slurm batch job: ___
 # - instances: 154
-# - date: 11 July 2024
+# - date: 12 July 2024
 
 # Muscle
 # Slurm batch job: ___
 # - instances: 185
-# - date: 11 July 2024
+# - date: 12 July 2024
 
 
 ###############################################################################
@@ -50,8 +50,8 @@ path_directory_dock="${path_directory_process}/dock"
 
 path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31"
 path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13"
-path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/sort_index"
-path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/sort_index"
+path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index"
+path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
 path_directory_parallel_adipose="${path_directory_product_adipose}/parallel"
 path_directory_parallel_muscle="${path_directory_product_muscle}/parallel"
 
@@ -60,9 +60,9 @@ path_file_parallel_instances_adipose="${path_directory_parallel_adipose}/instanc
 path_file_parallel_instances_muscle="${path_directory_parallel_muscle}/instances_parallel.txt"
 
 # Scripts.
-path_script_sort_index_bam_1="${path_directory_process}/partner/scripts/samtools/sort_index_bam_slurm_1.sh"
-path_script_sort_index_bam_2="${path_directory_process}/partner/scripts/samtools/sort_index_bam_slurm_2.sh"
-path_script_sort_index_bam_3="${path_directory_process}/partner/scripts/samtools/sort_index_bam.sh"
+path_script_sort_index_bam_1="${path_directory_process}/partner/scripts/samtools/filter_sort_index_bam_slurm_1.sh"
+path_script_sort_index_bam_2="${path_directory_process}/partner/scripts/samtools/filter_sort_index_bam_slurm_2.sh"
+path_script_sort_index_bam_3="${path_directory_process}/partner/scripts/samtools/filter_sort_index_bam.sh"
 
 # Executable handles.
 path_execution_samtools="${path_directory_tool}/samtools-1.20/bin/samtools"
@@ -175,8 +175,8 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "Script:"
   echo $0 # Print full file path to script.
-  echo "4_sort_index_bam_files.sh"
-  echo "Sort coordinates and create index for files in BAM format."
+  echo "4_filter_sort_index_bam_files.sh"
+  echo "Filter reads, sort reads by name, and create index for file in BAM format."
   echo "----------"
   echo "Adipose"
   echo "count of source files: " $count_paths_file_source_adipose

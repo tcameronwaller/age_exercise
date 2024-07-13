@@ -16,6 +16,11 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
+# Describe the format of chromosome identifiers in the RNA sequence read data
+# in BAM format file.
+# samtools idxstats /path/to/input/file.bam
+
+
 # Slurm batch job: 10483267
 # - instances: 1,232
 # - date: 10 July 2024
@@ -56,8 +61,8 @@ path_script_convert_cram_to_bam_3="${path_directory_process}/partner/scripts/sam
 
 # Files.
 #path_file_reference_genome=$(<"./paths/community/reference_alignment_human_genome_grch38.txt")
-path_file_reference_genome="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
-path_file_reference_genome_index="${path_directory_reference}/human_genome/grch38_bsi_alignment/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.fai"
+path_file_reference_genome="${path_directory_reference}/human_genome/genbank_ucsc_identifiers_bsi_alignment/grch38/sequence/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna"
+path_file_reference_genome_index="${path_directory_reference}/human_genome/genbank_ucsc_identifiers_bsi_alignment/grch38/sequence/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.fai"
 path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 
 # Initialize directory.
