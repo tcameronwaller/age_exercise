@@ -33,8 +33,10 @@ path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
-path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index"
-path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
+#path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index"
+path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
+#path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
+path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
 path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/quantification"
 path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/quantification"
 #stamp_date=$(date +%Y-%m-%d)
