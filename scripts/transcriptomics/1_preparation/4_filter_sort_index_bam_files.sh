@@ -26,7 +26,7 @@
 # - date: 12 July 2024
 
 # Muscle
-# Slurm batch job: 10501636 <-- One sample in this batch failed because it needed longer than 1 hour to run.
+# Slurm batch job: 10522113
 # - instances: 185
 # - date: 13 July 2024
 
