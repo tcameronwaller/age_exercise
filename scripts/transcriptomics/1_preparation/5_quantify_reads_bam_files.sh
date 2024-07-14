@@ -37,18 +37,17 @@ path_directory_dock="${path_directory_process}/dock"
 path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
 #path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
 path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
-path_directory_product_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/quantification"
-path_directory_product_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/quantification"
+path_directory_product="${path_directory_dock}/quantification"
 #stamp_date=$(date +%Y-%m-%d)
-#path_directory_temporary="${path_directory_product_adipose}/temporary_${stamp_date}" # hopefully unique
-path_directory_parallel="${path_directory_product_adipose}/parallel"
+#path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
+path_directory_parallel="${path_directory_product}/parallel"
 
 # Files.
 path_file_annotation_gtf_gzip="${path_directory_reference}/human_genome/gencode/grch38/annotation/gencode.v46.primary_assembly.annotation.gtf.gz"
 #path_file_annotation_gtf="${path_directory_temporary}/gencode.v46.primary_assembly.annotation.gtf"
-path_file_product_adipose="${path_directory_product_adipose}/test_quantification.tsv"
-path_file_product_muscle="${path_directory_product_muscle}/test_quantification.tsv"
-path_file_parallel_instances="${path_directory_parallel_adipose}/instances_parallel.txt"
+path_file_product_adipose="${path_directory_product}/test_quantification_adipose.tsv"
+path_file_product_muscle="${path_directory_product}/test_quantification_muscle.tsv"
+path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 
 # Scripts.
 path_script_quantify_1="${path_directory_process}/partner/scripts/htseq/quantify_rna_reads_slurm_1.sh"
@@ -59,10 +58,8 @@ path_script_quantify_3="${path_directory_process}/partner/scripts/htseq/quantify
 path_environment_htseq="${path_directory_tool}/python/environments/htseq"
 
 # Initialize directory.
-rm -r $path_directory_product_adipose # caution
-mkdir -p $path_directory_product_adipose
-rm -r $path_directory_product_muscle # caution
-mkdir -p $path_directory_product_muscle
+rm -r $path_directory_product # caution
+mkdir -p $path_directory_product
 #mkdir -p $path_directory_temporary
 mkdir -p $path_directory_parallel
 # Initialize file.
