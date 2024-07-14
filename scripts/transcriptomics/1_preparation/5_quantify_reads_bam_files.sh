@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 13 July 2024
-# Date, last execution or modification: 13 July 2024
-# Review: TCW; 13 July 2024
+# Date, last execution or modification: 14 July 2024
+# Review: TCW; 14 July 2024
 ###############################################################################
 # Note
 
@@ -33,10 +33,10 @@ path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
-#path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index"
-path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
-#path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
-path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
+path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index"
+#path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
+path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
+#path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
 path_directory_product="${path_directory_dock}/quantification"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
@@ -45,8 +45,8 @@ path_directory_parallel="${path_directory_product}/parallel"
 # Files.
 path_file_annotation_gtf_gzip="${path_directory_reference}/human_genome/gencode/grch38/annotation/gencode.v46.primary_assembly.annotation.gtf.gz"
 #path_file_annotation_gtf="${path_directory_temporary}/gencode.v46.primary_assembly.annotation.gtf"
-path_file_product_adipose="${path_directory_product}/test_quantification_adipose.tsv"
-path_file_product_muscle="${path_directory_product}/test_quantification_muscle.tsv"
+path_file_product_adipose="${path_directory_product}/quantification_rna_reads_gene_adipose.tsv"
+path_file_product_muscle="${path_directory_product}/quantification_rna_reads_gene_muscle.tsv"
 path_file_parallel_instances="${path_directory_parallel}/instances_parallel.txt"
 
 # Scripts.
@@ -68,7 +68,7 @@ rm $path_file_parallel_instances # caution
 ###############################################################################
 # Organize parameters.
 
-threads=10
+threads=16
 report="true"
 
 #set -x # enable print commands to standard error
