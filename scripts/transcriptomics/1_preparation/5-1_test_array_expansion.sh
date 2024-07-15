@@ -56,7 +56,7 @@ path_environment_htseq="${path_directory_tool}/python/environments/htseq"
 
 # Initialize directory.
 #rm -r $path_directory_product # caution
-mkdir -p $path_directory_product
+#mkdir -p $path_directory_product
 
 ###############################################################################
 # Organize parameters.
@@ -77,13 +77,15 @@ paths_file_source=()
 while IFS= read -r -d $'\0'; do
   paths_file_source+=("$REPLY")
 done < <(find $path_directory_source -maxdepth 1 -mindepth 1 -type f -name "*.bam" -print0)
-IFS=";"
-#paths_file_source_expansion="${paths_file_source[*]}"
+IFS=";"; paths_file_source_expansion="${paths_file_source[*]}"
+echo $paths_file_source_expansion
 
 # Divide the array of files into chunks of 30 or fewer elements.
 count_chunk=10
-for ((index=0; index < ${#paths_files_source[@]}; index+=$count_chunk)); do
-  echo "${paths_files_source[@]:index:count_chunk}"
+for ((index=0; index < ${#paths_file_source[@]}; index+=count_chunk)); do
+  chunk=("${paths_file_source[@]:index:count_chunk}")
+  IFS=";"; chunk_expansion="${chunk[*]}"
+  echo $chunk_expansion
 done
 
 ###############################################################################
