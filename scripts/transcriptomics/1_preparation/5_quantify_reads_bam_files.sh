@@ -16,6 +16,16 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
+# Slurm batch job: 10545340
+# - instances: 2
+# - date: 14 July 2024
+# threads=16
+###SBATCH --nodes=1                            # count of cluster nodes (CPUs)
+###SBATCH --ntasks-per-node=16                 # count of CPU cores or threads on node
+###SBATCH --mem=10G                            # memory per node (per CPU)
+###SBATCH --time=0-48:00:00                    # time allocation request (days-hours:minutes:seconds)
+
+
 ###############################################################################
 
 
@@ -33,10 +43,10 @@ path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
-path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index"
-#path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
-path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index"
-#path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
+#path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index" # 14 July 2024
+path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
+#path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index" # 14 July 2024
+path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
 path_directory_product="${path_directory_dock}/quantification"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
