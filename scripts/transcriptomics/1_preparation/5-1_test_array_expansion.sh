@@ -85,6 +85,7 @@ count_chunk=10
 for ((index=0; index < ${#paths_file_source[@]}; index+=count_chunk)); do
   chunk=("${paths_file_source[@]:index:count_chunk}")
   IFS=";"; chunk_expansion="${chunk[*]}"
+  echo "----------"
   echo $chunk_expansion
 done
 
