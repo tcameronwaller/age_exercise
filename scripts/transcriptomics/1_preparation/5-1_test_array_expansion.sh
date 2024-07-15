@@ -81,7 +81,7 @@ IFS=";"; paths_file_source_expansion="${paths_file_source[*]}"
 echo $paths_file_source_expansion
 
 # Divide the array of files into chunks of 30 or fewer elements.
-count_chunk=10
+count_chunk=30
 for ((index=0; index < ${#paths_file_source[@]}; index+=count_chunk)); do
   chunk=("${paths_file_source[@]:index:count_chunk}")
   IFS=";"; chunk_expansion="${chunk[*]}"
