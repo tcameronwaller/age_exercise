@@ -119,7 +119,7 @@ identifiers_sample=()
 #input=$names_file_base
 input=$path_file_temporary_1
 while IFS=$'\n' read -r -a array_lines; do
-  for line in "${array_lines}"; do
+  for line in "${array_lines[@]}"; do
     # Separate segments within current line.
     IFS=$';' read -r -a array_segments <<< "${line}"
     # Select identifier of sample from segments of current file's base name.
