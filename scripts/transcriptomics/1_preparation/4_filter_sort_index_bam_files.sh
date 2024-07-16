@@ -16,10 +16,6 @@
 # samtools head --headers 100 /path/to/input/file.bam
 # samtools view --header-only --output /path/to/output/header/file.txt /path/to/input/file.bam
 
-# In next-generation sequencing, each sample was analyzed simultaneously on
-# 8 separate flow cells, such that there are 8 different files in BAM format
-# for each sample. It is necessary to merge these 8 files for each sample.
-
 # Adipose
 # Slurm batch job: 10501635
 # - instances: 154

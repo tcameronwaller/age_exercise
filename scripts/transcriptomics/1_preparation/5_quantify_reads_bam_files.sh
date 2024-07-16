@@ -24,7 +24,19 @@
 ###SBATCH --ntasks-per-node=16                 # count of CPU cores or threads on node
 ###SBATCH --mem=10G                            # memory per node (per CPU)
 ###SBATCH --time=0-48:00:00                    # time allocation request (days-hours:minutes:seconds)
+# This batch job, consisting of 154 samples in the first instance and 185
+# samples in the second instance, required about 34 hours to run on one node
+# for each instance with 16 CPU cores and 10 Gigabytes of memory for each node.
 
+# For future quantifications, refer to script
+# "5-1_trial_array_chunk_expansion.sh" for a demonstration of how to divide up
+# an array of paths to files into smaller chunks and then expand these into a
+# text string that can be passed as an argument and reformatted with a white
+# space delimiter to hand as a parameter to HTSeq. This approach will make it
+# practical to parallelize the HTSeq quantification more extensively. Then also
+# implement a driver script to merge together the separate report tables from
+# parallel quantification in HTSeq. Refer to the preliminary draft of script
+# "merge_quantification_tables.sh" within "/.../partner/scripts/htseq".
 
 ###############################################################################
 
@@ -43,10 +55,8 @@ path_directory_tool="${path_directory_parent_project}/tool"
 path_directory_process="${path_directory_parent_project}/process"
 path_directory_dock="${path_directory_process}/dock"
 
-#path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index" # 14 July 2024
-path_directory_source_adipose="${path_directory_process}/test_temp_adipose"
-#path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index" # 14 July 2024
-path_directory_source_muscle="${path_directory_process}/test_temp_muscle"
+path_directory_source_adipose="${path_directory_dock}/consolidation_adipose_2024-05-31/filter_sort_index" # 14 July 2024
+path_directory_source_muscle="${path_directory_dock}/consolidation_muscle_2022-07-13/filter_sort_index" # 14 July 2024
 path_directory_product="${path_directory_dock}/quantification"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
@@ -137,7 +147,7 @@ if [ "$report" == "true" ]; then
 fi
 
 ##########
-# Remove temporary, intermediate files.
+# Remove directory of temporary, intermediate files.
 #rm -r $path_directory_temporary
 
 ###############################################################################
