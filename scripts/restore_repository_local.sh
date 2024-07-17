@@ -24,17 +24,28 @@
 # the "package" subdirectories of repositories, it is convenient to copy and
 # rename the package directories.
 
+# It is possible for the paths specific to a Python virtual environment to
+# become corrupted. It might be necessary to examine the paths in the
+# environment's "activate" script. In particular, any change to the names of
+# directories in the file system's path to the virtual environment will disrupt
+# the environment since the "activate" script uses absolute paths. The files
+# for the relevant scripts have names "activate", "activate.csh", and
+# "activate.fish". If correcting the paths in these activation scripts is not
+# sufficient, then it might be necessary to re-create the environment.
+# https://stackoverflow.com/questions/55740123/pip-virtualenv-reset-the-path-after-reactivating
 
 ################################################################################
 # Organize paths.
 
 # Directories.
 cd ~
-path_directory_paths="~/Downloads/paths_process_local"
+path_directory_paths="./Downloads/paths_process_local"
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
 path_directory_dock="$path_directory_process/dock"
 path_directory_data="$path_directory_dock/in_data" # restore script does not modify "in_data" for efficiency
 path_directory_parameters="$path_directory_dock/in_parameters"
+path_directory_parameters_private_source=$(<"$path_directory_paths/path_parameters_private_exercise.txt")
+path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 path_directory_repository_partner=$(<"$path_directory_paths/path_directory_repository_partner.txt")
 path_directory_repository_exercise=$(<"$path_directory_paths/path_directory_repository_exercise.txt")
 path_directory_package="$path_directory_process/package"
@@ -44,19 +55,21 @@ path_directory_package_partner_product="$path_directory_package/partner"
 path_directory_package_exercise_product="$path_directory_package/exercise"
 
 # Initialize directories.
-if [ -d $path_directory_parameters ] || [ -d $path_directory_package ]; then
+if [ -d $path_directory_parameters ] || [ -d $path_directory_package ] || [ -d $path_directory_parameters_private ] ; then
   # Remove previous versions of code from temporary location for execution.
   rm -rf $path_directory_parameters
+  rm -rf $path_directory_parameters_private
   rm -rf $path_directory_package
 fi
 
-if [ ! -d $path_directory_process ] || [ ! -d $path_directory_package ] || [ ! -d $path_directory_dock ] || [ ! -d $path_directory_parameters ] ; then
+if [ ! -d $path_directory_process ] || [ ! -d $path_directory_package ] || [ ! -d $path_directory_dock ] || [ ! -d $path_directory_parameters ] || [ ! -d $path_directory_parameters_private ] ; then
   # Directory or directories do not already exist.
   # Create directories.
   mkdir -p $path_directory_process
   mkdir -p $path_directory_package
   mkdir -p $path_directory_dock
   mkdir -p $path_directory_parameters
+  #mkdir -p $path_directory_parameters_private
 fi
 
 ################################################################################
@@ -68,6 +81,8 @@ cp -r "$path_directory_repository_partner/parameters" "$path_directory_parameter
 mv "$path_directory_parameters/parameters" "$path_directory_parameters/partner"
 cp -r "$path_directory_repository_exercise/parameters" "$path_directory_parameters/parameters"
 mv "$path_directory_parameters/parameters" "$path_directory_parameters/exercise"
+cp -r $path_directory_parameters_private_source $path_directory_dock
+mv "${path_directory_dock}/parameters" $path_directory_parameters_private
 
 ##########
 # Organize Python packages.

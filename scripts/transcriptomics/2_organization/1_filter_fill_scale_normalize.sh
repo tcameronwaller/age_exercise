@@ -25,7 +25,7 @@
 
 # Directories.
 cd ~
-path_directory_paths="~/Downloads/paths_process_local"
+path_directory_paths="./Downloads/paths_process_local"
 path_directory_tool=$(<"$path_directory_paths/path_directory_tool.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
 path_directory_package="$path_directory_process/package"
@@ -45,7 +45,7 @@ path_directory_parameters="$path_directory_dock/in_parameters"
 
 # Executable handles.
 path_environment_main="$path_directory_tool/python/environments/main"
-
+echo $path_environment_main
 # Initialize directory.
 #rm -r $path_directory_product # caution
 #mkdir -p $path_directory_product
@@ -74,6 +74,8 @@ set +v # disable print input to standard error
 # Activate Python virtual environment.
 source "${path_environment_main}/bin/activate"
 # Set paths for local packages and modules.
+#echo "Python path variable before update"
+#echo $PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$path_directory_package
 export PYTHONPATH=$PYTHONPATH:$path_directory_package_partner
 export PYTHONPATH=$PYTHONPATH:$path_directory_package_exercise
@@ -101,7 +103,7 @@ fi
 # Execute procedure.
 
 # Execute program process in Python.
-python3 $path_directory_package_scratch/interface.py \
+python3 $path_directory_package_exercise/interface.py \
 main \
 --exercise_transcriptomics_organization \
 --path_directory_dock $path_directory_dock
