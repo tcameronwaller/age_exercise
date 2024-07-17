@@ -43,8 +43,6 @@ path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # h
 # Files.
 path_file_source_adipose="${path_directory_source}/quantification_rna_reads_gene_adipose.tsv"
 path_file_source_muscle="${path_directory_source}/quantification_rna_reads_gene_muscle.tsv"
-path_file_identifiers_adipose="${path_directory_product}/table_sample_identifiers_adipose.tsv"
-path_file_identifiers_muscle="${path_directory_product}/table_sample_identifiers_muscle.tsv"
 path_file_temporary_adipose="${path_directory_temporary}/temporary_${stamp_date}_adipose.tsv"
 path_file_temporary_muscle="${path_directory_temporary}/temporary_${stamp_date}_muscle.tsv"
 path_file_product_adipose="${path_directory_product}/quantification_rna_reads_gene_adipose.tsv"
@@ -52,7 +50,6 @@ path_file_product_muscle="${path_directory_product}/quantification_rna_reads_gen
 path_file_sample_translations="${path_directory_dock}/table_sample_translations.tsv"
 
 # Scripts.
-path_script_extract_identifiers="${path_directory_process}/partner/scripts/htseq/read_extract_table_column_sample_identifiers.sh"
 path_script_name_auxiliary="${path_directory_process}/partner/scripts/htseq/name_table_first_auxiliary_columns.sh"
 path_script_translate_samples="${path_directory_process}/partner/scripts/htseq/translate_table_column_sample_identifiers.sh"
 
@@ -62,6 +59,12 @@ path_script_translate_samples="${path_directory_process}/partner/scripts/htseq/t
 #rm -r $path_directory_product # caution
 mkdir -p $path_directory_product
 mkdir -p $path_directory_temporary
+
+# Initialize file.
+rm $path_file_temporary_adipose
+rm $path_file_temporary_muscle
+rm $path_file_product_adipose
+rm $path_file_product_muscle
 
 
 ###############################################################################
@@ -79,56 +82,29 @@ set +v # disable print input to standard error
 # Execute procedure.
 
 ##########
-# Extract original identifiers of samples.
-if true; then
-  # Initialize file.
-  rm $path_file_identifiers_adipose
-  rm $path_file_identifiers_muscle
-  # Extract identifiers.
-  /usr/bin/bash $path_script_extract_identifiers \
-  $path_file_source_adipose \
-  $path_file_identifiers_adipose \
-  $report
-  /usr/bin/bash $path_script_extract_identifiers \
-  $path_file_source_muscle \
-  $path_file_identifiers_muscle \
-  $report
-fi
-
-##########
 # Organize information in tables.
-if false; then
-  # Initialize file.
-  rm $path_file_temporary_adipose
-  rm $path_file_temporary_muscle
-  rm $path_file_product_adipose
-  rm $path_file_product_muscle
-  # Insert header names for columns of auxiliary information about genes.
-  /usr/bin/bash $path_script_name_auxiliary \
-  $path_file_source_adipose \
-  $path_file_temporary_adipose \
-  $report
-  /usr/bin/bash $path_script_name_auxiliary \
-  $path_file_source_muscle \
-  $path_file_temporary_muscle \
-  $report
 
-  # Translate identifiers for samples.
-  /usr/bin/bash $path_script_translate_samples \
-  $path_file_sample_translations \
-  $path_file_temporary_adipose \
-  $path_file_product_adipose \
-  $report
-  /usr/bin/bash $path_script_translate_samples \
-  $path_file_sample_translations \
-  $path_file_temporary_muscle \
-  $path_file_product_muscle \
-  $report
+# Insert header names for columns of auxiliary information about genes.
+/usr/bin/bash $path_script_name_auxiliary \
+$path_file_source_adipose \
+$path_file_temporary_adipose \
+$report
+/usr/bin/bash $path_script_name_auxiliary \
+$path_file_source_muscle \
+$path_file_temporary_muscle \
+$report
 
-  ##########
-  # Remove directory of temporary, intermediate files.
-  rm -r $path_directory_temporary
-fi
+# Translate identifiers for samples.
+/usr/bin/bash $path_script_translate_samples \
+$path_file_sample_translations \
+$path_file_temporary_adipose \
+$path_file_product_adipose \
+$report
+/usr/bin/bash $path_script_translate_samples \
+$path_file_sample_translations \
+$path_file_temporary_muscle \
+$path_file_product_muscle \
+$report
 
 ##########
 # Report.
@@ -138,9 +114,15 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "Script:"
   echo $0 # Print full file path to script.
-  echo "6_organize_quantification_tables.sh"
+  echo "7_organize_quantification_tables.sh"
   echo "----------"
 fi
+
+
+##########
+# Remove directory of temporary, intermediate files.
+rm -r $path_directory_temporary
+
 
 ###############################################################################
 # End.
