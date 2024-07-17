@@ -18,14 +18,17 @@
 # This script also manages the translation of identifiers for samples for the
 # sake of increasing deidentification anonymity.
 
-###############################################################################
 
 
 ###############################################################################
 # Organize arguments.
 
+
+
 ###############################################################################
 # Organize paths.
+
+
 
 # Directories.
 cd ~

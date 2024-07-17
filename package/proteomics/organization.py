@@ -2,12 +2,8 @@
 Supply functionality for process and analysis of data from proteomics using
 mass spectroscopy.
 
-This module 'proteomics_mass_spectroscopy' is part of the 'exercise' package.
-
-This module is not directly executable.
-
-This subpackage 'exercise' provides executable functionality under the
-management of a higher level package. Importation paths require this hierarchy.
+This module 'organization' is part of the 'proteomics' package within the
+'exercise' package.
 
 Author:
 
@@ -18,10 +14,10 @@ Author:
 
 License:
 
-    This initialization file is part of the project package directory
-    'exercise' (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'exercise'
+    (https://github.com/tcameronwaller/exercise/).
 
-    Project 'exercise' supports data analysis in multiple other projects.
+    Project 'exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
     The code within project 'exercise' is free software: you can redistribute
