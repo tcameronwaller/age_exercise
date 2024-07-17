@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 16 July 2024
-# Date, last execution or modification: 16 July 2024
-# Review: TCW; 16 July 2024
+# Date, last execution or modification: 17 July 2024
+# Review: TCW; 17 July 2024
 ###############################################################################
 # Note
 
@@ -45,9 +45,10 @@ path_file_source_adipose="${path_directory_source}/quantification_rna_reads_gene
 path_file_source_muscle="${path_directory_source}/quantification_rna_reads_gene_muscle.tsv"
 path_file_temporary_adipose="${path_directory_temporary}/temporary_${stamp_date}_adipose.tsv"
 path_file_temporary_muscle="${path_directory_temporary}/temporary_${stamp_date}_muscle.tsv"
+path_file_translations_adipose="${path_directory_product}/table_sample_identifiers_adipose.tsv"
+path_file_translations_muscle="${path_directory_product}/table_sample_identifiers_muscle.tsv"
 path_file_product_adipose="${path_directory_product}/quantification_rna_reads_gene_adipose.tsv"
 path_file_product_muscle="${path_directory_product}/quantification_rna_reads_gene_muscle.tsv"
-path_file_sample_translations="${path_directory_dock}/table_sample_translations.tsv"
 
 # Scripts.
 path_script_name_auxiliary="${path_directory_process}/partner/scripts/htseq/name_table_first_auxiliary_columns.sh"
@@ -96,12 +97,12 @@ $report
 
 # Translate identifiers for samples.
 /usr/bin/bash $path_script_translate_samples \
-$path_file_sample_translations \
+$path_file_translations_adipose \
 $path_file_temporary_adipose \
 $path_file_product_adipose \
 $report
 /usr/bin/bash $path_script_translate_samples \
-$path_file_sample_translations \
+$path_file_translations_muscle \
 $path_file_temporary_muscle \
 $path_file_product_muscle \
 $report
