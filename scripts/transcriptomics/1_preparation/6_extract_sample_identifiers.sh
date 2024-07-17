@@ -37,8 +37,6 @@ path_directory_dock="${path_directory_process}/dock"
 
 path_directory_source="${path_directory_dock}/quantification_2024-07-14"
 path_directory_product="${path_directory_source}/organization"
-stamp_date=$(date +%Y-%m-%d)
-path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
 path_file_source_adipose="${path_directory_source}/quantification_rna_reads_gene_adipose.tsv"
@@ -52,9 +50,8 @@ path_script_extract_identifiers="${path_directory_process}/partner/scripts/htseq
 # Executable handles.
 
 # Initialize directory.
-#rm -r $path_directory_product # caution
+rm -r $path_directory_product # caution
 mkdir -p $path_directory_product
-mkdir -p $path_directory_temporary
 
 # Initialize file.
 rm $path_file_product_adipose
