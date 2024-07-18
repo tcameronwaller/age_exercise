@@ -255,7 +255,7 @@ def read_source(
     # Define paths to child files.
     path_file_table_sample = os.path.join(
         paths["in_parameters_private"], "quantification_2024-07-14",
-        "attributes_samples", "table_samples_attributes.tsv",
+        "attributes_samples", "table_attributes_samples.tsv",
     )
     path_file_table_quantity_adipose = os.path.join(
         paths["in_data"], "quantification_2024-07-14",
