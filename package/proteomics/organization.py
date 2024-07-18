@@ -311,70 +311,6 @@ def read_source(
 # 2. Organize information.
 
 
-def extract_organize_values_from_series(
-    series=None,
-    report=None,
-):
-    """
-    Extract and organize values from a Pandas series, such as a single column
-    or row from a Pandas data-frame table.
-
-    arguments:
-        series (object): Pandas series of values of intensity
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Copy information in series.
-    series = series.copy(deep=True)
-    # Extract and organize information from series.
-    #values_raw = values_raw.astype(numpy.float32)
-    values_raw = series.to_numpy(
-        dtype="float64",
-        na_value=numpy.nan,
-        copy=True,
-    )
-    values_positive = values_raw
-    values_positive[values_positive < 0] = numpy.nan
-    values_valid = values_positive[~numpy.isnan(values_positive)]
-    values_log = numpy.log(values_valid)
-    # Collect information.
-    pail = dict()
-    pail["values_raw"] = values_raw
-    pail["values_positive"] = values_positive
-    pail["values_valid"] = values_valid
-    pail["values_log"] = values_log
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=2)
-        print("Report:")
-        print("exercise")
-        print("proteomics_mass_spectroscopy")
-        print("extract_organize_values_from_series()")
-        putly.print_terminal_partition(level=4)
-        print("Original source series:")
-        print(series)
-        putly.print_terminal_partition(level=4)
-        print("Raw values:")
-        print(values_raw)
-        putly.print_terminal_partition(level=4)
-        print("Positive values:")
-        print(values_positive)
-        putly.print_terminal_partition(level=4)
-        print("Valid values:")
-        print(values_valid)
-        putly.print_terminal_partition(level=4)
-        print("Logarithmic values:")
-        print(values_log)
-    # Return information.
-    return pail
-
-
 def organize_table_main(
     table_sample=None,
     table_main=None,
@@ -642,80 +578,6 @@ def match_keep_table_row_identification(
     return indicator
 
 
-def match_keep_table_row_quantification(
-    row=None,
-    columns_intensity=None,
-    proportion_validity=None,
-    report=None,
-):
-    """
-    Determines whether to keep a row from a table.
-
-    arguments:
-        row (object): Pandas series of values of intensity across samples for
-            a single protein
-        columns_intensity (list<str>): names of columns corresponding to values
-            of intensity
-        proportion_validity (float): proportion of values of intensity that
-            must have non-missing, valid values in order to keep the row for
-            each protein
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (int): logical binary representation of whether to keep current row
-
-    """
-
-    # Copy information in row.
-    row = row.copy(deep=True)
-    # Extract and organize information from series.
-    pail_values = extract_organize_values_from_series(
-        series=row[columns_intensity],
-        report=False,
-    )
-    values_nonmissing = pail_values["values_raw"][~numpy.isnan(
-        pail_values["values_raw"]
-    )]
-    #count_nonmissing = numpy.count_nonzero(~numpy.isnan(
-    #    pail_values["values_raw"]
-    #))
-    count_nonmissing = int(values_nonmissing.size)
-    count_validity = numpy.count_nonzero(values_nonmissing > 0)
-    count_samples = len(columns_intensity)
-    count_invalidity = (count_samples - count_validity)
-    proportion_actual = float(count_validity / count_samples)
-    # Determine whether to keep current row from table.
-    if (
-        (proportion_actual >= proportion_validity)
-    ):
-        indicator = 1
-    else:
-        indicator = 0
-        pass
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=4)
-        print(
-            "Match function for filter by quantification of intensity " +
-            "values across samples for a single protein."
-        )
-        putly.print_terminal_partition(level=4)
-        print("Array of intensity values accross samples:")
-        print("Count of samples: " + str(count_samples))
-        print("Count of nonmissing: " + str(count_nonmissing))
-        print("Count of valid: " + str(count_validity))
-        print("Count of invalid: " + str(count_invalidity))
-        putly.print_terminal_partition(level=4)
-        print("Proportion Valid, Actual: " + str(proportion_actual))
-        print("Proportion Valid, Threshold: " + str(proportion_validity))
-        print("Indicator: " + str(indicator))
-        putly.print_terminal_partition(level=4)
-    # Return information.
-    return indicator
-
-
 def filter_table_main(
     table=None,
     columns_intensity=None,
@@ -779,27 +641,26 @@ def filter_table_main(
     )
 
     ##########
-    # Filter rows in table on basis of protein quantification.
-    table_filter["match_keep"] = table_filter.apply(
+    # Filter rows in table on basis of signal validity.
+    table_filter["match_keep_signal"] = table_filter.apply(
         lambda row:
-            match_keep_table_row_quantification(
-                row=row,
-                columns_intensity=columns_intensity,
-                proportion_validity=proportion_validity,
+            porg.match_keep_series_signal_validity(
+                series=row,
+                keys_signal=columns_intensity,
+                proportion=proportion_validity,
                 report=False,
             ),
         axis="columns", # apply function to each row
     )
     table_filter = table_filter.loc[
-        (table_filter["match_keep"] == 1), :
+        (table_filter["match_keep_signal"] == 1), :
     ]
     # Remove unnecessary columns.
     table_filter.drop(
-        labels=["match_keep",],
+        labels=["match_keep_signal",],
         axis="columns",
         inplace=True
     )
-
     # Filter and sort columns in table.
     columns_sequence_protein = define_column_sequence_table_protein()
     columns_sequence = copy.deepcopy(columns_sequence_protein)
@@ -948,7 +809,7 @@ def match_table_row_fill_missing(
     # Copy information in row.
     row = row.copy(deep=True)
     # Extract and organize information from series.
-    pail_values = extract_organize_values_from_series(
+    pail_values = porg.extract_organize_values_from_series(
         series=row[columns_intensity],
         report=False,
     )
@@ -1032,7 +893,7 @@ def fill_missing_values_intensity_row(
         # Fill missing value.
         check_fill = 1
         # Extract and organize information from series.
-        pail_values = extract_organize_values_from_series(
+        pail_values = porg.extract_organize_values_from_series(
             series=row[columns_intensity],
             report=report,
         )
@@ -1811,7 +1672,7 @@ def plot_histogram_values_across_proteins_each_sample(
     # Create separate plot for each sample.
     for column in names_columns:
         # Extract and organize information from series.
-        pail_values = extract_organize_values_from_series(
+        pail_values = porg.extract_organize_values_from_series(
             series=table[column],
             report=False,
         )
@@ -1887,7 +1748,7 @@ def execute_procedure(
 
 
     ##########
-    # 3. Filter columns and rows in table.
+    # 3. Filter columns and rows in main table.
     if False:
         # Test.
         row = define_row_test_filter()
@@ -1905,10 +1766,10 @@ def execute_procedure(
     if False:
         # Test.
         row = define_row_test_filter()
-        indicator = match_keep_table_row_quantification(
-            row=row,
-            columns_intensity=pail_organization["samples"],
-            proportion_validity=0.80,
+        indicator = porg.match_keep_series_signal_validity(
+            series=row,
+            keys_signal=pail_organization["samples"],
+            proportion=0.80,
             report=True,
         )
     table_filter = filter_table_main(

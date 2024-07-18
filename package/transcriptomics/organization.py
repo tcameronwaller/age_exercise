@@ -158,7 +158,7 @@ def initialize_directories(
 
 
 ##########
-# 1. Read information from file.
+# 1. Read source information from file.
 
 
 
@@ -323,7 +323,7 @@ def read_source(
 
 
 ##########
-# 2. Organize information.
+# 2. Organize information from source.
 
 
 def organize_table_sample(
@@ -350,23 +350,6 @@ def organize_table_sample(
 
     # Copy information in table.
     table_sample = table_sample.copy(deep=True)
-
-    # Organize indices in table.
-    table_sample.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
-    table_sample.set_index(
-        ["identifier"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_sample.columns.rename(
-        "attribute",
-        inplace=True,
-    ) # single-dimensional index
 
     # Filter and separate information about samples.
     table_sample_tissue = table_sample.loc[
@@ -400,6 +383,22 @@ def organize_table_sample(
     samples_intervention_2 = copy.deepcopy(
         table_sample_intervention_2["identifier"].to_list()
     )
+    # Organize indices in table.
+    table_sample.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_sample.set_index(
+        ["identifier"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    table_sample.columns.rename(
+        "attribute",
+        inplace=True,
+    ) # single-dimensional index
     # Collect information.
     pail = dict()
     pail["table_sample"] = table_sample
@@ -436,6 +435,7 @@ def organize_table_sample(
 
 
 def organize_table_main(
+    tissue=None,
     samples=None,
     table_main=None,
     report=None,
@@ -444,11 +444,14 @@ def organize_table_main(
     Organizes information in tables about samples and measurement signals.
 
     arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
         samples (list<str>): identifiers of samples corresponding to names of
-            columns for measurement signals across features
+            columns for measurement values of signal intensity across features
         table_main (object): Pandas data-frame table of values of signal
-            intensity for samples across columns and for genes across rows,
-            with a few additional columns of attributes for genes
+            intensity for sample observations across columns and for gene
+            features across rows, with a few additional columns for attributes
+            of gene features
         report (bool): whether to print reports
 
     raises:
@@ -460,27 +463,16 @@ def organize_table_main(
 
     # Copy information in table.
     table_main = table_main.copy(deep=True)
+    # Copy other information.
+    samples = copy.deepcopy(samples)
 
     # Translate names of columns.
     translations = dict()
     translations["gene_id"] = "gene_identifier"
     translations["exon_number"] = "gene_exon_number"
     translations["chromosome"] = "gene_chromosome"
-    translations.update(translations_sample)
     table_main.rename(
         columns=translations,
-        inplace=True,
-    )
-    # Organize indices in table.
-    table_main.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
-    table_main.set_index(
-        ["identifier_gene"],
-        append=False,
-        drop=True,
         inplace=True,
     )
     # Replace values of zero for signal intensity with missing values.
@@ -519,10 +511,265 @@ def organize_table_main(
     return pail
 
 
+##########
+# 3. Filter columns and rows in main table.
 
-# TODO: TCW; 18 July 2024
-# Filter rows:
-# "ENSG" not it "identifier_gene"
+
+def define_keep_types_gene():
+    """
+    Defines the categorical types of genes for which to keep rows in the main
+    table.
+
+    Reference:
+    https://www.gencodegenes.org/pages/biotypes.html
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): types of gene to keep
+
+    """
+
+    # Specify categorical types.
+    types_gene = [
+        "protein_coding",
+        "lncRNA",
+        #"processed_pseudogene",
+        #"unprocessed_pseudogene",
+        "misc_RNA",
+        "snRNA",
+        "miRNA",
+        "TEC",
+        #"transcribed_unprocessed_pseudogene"
+        "snoRNA",
+        #"transcribed_processed_pseudogene",
+        #"rRNA_pseudogene",
+        #"IG_V_pseudogene",
+        #"transcribed_unitary_pseudogene",
+        "IG_V_gene",
+        "TR_V_gene",
+        #"unitary_pseudogene",
+        "TR_J_gene",
+        "rRNA",
+        "scaRNA",
+        "IG_D_gene",
+        #"TR_V_pseudogene",
+        "Mt_tRNA",
+        #"artifact",
+        "IG_J_gene",
+        "IG_C_gene",
+        #"IG_C_pseudogene",
+        "ribozyme",
+        "TR_C_gene",
+        "sRNA",
+        "TR_D_gene",
+        #"pseudogene",
+        "vault_RNA",
+        #"TR_J_pseudogene",
+        #"IG_J_pseudogene",
+        "Mt_rRNA",
+        #"translated_processed_pseudogene",
+        "scRNA",
+        #"IG_pseudogene",
+    ]
+    # Return information.
+    return types_gene
+
+
+def match_keep_table_row_identity(
+    row_identifier=None,
+    row_type=None,
+    identifier_prefix=None,
+    types_gene=None,
+):
+    """
+    Determines whether to keep a row from a table.
+
+    arguments:
+        row_identifier (str): current row's identifier of gene
+        row_type (str): current row's type of gene
+        identifier_prefix (str): prefix in identifier of gene to keep
+        types_gene (list<str>): types of gene to keep
+
+    raises:
+
+    returns:
+        (int): logical binary representation of whether to keep current row
+
+    """
+
+    # Determine whether to keep current row from table.
+    #(any(row_type == type_gene for type_gene in types_gene))
+    if (
+        (pandas.notna(row_identifier)) and
+        (len(str(row_identifier)) > 0) and
+        (str(identifier_prefix) in str(row_identifier)) and
+        (str(row_type) in types_gene)
+    ):
+        indicator = 1
+    else:
+        indicator = 0
+        pass
+    # Return information.
+    return indicator
+
+
+def define_column_sequence_table_main_gene():
+    """
+    Defines the columns in sequence within table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): variable types of columns within table
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = [
+        "identifier_gene",
+        "gene_identifier",
+        "gene_name",
+        #"gene_exon_number",
+        "gene_type",
+        "gene_chromosome",
+        #"Unnamed: 160",
+    ]
+    # Return information.
+    return columns_sequence
+
+
+def filter_table_main(
+    tissue=None,
+    table_main=None,
+    samples=None,
+    proportion_signal_validity=None,
+    report=None,
+):
+    """
+    Filters information in table.
+
+    arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        table_main (object): Pandas data-frame table of values of signal
+            intensity for sample observations across columns and for gene
+            features across rows, with a few additional columns for attributes
+            of gene features
+        samples (list<str>): identifiers of samples corresponding to names of
+            columns for measurement values of signal intensity across features
+        proportion_signal_validity (float): proportion of values of signal
+            intensity that must have non-missing, valid values in order to keep
+            the row for each gene feature
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table of values of intensity across
+            samples in columns and proteins in rows
+
+    """
+
+    # Copy information in table.
+    table_filter = table_main.copy(deep=True)
+    # Copy other information.
+    samples = copy.deepcopy(samples)
+
+    # Filter information in table.
+
+    ##########
+    # Filter rows in table.
+
+    # Filter rows in table on basis of gene feature identity.
+    types_gene = define_keep_types_gene()
+    table_filter["match_keep_identity"] = table_filter.apply(
+        lambda row:
+            match_keep_table_row_identity(
+                row_identifier=row["identifier_gene"],
+                row_type=row["gene_type"],
+                identifier_prefix="ENSG",
+                types_gene=types_gene,
+            ),
+        axis="columns", # apply function to each row
+    )
+    table_filter = table_filter.loc[
+        (table_filter["match_keep_identity"] == 1), :
+    ]
+    # Remove unnecessary columns.
+    table_filter.drop(
+        labels=["match_keep_identity",],
+        axis="columns",
+        inplace=True
+    )
+
+    ##########
+    # Filter rows in table on basis of signal validity.
+    table_filter["match_keep_signal"] = table_filter.apply(
+        lambda row:
+            porg.match_keep_series_signal_validity(
+                series=row,
+                keys_signal=samples,
+                proportion=proportion_signal_validity,
+                report=False,
+            ),
+        axis="columns", # apply function to each row
+    )
+    table_filter = table_filter.loc[
+        (table_filter["match_keep_signal"] == 1), :
+    ]
+    # Remove unnecessary columns.
+    table_filter.drop(
+        labels=["match_keep_signal",],
+        axis="columns",
+        inplace=True
+    )
+
+    ##########
+    # Filter columns in table.
+
+    # Filter and sort columns in table.
+    columns_sequence = define_column_sequence_table_main_gene()
+    columns_sequence.extend(samples)
+    table_filter = porg.filter_sort_table_columns(
+        table=table_filter,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organization.py")
+        print("function: filter_table_main()")
+        print("tissue: " + tissue)
+        putly.print_terminal_partition(level=5)
+        print("source main table:")
+        count_rows = (table_main.shape[0])
+        count_columns = (table_main.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        print(table_main)
+        putly.print_terminal_partition(level=5)
+        print("product main table:")
+        count_rows = (table_filter.shape[0])
+        count_columns = (table_filter.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        print(table_filter)
+        print(
+            "counts of genes with each unique categorical value of "
+            + "gene type:")
+        print(table_filter["gene_type"].value_counts(dropna=False))
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table_filter
+
 
 
 # TODO: TCW; 18 July 2024
@@ -579,10 +826,23 @@ def control_split_procedure(
         report=report,
     )
     pail_organization_main = organize_table_main(
+        tissue=tissue,
         table_main=pail_source["table_main"],
         samples=pail_organization_sample["samples"],
         report=report,
     )
+
+    ##########
+    # 3. Filter columns and rows in main table.
+    table_filter = filter_table_main(
+        tissue=tissue,
+        table_main=pail_organization_main["table_main"],
+        samples=pail_organization_sample["samples"],
+        proportion_signal_validity=0.7,
+        report=report,
+    )
+
+
 
 
     ##########
@@ -629,7 +889,7 @@ def execute_procedure(
     ##########
     # Control procedure with split for parallelization.
     control_split_procedure(
-        tissue="adipose",
+        tissue="adipose", # adipose, muscle
         paths=paths,
         report=True,
     )
