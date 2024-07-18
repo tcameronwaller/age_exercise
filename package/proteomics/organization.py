@@ -287,7 +287,9 @@ def read_source(
         sep="\t",
         header=0,
         dtype=types_columns,
-        na_values=["nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",],
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
     )
     # Table of attributes of samples.
     types_columns = define_table_column_types_sample()
@@ -296,7 +298,9 @@ def read_source(
         sep="\t",
         header=0,
         dtype=types_columns,
-        na_values=["nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",],
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
     )
 
     # Return information.

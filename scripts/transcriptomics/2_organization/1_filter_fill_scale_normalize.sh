@@ -122,7 +122,7 @@ deactivate
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: exercise"
-  echo "set: transcriptomics"
+  echo "technology: transcriptomics"
   echo "procedure: 2_organization"
   echo "script: 1_filter_fill_scale_normalize.sh"
   echo $0 # Print full file path to script.

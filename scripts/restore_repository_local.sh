@@ -69,7 +69,7 @@ if [ ! -d $path_directory_process ] || [ ! -d $path_directory_package ] || [ ! -
   mkdir -p $path_directory_package
   mkdir -p $path_directory_dock
   mkdir -p $path_directory_parameters
-  #mkdir -p $path_directory_parameters_private
+  mkdir -p $path_directory_parameters_private
 fi
 
 ################################################################################
@@ -82,7 +82,8 @@ mv "$path_directory_parameters/parameters" "$path_directory_parameters/partner"
 cp -r "$path_directory_repository_exercise/parameters" "$path_directory_parameters/parameters"
 mv "$path_directory_parameters/parameters" "$path_directory_parameters/exercise"
 cp -r $path_directory_parameters_private_source $path_directory_dock
-mv "${path_directory_dock}/parameters" $path_directory_parameters_private
+mv "${path_directory_dock}/parameters" "${path_directory_dock}/exercise"
+mv "${path_directory_dock}/exercise" $path_directory_parameters_private
 
 ##########
 # Organize Python packages.
