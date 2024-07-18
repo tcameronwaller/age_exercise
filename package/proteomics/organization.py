@@ -444,7 +444,9 @@ def organize_table_main(
         drop=True,
         inplace=True,
     )
-    translations_sample = table_sample_translation["identifier_novel"].to_dict()
+    translations_sample = (
+        table_sample_translation["identifier_novel"].to_dict()
+    )
     # Translate names of columns.
     translations = dict()
     translations["Protein FDR Confidence: Combined"] = "confidence"
