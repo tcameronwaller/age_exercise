@@ -75,6 +75,85 @@ import partner.parallelization as prall
 # Functionality
 
 
+##########
+# Initialization
+
+
+def initialize_directories(
+    project=None,
+    technology=None,
+    set=None,
+    path_directory_dock=None,
+    restore=None,
+):
+    """
+    Initialize directories for procedure's product files.
+
+    arguments:
+        project (str): name of project
+        technology (str): name of technology, either 'transcriptomics' or
+            'proteomics'
+        set (str): name of set or step in process procedure
+        path_directory_dock (str): path to dock directory for source and
+            product directories and files
+        restore (bool): whether to remove previous versions of data
+
+    raises:
+
+    returns:
+        (dict<str>): collection of paths to directories for procedure's files
+
+    """
+
+    # Collect paths.
+    paths = dict()
+    # Define paths to directories.
+    paths["dock"] = path_directory_dock
+    paths["in_data"] = os.path.join(
+        paths["dock"], "in_data", str(project), str(technology),
+    )
+    paths["in_parameters"] = os.path.join(
+        paths["dock"], "in_parameters", str(project), str(technology),
+    )
+    paths["out_project"] = os.path.join(
+        paths["dock"], str("out_" + project),
+    )
+    paths["out_technology"] = os.path.join(
+        paths["out_project"], str(technology),
+    )
+    paths["out_set"] = os.path.join(
+        paths["out_technology"], str(set),
+    )
+    paths["out_test"] = os.path.join(
+        paths["out_set"], "test",
+    )
+    paths["out_table"] = os.path.join(
+        paths["out_set"], "table",
+    )
+    paths["out_plot"] = os.path.join(
+        paths["out_set"], "plot",
+    )
+    paths_initialization = [
+        paths["out_project"],
+        paths["out_technology"],
+        paths["out_set"],
+        paths["out_test"],
+        paths["out_table"],
+        paths["out_plot"],
+    ]
+    # Remove previous files to avoid version or batch confusion.
+    if restore:
+        for path in paths_initialization:
+            putly.remove_directory(path=path)
+    # Initialize directories.
+    for path in paths_initialization:
+        putly.create_directories(
+            path=path,
+        )
+    # Return information.
+    return paths
+
+
 
 ###############################################################################
 # Procedure
@@ -96,7 +175,21 @@ def execute_procedure(
 
     """
 
-    print("Hello Cameron. You are executing this procedure locally.")
+    # Report.
+    print("system: local")
+    print("project: exercise")
+    print("technology: transcriptomics")
+    print("set: organization")
+
+    # Initialize directories.
+    paths = initialize_directories(
+        project="exercise",
+        technology="transcriptomics",
+        set="organization",
+        path_directory_dock=path_directory_dock,
+        restore=True,
+    )
+
 
     pass
 
