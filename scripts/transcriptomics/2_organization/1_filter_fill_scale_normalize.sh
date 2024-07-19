@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 17 July 2024
-# Date, last execution or modification: 17 July 2024
-# Review: TCW; 17 July 2024
+# Date, last execution or modification: 18 July 2024
+# Review: TCW; 18 July 2024
 ###############################################################################
 # Note
 
@@ -21,7 +21,7 @@
 ###############################################################################
 # Organize paths.
 
-
+project_main="exercise"
 
 # Directories.
 cd ~
@@ -30,12 +30,16 @@ path_directory_tool=$(<"$path_directory_paths/path_directory_tool.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
 path_directory_package="$path_directory_process/package"
 path_directory_package_partner="$path_directory_package/partner"
-path_directory_package_exercise="$path_directory_package/exercise"
+path_directory_package_project_main="$path_directory_package/${project_main}"
+
+path_directory_package_project_main="$path_directory_package/${project_main}"
+
 path_directory_dock="$path_directory_process/dock"
 path_directory_data="$path_directory_dock/in_data" # restore script does not modify "in_data" for efficiency
-path_directory_parameters="$path_directory_dock/in_parameters"
-#path_directory_source="${path_directory_dock}/source"
-#path_directory_product="${path_directory_dock}/product"
+path_directory_parameters="$path_directory_dock/in_parameters/${project_main}"
+path_directory_parameters_private="$path_directory_dock/in_parameters_private/${project_main}"
+#path_directory_source="${path_directory_dock}/${project_main}/source"
+#path_directory_product="${path_directory_dock}/${project_main}/product"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
@@ -78,7 +82,7 @@ source "${path_environment_main}/bin/activate"
 #echo $PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:$path_directory_package
 export PYTHONPATH=$PYTHONPATH:$path_directory_package_partner
-export PYTHONPATH=$PYTHONPATH:$path_directory_package_exercise
+export PYTHONPATH=$PYTHONPATH:$path_directory_package_project_main
 # Regulate concurrent or parallel process threads on node cores.
 # Force Python program (especially SciPy) not to use all available cores on a
 # cluster computation node.
@@ -103,9 +107,9 @@ fi
 # Execute procedure.
 
 # Execute program process in Python.
-python3 $path_directory_package_exercise/interface.py \
+python3 $path_directory_package_project_main/interface.py \
 main \
---exercise_transcriptomics_organization \
+--transcriptomics_organization \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
@@ -121,7 +125,7 @@ deactivate
 # Report.
 if [ "$report" == "true" ]; then
   echo "----------"
-  echo "project: exercise"
+  echo "project: ${project_main}"
   echo "technology: transcriptomics"
   echo "procedure: 2_organization"
   echo "script: 1_filter_fill_scale_normalize.sh"

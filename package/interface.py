@@ -169,9 +169,9 @@ def define_main_subparser(subparsers=None):
         )
     )
     parser_main.add_argument(
-        "-exercise_transcriptomics_organization",
-        "--exercise_transcriptomics_organization",
-        dest="exercise_transcriptomics_organization",
+        "-transcriptomics_organization",
+        "--transcriptomics_organization",
+        dest="transcriptomics_organization",
         action="store_true",
         help=(
             "Organize information."
@@ -266,7 +266,7 @@ def evaluate_main_parameters(arguments):
     print("--------------------------------------------------")
     print("... call to main routine ...")
     # Execute procedure.
-    if arguments.exercise_transcriptomics_organization:
+    if arguments.transcriptomics_organization:
         # Report status.
         print(
            "... executing exercise.transcriptomics.organization procedure ..."
