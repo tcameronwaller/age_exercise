@@ -647,6 +647,8 @@ def filter_table_main(
             porg.match_keep_series_signal_validity(
                 series=row,
                 keys_signal=columns_intensity,
+                threshold_low=0.0,
+                threshold_high=None,
                 proportion=proportion_validity,
                 report=False,
             ),
@@ -911,7 +913,7 @@ def fill_missing_values_intensity_row(
                 value=value_fill,
             )
         elif (method == "half_minimum"):
-            minimum = numpy.nanmin(array_intensities)
+            minimum = numpy.nanmin(pail_values["values_nonmissing"])
             value_fill = float(minimum / 2)
             row_fill = row.replace(
                 to_replace=pandas.NA,
@@ -1769,6 +1771,8 @@ def execute_procedure(
         indicator = porg.match_keep_series_signal_validity(
             series=row,
             keys_signal=pail_organization["samples"],
+            threshold_low=0.0,
+            threshold_high=None,
             proportion=0.80,
             report=True,
         )
