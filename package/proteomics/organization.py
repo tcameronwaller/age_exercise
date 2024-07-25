@@ -718,8 +718,7 @@ def split_table_main_columns(
     raises:
 
     returns:
-        (object): Pandas data-frame table of values of intensity across
-            samples in columns and proteins in rows
+        (dict<object>): collection of information
 
     """
 
