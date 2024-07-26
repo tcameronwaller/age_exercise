@@ -1422,11 +1422,13 @@ def control_split_procedure(
     putly.write_tables_to_file(
         pail_write=pail_write_data,
         path_directory=paths["out_data"],
+        reset_index=False,
         type="text",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_data,
         path_directory=paths["out_data"],
+        reset_index=False,
         type="pickle",
     )
     pass
