@@ -21,6 +21,7 @@
 ###############################################################################
 # Organize paths.
 
+# Project.
 project_main="exercise"
 
 # Directories.

@@ -130,8 +130,8 @@ def initialize_directories(
     paths["out_test"] = os.path.join(
         paths["out_set"], "test",
     )
-    paths["out_table"] = os.path.join(
-        paths["out_set"], "table",
+    paths["out_data"] = os.path.join(
+        paths["out_set"], "data",
     )
     paths["out_plot"] = os.path.join(
         paths["out_set"], "plot",
@@ -141,7 +141,7 @@ def initialize_directories(
         paths["out_technology"],
         paths["out_set"],
         paths["out_test"],
-        paths["out_table"],
+        paths["out_data"],
         paths["out_plot"],
     ]
     # Remove previous files to avoid version or batch confusion.
@@ -1205,8 +1205,9 @@ def check_coherence_table_sample_table_signal(
     report=None,
 ):
     """
-    Checks the coherence, especially sample sequence, of information in tables
-    for sample attributes and gene signals across samples.
+    Checks the coherence, specifically identity and sequence of samples, of
+    information in separate tables for sample attributes and gene signals
+    across samples.
 
     arguments:
         table_sample (object): Pandas data-frame table of attributes for
@@ -1287,9 +1288,7 @@ def check_coherence_table_sample_table_signal(
     pass
 
 
-
-
-
+##########
 # TODO: TCW; 18 July 2024
 # For analysis (by regression, for example) it will make most sense to transpose the "signal" table
 # to orient samples across rows (convenience in merging in sample attributes)
@@ -1397,9 +1396,6 @@ def control_split_procedure(
     )
 
 
-
-    # NEXT: separate the signal data from the gene data...
-
     # TODO: TCW; 24 July 2024
     # TODO:
     # 1. - In future, add a pseudo-count of 1 to any zeros or missing values.
@@ -1410,13 +1406,29 @@ def control_split_procedure(
     # 3. - In future, apply logarithmic transformation and evaluate distributions (histograms).
     # 4. - In future, evaluate coefficient of variance of each gene across control samples.
 
-
-
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_data = dict()
+    pail_write_data[str("table_sample")] = (
+        pail_organization_sample["table_sample_inclusion"]
+    )
+    pail_write_data[str("table_signal")] = (
+        pail_separate["table_signal"]
+    )
 
     ##########
     # Write product information to file.
-    ##########
-    # Return information.
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=paths["out_data"],
+        type="text",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=paths["out_data"],
+        type="pickle",
+    )
     pass
 
 
