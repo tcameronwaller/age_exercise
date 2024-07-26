@@ -743,7 +743,7 @@ def define_keep_types_gene():
     return types_gene
 
 
-def match_keep_table_row_identity(
+def determine_keep_series_by_identity(
     row_identifier=None,
     row_type=None,
     identifier_prefix=None,
@@ -869,7 +869,7 @@ def filter_table_main_rows_signal(
     # porg.test_extract_organize_values_from_series()
     table_filter["match_keep_signal_all"] = table_filter.apply(
         lambda row:
-            porg.match_keep_series_signal_validity(
+            porg.determine_series_signal_validity_threshold(
                 series=row,
                 keys_signal=samples_all,
                 threshold_low=threshold_signal_low,
@@ -889,7 +889,7 @@ def filter_table_main_rows_signal(
     if filter_rows_signal_by_condition:
         table_filter["match_keep_signal_control"] = table_filter.apply(
             lambda row:
-                porg.match_keep_series_signal_validity(
+                porg.determine_series_signal_validity_threshold(
                     series=row,
                     keys_signal=samples_control,
                     threshold_low=threshold_signal_low,
@@ -901,7 +901,7 @@ def filter_table_main_rows_signal(
         )
         table_filter["match_keep_signal_intervention"] = table_filter.apply(
             lambda row:
-                porg.match_keep_series_signal_validity(
+                porg.determine_series_signal_validity_threshold(
                     series=row,
                     keys_signal=samples_intervention,
                     threshold_low=threshold_signal_low,
@@ -1034,7 +1034,7 @@ def filter_table_main(
         types_gene = define_keep_types_gene()
         table_filter["match_keep_identity"] = table_filter.apply(
             lambda row:
-                match_keep_table_row_identity(
+                determine_keep_series_by_identity(
                     row_identifier=row["identifier_gene"],
                     row_type=row["gene_type"],
                     identifier_prefix="ENSG",
@@ -1213,7 +1213,7 @@ def separate_table_main_columns(
         count_rows = (table_split.shape[0])
         count_columns = (table_split.shape[1])
         print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
+        print("count of columns in table: " + str(count_columns))
         print(table_main)
         putly.print_terminal_partition(level=5)
         count_rows = (table_gene.shape[0])
@@ -1221,14 +1221,14 @@ def separate_table_main_columns(
         print("table of information about genes:")
         print(table_gene)
         print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
+        print("count of columns in table: " + str(count_columns))
         putly.print_terminal_partition(level=5)
         count_rows = (table_signal.shape[0])
         count_columns = (table_signal.shape[1])
         print("table of information about signals:")
         print(table_signal)
         print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
+        print("count of columns in table: " + str(count_columns))
         putly.print_terminal_partition(level=5)
         pass
     # Collect information.
@@ -1459,13 +1459,19 @@ def control_split_procedure(
 
     ##########
     # 5. Fill missing values of signal intensity.
+    table_signal = porg.fill_missing_values_table_by_row(
+        table=pail_separate["table_signal"],
+        columns=pail_organization_sample["samples_selection"],
+        method="zero",
+        report=report,
+    )
 
 
     ##########
     # 6. Check the coherence of separate tables for analysis.
     check_coherence_table_sample_table_signal(
         table_sample=pail_organization_sample["table_sample_selection"],
-        table_signal=pail_separate["table_signal"],
+        table_signal=table_signal,
         tissue=tissue,
         report=report,
     )
@@ -1588,7 +1594,7 @@ def control_parallel_instances(
     ]
 
     # Execute procedure iteratively with parallelization across instances.
-    if False:
+    if True:
         prall.drive_procedure_parallel(
             function_control=(
                 control_parallel_instance
