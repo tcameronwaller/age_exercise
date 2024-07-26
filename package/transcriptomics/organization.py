@@ -444,6 +444,18 @@ def organize_table_sample(
     table_sample_inclusion = table_sample_tissue.loc[
         (table_sample_tissue["inclusion"] == 1), :
     ].copy(deep=True)
+    #table_sample_selection = table_sample_inclusion.loc[
+    #    (
+    #        (table_sample_inclusion["condition"] == "control") |
+    #        (table_sample_inclusion["condition"] == "intervention_1")
+    #    ), :
+    #].copy(deep=True)
+    table_sample_selection = table_sample_inclusion.loc[
+        (table_sample_inclusion["condition"].isin([
+            "control",
+            "intervention_1"])
+        ), :
+    ].copy(deep=True)
     table_sample_control = table_sample_inclusion.loc[
         (table_sample_inclusion["condition"] == "control"), :
     ]
@@ -453,12 +465,6 @@ def organize_table_sample(
     table_sample_intervention_2 = table_sample_inclusion.loc[
         (table_sample_inclusion["condition"] == "intervention_2"), :
     ]
-    #table_sample_intervention = table_sample_inclusion.loc[
-    #    (
-    #        (table_sample_inclusion["condition"] == "intervention_1") |
-    #        (table_sample_inclusion["condition"] == "intervention_2")
-    #    ), :
-    #]
     table_sample_intervention = table_sample_inclusion.loc[
         (table_sample_inclusion["condition"].isin([
             "intervention_1",
@@ -471,6 +477,9 @@ def organize_table_sample(
     )
     samples_inclusion = copy.deepcopy(
         table_sample_inclusion["identifier"].to_list()
+    )
+    samples_selection = copy.deepcopy(
+        table_sample_selection["identifier"].to_list()
     )
     samples_control = copy.deepcopy(
         table_sample_control["identifier"].to_list()
@@ -485,28 +494,37 @@ def organize_table_sample(
         table_sample_intervention["identifier"].to_list()
     )
     # Organize indices in table.
-    table_sample.reset_index(
+    tables = [
+        table_sample,
+        table_sample_tissue,
+        table_sample_inclusion,
+        table_sample_selection,
+    ]
+    for table in tables:
+        table.reset_index(
         level=None,
         inplace=True,
         drop=True, # remove index; do not move to regular columns
-    )
-    table_sample.set_index(
-        ["identifier"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_sample.columns.rename(
-        "attribute",
-        inplace=True,
-    ) # single-dimensional index
+        )
+        table.set_index(
+            ["identifier"],
+            append=False,
+            drop=True,
+            inplace=True,
+        )
+        table.columns.rename(
+            "attribute",
+            inplace=True,
+        ) # single-dimensional index
     # Collect information.
     pail = dict()
     pail["table_sample"] = table_sample
     pail["table_sample_tissue"] = table_sample_tissue
     pail["table_sample_inclusion"] = table_sample_inclusion
+    pail["table_sample_selection"] = table_sample_selection
     pail["samples_tissue"] = samples_tissue
     pail["samples_inclusion"] = samples_inclusion
+    pail["samples_selection"] = samples_selection
     pail["samples_control"] = samples_control
     pail["samples_intervention_1"] = samples_intervention_1
     pail["samples_intervention_2"] = samples_intervention_2
@@ -518,15 +536,17 @@ def organize_table_sample(
         print("function: organize_table_sample()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
-        print("sample table: ")
-        print(table_sample)
+        print("sample table, filtered by tissue and inclusion: ")
+        print(table_sample_inclusion)
         putly.print_terminal_partition(level=5)
         print("description of categorical experimental conditions:")
-        print(table_sample_tissue["condition"].describe(include=["category",]))
+        print(
+            table_sample_inclusion["condition"].describe(include=["category",])
+        )
         print(
             "counts of samples with each unique categorical value of "
             + "experimental condition:")
-        print(table_sample_tissue["condition"].value_counts(dropna=False))
+        print(table_sample_inclusion["condition"].value_counts(dropna=False))
         putly.print_terminal_partition(level=5)
         for name_list in pail.keys():
             count_list = len(pail[name_list])
@@ -1122,8 +1142,6 @@ def separate_table_main_columns(
     table_signal = table_split.loc[
         :, table_split.columns.isin(columns_signal)
     ].copy(deep=True)
-
-
     # Organize indices in table.
     table_gene.reset_index(
         level=None,
@@ -1228,16 +1246,17 @@ def check_coherence_table_sample_table_signal(
 
     # Copy information in table.
     table_sample = table_sample.copy(deep=True)
+    table_sample_extract = table_sample.copy(deep=True)
     table_signal = table_signal.copy(deep=True)
     # Organize indices in table.
-    table_sample.reset_index(
+    table_sample_extract.reset_index(
         level=None,
         inplace=True,
         drop=False, # remove index; do not move to regular columns
     )
     # Extract identifiers of samples from each separate table.
     samples_sample = copy.deepcopy(
-        table_sample["identifier"].to_list()
+        table_sample_extract["identifier"].to_list()
     )
     samples_signal = copy.deepcopy(
         table_signal.columns.to_list()
@@ -1273,15 +1292,29 @@ def check_coherence_table_sample_table_signal(
         print("function: check_coherence_table_sample_table_signal()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
+        count_rows = (table_sample.shape[0])
+        count_columns = (table_sample.shape[1])
+        print("table of information about samples:")
+        print(table_sample)
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        putly.print_terminal_partition(level=5)
+        count_rows = (table_signal.shape[0])
+        count_columns = (table_signal.shape[1])
+        print("table of information about signals:")
+        print(table_signal)
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        putly.print_terminal_partition(level=5)
+        print("real comparisons of sample identifiers:")
+        print("inclusion: " + str(inclusion))
+        print("identity: " + str(identity))
+        print("equality: " + str(equality))
+        putly.print_terminal_partition(level=5)
         print("test comparisons:")
         print("inclusion: " + str(test_inclusion))
         print("identity: " + str(test_identity))
         print("equality: " + str(test_equality))
-        putly.print_terminal_partition(level=5)
-        print("real comparisons:")
-        print("inclusion: " + str(inclusion))
-        print("identity: " + str(identity))
-        print("equality: " + str(equality))
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -1349,7 +1382,7 @@ def control_split_procedure(
     pail_organization_main = organize_table_main(
         table_main=pail_source["table_main"],
         columns_gene=columns_gene,
-        samples=pail_organization_sample["samples_inclusion"],
+        samples=pail_organization_sample["samples_selection"],
         tissue=tissue,
         report=report,
     )
@@ -1359,7 +1392,7 @@ def control_split_procedure(
     table_filter = filter_table_main(
         table_main=pail_organization_main["table_main"],
         columns_gene=columns_gene,
-        samples_all=pail_organization_sample["samples_inclusion"],
+        samples_all=pail_organization_sample["samples_selection"],
         samples_control=pail_organization_sample["samples_control"],
         samples_intervention=(
             pail_organization_sample["samples_intervention_1"]
@@ -1381,7 +1414,7 @@ def control_split_procedure(
     pail_separate = separate_table_main_columns(
         table_main=table_filter,
         columns_gene=columns_gene,
-        columns_signal=pail_organization_sample["samples_inclusion"],
+        columns_signal=pail_organization_sample["samples_selection"],
         tissue=tissue,
         report=report,
     )
@@ -1389,7 +1422,7 @@ def control_split_procedure(
     ##########
     # 5. Check the coherence of separate tables for analysis.
     check_coherence_table_sample_table_signal(
-        table_sample=pail_organization_sample["table_sample_inclusion"],
+        table_sample=pail_organization_sample["table_sample_selection"],
         table_signal=pail_separate["table_signal"],
         tissue=tissue,
         report=report,
@@ -1411,7 +1444,7 @@ def control_split_procedure(
     # Collections of files.
     pail_write_data = dict()
     pail_write_data[str("table_sample")] = (
-        pail_organization_sample["table_sample_inclusion"]
+        pail_organization_sample["table_sample_selection"]
     )
     pail_write_data[str("table_signal")] = (
         pail_separate["table_signal"]
@@ -1471,7 +1504,7 @@ def execute_procedure(
     ##########
     # Control procedure with split for parallelization.
     control_split_procedure(
-        tissue="adipose", # adipose, muscle
+        tissue="muscle", # adipose, muscle
         paths=paths,
         report=True,
     )
