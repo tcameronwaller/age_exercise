@@ -83,6 +83,7 @@ def initialize_directories(
     project=None,
     technology=None,
     set=None,
+    tissues=None,
     path_directory_dock=None,
     restore=None,
 ):
@@ -94,6 +95,8 @@ def initialize_directories(
         technology (str): name of technology, either 'transcriptomics' or
             'proteomics'
         set (str): name of set or step in process procedure
+        tissues (list<str>): names of tissue that distinguish study design and
+            sets of samples
         path_directory_dock (str): path to dock directory for source and
             product directories and files
         restore (bool): whether to remove previous versions of data
@@ -127,32 +130,53 @@ def initialize_directories(
     paths["out_set"] = os.path.join(
         paths["out_technology"], str(set),
     )
-    paths["out_test"] = os.path.join(
-        paths["out_set"], "test",
-    )
-    paths["out_data"] = os.path.join(
-        paths["out_set"], "data",
-    )
-    paths["out_plot"] = os.path.join(
-        paths["out_set"], "plot",
-    )
+    # Initialize directories in main branch.
     paths_initialization = [
         paths["out_project"],
         paths["out_technology"],
         paths["out_set"],
-        paths["out_test"],
-        paths["out_data"],
-        paths["out_plot"],
     ]
-    # Remove previous files to avoid version or batch confusion.
+    # Remove previous directories and files to avoid version or batch
+    # confusion.
     if restore:
         for path in paths_initialization:
             putly.remove_directory(path=path)
-    # Initialize directories.
+    # Create directories.
     for path in paths_initialization:
         putly.create_directories(
             path=path,
         )
+    # Initialize directories in branch forks.
+    for tissue in tissues:
+        paths["out_tissue"] = os.path.join(
+            paths["out_set"], str(tissue),
+        )
+        #paths[str(str(tissue) + "_out_test")] = os.path.join(
+        #    paths["out_tissue"], "test",
+        #)
+        paths[str(str(tissue) + "_out_data")] = os.path.join(
+            paths["out_tissue"], "data",
+        )
+        #paths[str(str(tissue) + "_out_plot")] = os.path.join(
+        #    paths["out_tissue"], "plot",
+        #)
+        # Initialize directories.
+        paths_initialization = [
+            paths["out_tissue"],
+            #paths[str(str(tissue) + "_out_test")],
+            paths[str(str(tissue) + "_out_data")],
+            #paths[str(str(tissue) + "_out_plot")],
+        ]
+        # Remove previous directories and files to avoid version or batch
+        # confusion.
+        if restore:
+            for path in paths_initialization:
+                putly.remove_directory(path=path)
+        # Create directories.
+        for path in paths_initialization:
+            putly.create_directories(
+                path=path,
+            )
     # Return information.
     return paths
 
@@ -607,10 +631,13 @@ def organize_table_main(
     # Only replace values within table's columns for samples.
     # This implementation is more concise than iteration across specific
     # columns.
-    table_main[samples] = table_main[samples].replace(
-        to_replace=0,
-        value=pandas.NA,
-    )
+    # This operation is inaccurate for quantification of RNA sequence read
+    # data. In this case, it might even be more reasonable to replace missing
+    # values with values of zero.
+    #table_main[samples] = table_main[samples].replace(
+    #    to_replace=0,
+    #    value=pandas.NA,
+    #)
     # Replace values less than zero with missing values.
     table_main[samples][table_main[samples] < 0] = pandas.NA
 
@@ -1213,7 +1240,12 @@ def separate_table_main_columns(
 
 
 ##########
-# 5. Check the coherence of separate tables for analysis.
+# 5. Fill missing values of signal intensity.
+
+
+
+##########
+# 6. Check the coherence of separate tables for analysis.
 
 
 def check_coherence_table_sample_table_signal(
@@ -1305,6 +1337,12 @@ def check_coherence_table_sample_table_signal(
         print(table_signal)
         print("count of rows in table: " + str(count_rows))
         print("Count of columns in table: " + str(count_columns))
+        putly.print_terminal_partition(level=5)
+        print("sample identifiers from rows of sample table:")
+        print(samples_sample)
+        putly.print_terminal_partition(level=5)
+        print("sample identifiers from columns of signal table:")
+        print(samples_signal)
         putly.print_terminal_partition(level=5)
         print("real comparisons of sample identifiers:")
         print("inclusion: " + str(inclusion))
@@ -1420,7 +1458,11 @@ def control_split_procedure(
     )
 
     ##########
-    # 5. Check the coherence of separate tables for analysis.
+    # 5. Fill missing values of signal intensity.
+
+
+    ##########
+    # 6. Check the coherence of separate tables for analysis.
     check_coherence_table_sample_table_signal(
         table_sample=pail_organization_sample["table_sample_selection"],
         table_signal=pail_separate["table_signal"],
@@ -1454,16 +1496,114 @@ def control_split_procedure(
     # Write product information to file.
     putly.write_tables_to_file(
         pail_write=pail_write_data,
-        path_directory=paths["out_data"],
+        path_directory=paths[str(str(tissue) + "_out_data")],
         reset_index=False,
+        write_index=True,
         type="text",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_data,
-        path_directory=paths["out_data"],
+        path_directory=paths[str(str(tissue) + "_out_data")],
         reset_index=False,
+        write_index=True,
         type="pickle",
     )
+    pass
+
+
+def control_parallel_instance(
+    instance=None,
+    parameters=None,
+):
+    """
+    Control procedure to organize within tables the information about genetic
+    correlations from LDSC.
+
+    arguments:
+        instance (dict): parameters specific to current instance
+            tissue (str): name of tissue, either 'adipose' or 'muscle', which
+                distinguishes study design and sets of samples
+        parameters (dict): parameters common to all instances
+            paths : (dict<str>): collection of paths to directories for
+                procedure's files
+            report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Extract parameters.
+    # Extract parameters specific to each instance.
+    tissue = instance["tissue"]
+    # Extract parameters common across all instances.
+    paths = parameters["paths"]
+    report = parameters["report"]
+
+    ##########
+    # Control procedure with split for parallelization.
+    control_split_procedure(
+        tissue=tissue, # adipose, muscle
+        paths=paths,
+        report=report,
+    )
+
+    pass
+
+
+def control_parallel_instances(
+    paths=None,
+    report=None,
+):
+    """
+    Control procedure for parallel instances.
+
+    arguments:
+        paths : (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+
+    raises:
+
+    returns:
+
+    """
+
+    # Collect parameters common across all instances.
+    parameters = dict()
+    parameters["paths"] = paths
+    parameters["report"] = report
+
+    # Collect parameters specific to each instance.
+    instances = [
+        {
+            "tissue": "muscle",
+        },
+        {
+            "tissue": "adipose",
+        },
+    ]
+
+    # Execute procedure iteratively with parallelization across instances.
+    if False:
+        prall.drive_procedure_parallel(
+            function_control=(
+                control_parallel_instance
+            ),
+            instances=instances,
+            parameters=parameters,
+            cores=2,
+            report=True,
+        )
+    else:
+        # Execute procedure directly for testing.
+        control_parallel_instance(
+            instance=instances[1],
+            parameters=parameters,
+        )
     pass
 
 
@@ -1497,18 +1637,25 @@ def execute_procedure(
         project="exercise",
         technology="transcriptomics",
         set="organization",
+        tissues=["muscle", "adipose",],
         path_directory_dock=path_directory_dock,
         restore=True,
     )
 
     ##########
     # Control procedure with split for parallelization.
-    control_split_procedure(
-        tissue="muscle", # adipose, muscle
+    #control_split_procedure(
+    #    tissue="adipose", # adipose, muscle
+    #    paths=paths,
+    #    report=True,
+    #)
+
+    ##########
+    # Control procedure for parallel instances.
+    control_parallel_instances(
         paths=paths,
         report=True,
     )
-
 
     pass
 
