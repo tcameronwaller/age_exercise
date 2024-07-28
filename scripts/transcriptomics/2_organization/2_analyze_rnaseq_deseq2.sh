@@ -59,7 +59,7 @@ mkdir -p $path_directory_product
 # Organize parameters.
 
 # Parameters.
-threads=4
+threads=5
 report="true"
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error
