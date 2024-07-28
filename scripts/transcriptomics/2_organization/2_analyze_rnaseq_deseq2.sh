@@ -59,7 +59,7 @@ mkdir -p $path_directory_product
 # Organize parameters.
 
 # Parameters.
-threads=6
+threads=4
 report="true"
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error
@@ -74,7 +74,9 @@ set +v # disable print input to standard error
 $path_execution_r $path_script_deseq2 \
 $path_file_source_table_sample \
 $path_file_source_table_signal \
-$path_file_product_table
+$path_file_product_table \
+$threads \
+$report
 
 
 
