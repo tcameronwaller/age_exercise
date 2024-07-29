@@ -40,6 +40,7 @@ path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2
 
 # Files.
 path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
+path_file_source_table_gene="${path_directory_source}/table_gene.tsv"
 path_file_source_table_signal="${path_directory_source}/table_signal.tsv"
 path_file_product_table="${path_directory_product}/table_result.tsv"
 
@@ -73,6 +74,7 @@ set +v # disable print input to standard error
 # Execute program script in R.
 $path_execution_r $path_script_deseq2 \
 $path_file_source_table_sample \
+$path_file_source_table_gene \
 $path_file_source_table_signal \
 $path_file_product_table \
 $threads \

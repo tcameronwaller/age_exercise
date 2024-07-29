@@ -1169,6 +1169,13 @@ def separate_table_main_columns(
     table_signal = table_split.loc[
         :, table_split.columns.isin(columns_signal)
     ].copy(deep=True)
+    # Translate names of columns.
+    translations = dict()
+    translations["identifier_gene"] = "identifier"
+    table_gene.rename(
+        columns=translations,
+        inplace=True,
+    )
     # Organize indices in table.
     table_gene.reset_index(
         level=None,
@@ -1181,7 +1188,7 @@ def separate_table_main_columns(
         drop=True, # remove index; do not move to regular columns
     )
     table_gene.set_index(
-        ["identifier_gene"],
+        ["identifier"],
         append=False,
         drop=True,
         inplace=True,
@@ -1493,6 +1500,9 @@ def control_split_procedure(
     pail_write_data = dict()
     pail_write_data[str("table_sample")] = (
         pail_organization_sample["table_sample_selection"]
+    )
+    pail_write_data[str("table_gene")] = (
+        pail_separate["table_gene"]
     )
     pail_write_data[str("table_signal")] = (
         pail_separate["table_signal"]
