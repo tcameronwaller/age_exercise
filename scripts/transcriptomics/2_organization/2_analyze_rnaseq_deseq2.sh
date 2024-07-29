@@ -42,7 +42,7 @@ path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2
 path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
 path_file_source_table_gene="${path_directory_source}/table_gene.tsv"
 path_file_source_table_signal="${path_directory_source}/table_signal.tsv"
-path_file_product_table="${path_directory_product}/table_result.tsv"
+path_file_product_table="${path_directory_product}/table_result_deseq2.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
