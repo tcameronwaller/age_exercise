@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 17 July 2024
-# Date, last execution or modification: 18 July 2024
-# Review: TCW; 18 July 2024
+# Date, first execution: 31 July 2024
+# Date, last execution or modification: 31 July 2024
+# Review: TCW; 31 July 2024
 ###############################################################################
 # Note
 
@@ -109,8 +109,8 @@ fi
 
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
-main \
---transcriptomics_organization \
+transcriptomics \
+--organize_sample \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
@@ -128,8 +128,8 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
   echo "technology: transcriptomics"
-  echo "procedure: 2_organization"
-  echo "script: 1_filter_fill_scale_normalize.sh"
+  echo "procedure: organize_sample"
+  echo "script: 1_organize_sample.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"

@@ -223,6 +223,40 @@ def define_table_column_types_sample():
     return types_columns
 
 
+def define_table_column_types_sample_attribute():
+    """
+    Defines the variable types of columns within table for attributes of
+    samples.
+
+    Review: TCW; 30 July 2024
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): variable types of columns within table
+
+    """
+
+    # Specify variable types of columns within table.
+    types_columns = dict()
+    types_columns["Name"] = "string"
+    types_columns["Visit"] = "string"
+    types_columns["Date"] = "string"
+    types_columns["Age Group"] = "string"
+    types_columns["Sex"] = "string"
+    types_columns["Intervention"] = "string"
+    types_columns["Age"] = "int32"
+    types_columns["BMI (kg/m2)"] = "float32"
+    types_columns["Total % Fat"] = "float32"
+    types_columns["Total Fat Mass"] = "float32"
+    types_columns["Lean Mass"] = "float32"
+    # ...
+    # Return information.
+    return types_columns
+
+
 def define_table_column_types_main():
     """
     Defines the variable types of columns within table for values of intensity.
@@ -281,8 +315,12 @@ def read_source(
 
     # Define paths to child files.
     path_file_table_sample = os.path.join(
-        paths["in_parameters_private"], "quantification_2024-07-14",
-        "attributes_samples", "table_attributes_samples.tsv",
+        paths["in_parameters_private"], "transcriptomics",
+        "table_sample_file_rnaseq.tsv",
+    )
+    path_file_table_sample_attribute = os.path.join(
+        paths["in_parameters_private"], "transcriptomics",
+        "table_sample_attribute.tsv",
     )
     if (tissue == "adipose"):
         path_file_table_main = os.path.join(
@@ -310,6 +348,7 @@ def read_source(
         na_values=[
             "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
         ],
+        encoding="utf-8",
     )
 
     # Table of values of intensity across samples and proteins.
@@ -322,6 +361,7 @@ def read_source(
         na_values=[
             "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
         ],
+        encoding="utf-8",
     )
     # Report.
     if report:
@@ -347,6 +387,38 @@ def read_source(
 
 ##########
 # 2. Organize information from source.
+
+
+
+def define_column_sequence_table_sample_supplement():
+    """
+    Defines the columns in sequence within table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): variable types of columns within table
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = [
+        "identifier",
+        "inclusion",
+        #"path_file",
+        "sample_plate",
+        "plate",
+        "sample",
+        "subject",
+        "tissue",
+        "condition_code",
+        "condition",
+        #"note_condition",
+    ]
+    # Return information.
+    return columns_sequence
 
 
 def define_column_sequence_table_sample():
@@ -405,6 +477,10 @@ def define_column_sequence_table_main_gene():
     ]
     # Return information.
     return columns_sequence
+
+
+# dateutil.parser.parser
+
 
 
 def organize_table_sample(
@@ -1418,6 +1494,16 @@ def control_split_procedure(
     # 2. Organize information from source.
     columns_sample = define_column_sequence_table_sample()
     columns_gene = define_column_sequence_table_main_gene()
+
+    pail_organization_supplement = organize_table_sample_supplement(
+        table_sample=pail_source["table_sample"],
+        columns_sample=columns_sample,
+        tissue=tissue,
+        report=report,
+    )
+
+
+
     pail_organization_sample = organize_table_sample(
         table_sample=pail_source["table_sample"],
         columns_sample=columns_sample,

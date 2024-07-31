@@ -46,7 +46,8 @@ import textwrap
 
 # Custom.
 
-import exercise.transcriptomics.organization
+import exercise.transcriptomics.organize_sample
+import exercise.transcriptomics.organize_signal
 import exercise.proteomics.organization
 
 #dir()
@@ -70,9 +71,9 @@ def define_interface_parsers():
     """
 
     # Define description.
-    description = define_general_description()
+    description = define_main_description()
     # Define epilog.
-    epilog = define_general_epilog()
+    epilog = define_main_epilog()
     # Define arguments.
     parser = argparse.ArgumentParser(
         description=description,
@@ -80,118 +81,21 @@ def define_interface_parsers():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     subparsers = parser.add_subparsers(title="procedures")
-    parser_main = define_main_subparser(subparsers=subparsers)
-    # TODO: add other subparsers here...
+    #parser_main = define_main_subparser(subparsers=subparsers)
+    parser_transcriptomics = define_subparser_transcriptomics(
+        project="exercise",
+        routine="transcriptomics",
+        subparsers=subparsers,
+    )
+    if False:
+        parser_proteomics = define_subparser_proteomics(
+            project="exercise",
+            routine="proteomics",
+            subparsers=subparsers,
+        )
+        pass
     # Parse arguments.
     return parser.parse_args()
-
-
-def define_general_description():
-    """
-    Defines description for terminal interface.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (str): description for terminal interface
-
-    """
-
-    description = textwrap.dedent("""\
-        --------------------------------------------------
-        --------------------------------------------------
-        --------------------------------------------------
-
-        Access data from UK Biobank and do other stuff.
-
-        --------------------------------------------------
-    """)
-    return description
-
-
-def define_general_epilog():
-    """
-    Defines epilog for terminal interface.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (str): epilog for terminal interface
-
-    """
-
-    epilog = textwrap.dedent("""\
-
-        --------------------------------------------------
-        --------------------------------------------------
-        --------------------------------------------------
-    """)
-    return epilog
-
-
-def define_main_subparser(subparsers=None):
-    """
-    Defines subparser for procedures that adapt a model of human metabolism.
-
-    arguments:
-        subparsers (object): reference to subparsers' container
-
-    raises:
-
-    returns:
-        (object): reference to parser
-
-    """
-
-    # Define description.
-    description = define_main_description()
-    # Define epilog.
-    epilog = define_main_epilog()
-    # Define parser.
-    parser_main = subparsers.add_parser(
-        name="main",
-        description=description,
-        epilog=epilog,
-        help="Help for main routine.",
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    # Define arguments.
-    parser_main.add_argument(
-        "-path_directory_dock", "--path_directory_dock",
-        dest="path_directory_dock", type=str, required=True,
-        help=(
-            "Path to dock directory for source and product " +
-            "directories and files."
-        )
-    )
-    parser_main.add_argument(
-        "-transcriptomics_organization",
-        "--transcriptomics_organization",
-        dest="transcriptomics_organization",
-        action="store_true",
-        help=(
-            "Organize information."
-        )
-    )
-    parser_main.add_argument(
-        "-exercise_proteomics_organization",
-        "--exercise_proteomics_organization",
-        dest="exercise_proteomics_organization",
-        action="store_true",
-        help=(
-            "Organize information."
-        )
-    )
-
-
-    # Define behavior.
-    parser_main.set_defaults(func=evaluate_main_parameters)
-    # Return parser.
-    return parser_main
 
 
 def define_main_description():
@@ -211,10 +115,12 @@ def define_main_description():
         --------------------------------------------------
         --------------------------------------------------
         --------------------------------------------------
+        Description of main project package
 
-        Package's main procedure
-
-        Do stuff.
+        Welcome to the interface of the "exercise" package in Python.
+        This package supports project-specific wrangling, processing,
+        and analysis of data from transcriptomics and proteomics
+        technologies.
 
         --------------------------------------------------
     """)
@@ -235,14 +141,11 @@ def define_main_epilog():
     """
 
     epilog = textwrap.dedent("""\
-
         --------------------------------------------------
-        main routine
+        Epilog of main project package
 
-        --------------------------------------------------
-        additional notes...
-
-
+        Well, I guess we did some fun stuff with data.
+        Sure was nice visiting. Hope y'all come back soon!
         --------------------------------------------------
         --------------------------------------------------
         --------------------------------------------------
@@ -250,7 +153,144 @@ def define_main_epilog():
     return epilog
 
 
-def evaluate_main_parameters(arguments):
+def define_subparser_transcriptomics(
+    project=None,
+    routine=None,
+    subparsers=None,
+):
+    """
+    Defines subparser for a specific routine of procedures.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine
+        subparsers (object): reference to subparsers' container
+
+    raises:
+
+    returns:
+        (object): reference to parser
+
+    """
+
+    # Define description.
+    description = define_routine_description()
+    # Define epilog.
+    epilog = define_routine_epilog()
+    # Define parser.
+    parser_routine = subparsers.add_parser(
+        name="transcriptomics",
+        description=description,
+        epilog=epilog,
+        help="Help for transcriptomics routine.",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    # Define arguments.
+    parser_routine.add_argument(
+        "-path_directory_dock", "--path_directory_dock",
+        dest="path_directory_dock", type=str, required=True,
+        help=(
+            "Path to dock directory for source and product " +
+            "directories and files."
+        )
+    )
+    parser_routine.add_argument(
+        "-organize_sample",
+        "--organize_sample",
+        dest="organize_sample",
+        action="store_true",
+        help=(
+            "Organize information about samples."
+        )
+    )
+    parser_routine.add_argument(
+        "-organize_signal",
+        "--organize_signal",
+        dest="organize_signal",
+        action="store_true",
+        help=(
+            "Organize information about signals."
+        )
+    )
+
+
+    # Define behavior.
+    parser_routine.set_defaults(func=evaluate_parameters_transcriptomics)
+    # Return parser.
+    return parser_routine
+
+
+def define_routine_description(
+    project=None,
+    routine=None,
+):
+    """
+    Defines description for terminal interface.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine
+
+    raises:
+
+    returns:
+        (str): description for terminal interface
+
+    """
+
+    description = textwrap.dedent("""\
+        --------------------------------------------------
+        --------------------------------------------------
+        --------------------------------------------------
+        Description of routine within main project package
+
+        project: {project}
+        routine: {routine}
+
+        --------------------------------------------------
+    """).format(
+        project=project,
+        routine=routine,
+    )
+    return description
+
+
+def define_routine_epilog(
+    project=None,
+    routine=None,
+):
+    """
+    Defines epilog for terminal interface.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine
+
+    raises:
+
+    returns:
+        (str): epilog for terminal interface
+
+    """
+
+    epilog = textwrap.dedent("""\
+        --------------------------------------------------
+        Epilog of routine within main project package
+
+        project: {project}
+        routine: {routine}
+
+        --------------------------------------------------
+        --------------------------------------------------
+        --------------------------------------------------
+    """).format(
+        project=project,
+        routine=routine,
+    )
+    return epilog
+
+
+def evaluate_parameters_transcriptomics(arguments):
     """
     Evaluates parameters for model procedure.
 
@@ -264,22 +304,26 @@ def evaluate_main_parameters(arguments):
     """
 
     print("--------------------------------------------------")
-    print("... call to main routine ...")
+    print("... call to transcriptomics routine ...")
     # Execute procedure.
-    if arguments.transcriptomics_organization:
+    if arguments.organize_sample:
         # Report status.
         print(
-           "... executing exercise.transcriptomics.organization procedure ..."
-          )
+           "... executing exercise.transcriptomics.organize_sample " +
+           "procedure ..."
+        )
         # Execute procedure.
-        exercise.transcriptomics.organization.execute_procedure(
+        exercise.transcriptomics.organize_sample.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
-    if arguments.exercise_proteomics_organization:
+    if arguments.organize_signal:
         # Report status.
-        print("... executing exercise.proteomics.organization procedure ...")
+        print(
+           "... executing exercise.transcriptomics.organize_signal " +
+           "procedure ..."
+        )
         # Execute procedure.
-        exercise.proteomics.organization.execute_procedure(
+        exercise.transcriptomics.organize_signal.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 
