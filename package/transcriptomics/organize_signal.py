@@ -1,9 +1,8 @@
 """
-Supply functionality for process and analysis of data from proteomics using
-mass spectroscopy.
+Supply functionality for process and analysis of data from transcriptomics.
 
-This module 'organization' is part of the 'proteomics' package within the
-'exercise' package.
+This module 'organize_sample' is part of the 'transcriptomics' package within
+the 'exercise' package.
 
 Author:
 
@@ -185,7 +184,7 @@ def initialize_directories(
 # 1. Read source information from file.
 
 
-def define_table_column_types_sample():
+def define_column_types_table_sample():
     """
     Defines the variable types of columns within table for attributes of
     samples.
@@ -223,7 +222,7 @@ def define_table_column_types_sample():
     return types_columns
 
 
-def define_table_column_types_sample_attribute():
+def define_column_types_table_sample_attribute():
     """
     Defines the variable types of columns within table for attributes of
     samples.
@@ -257,7 +256,7 @@ def define_table_column_types_sample_attribute():
     return types_columns
 
 
-def define_table_column_types_main():
+def define_column_types_table_main():
     """
     Defines the variable types of columns within table for values of intensity.
 
@@ -339,7 +338,7 @@ def read_source(
     # Read information from file.
 
     # Table of samples and their attributes.
-    types_columns = define_table_column_types_sample()
+    types_columns = define_column_types_table_sample()
     pail["table_sample"] = pandas.read_csv(
         path_file_table_sample,
         sep="\t",
@@ -352,7 +351,7 @@ def read_source(
     )
 
     # Table of values of intensity across samples and proteins.
-    types_columns = define_table_column_types_main()
+    types_columns = define_column_types_table_main()
     pail["table_main"] = pandas.read_csv(
         path_file_table_main,
         sep="\t",

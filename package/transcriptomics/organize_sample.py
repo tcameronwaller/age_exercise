@@ -1,9 +1,8 @@
 """
-Supply functionality for process and analysis of data from proteomics using
-mass spectroscopy.
+Supply functionality for process and analysis of data from transcriptomics.
 
-This module 'organization' is part of the 'proteomics' package within the
-'exercise' package.
+This module 'organize_sample' is part of the 'transcriptomics' package within
+the 'exercise' package.
 
 Author:
 
@@ -81,8 +80,8 @@ import partner.parallelization as prall
 
 def initialize_directories(
     project=None,
-    technology=None,
-    set=None,
+    routine=None,
+    procedure=None,
     tissues=None,
     path_directory_dock=None,
     restore=None,
@@ -92,9 +91,10 @@ def initialize_directories(
 
     arguments:
         project (str): name of project
-        technology (str): name of technology, either 'transcriptomics' or
+        routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
-        set (str): name of set or step in process procedure
+        procedure (str): name of procedure, a set or step in the routine
+            process
         tissues (list<str>): names of tissue that distinguish study design and
             sets of samples
         path_directory_dock (str): path to dock directory for source and
@@ -113,28 +113,28 @@ def initialize_directories(
     # Define paths to directories.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", str(project), str(technology),
+        paths["dock"], "in_data", str(project), str(routine),
     )
     paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(technology),
+        paths["dock"], "in_parameters", str(project), str(routine),
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(technology),
+        paths["dock"], "in_parameters_private", str(project), str(routine),
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
-    paths["out_technology"] = os.path.join(
-        paths["out_project"], str(technology),
+    paths["out_routine"] = os.path.join(
+        paths["out_project"], str(routine),
     )
-    paths["out_set"] = os.path.join(
-        paths["out_technology"], str(set),
+    paths["out_procedure"] = os.path.join(
+        paths["out_routine"], str(procedure),
     )
     # Initialize directories in main branch.
     paths_initialization = [
         paths["out_project"],
-        paths["out_technology"],
-        paths["out_set"],
+        paths["out_routine"],
+        paths["out_procedure"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
@@ -149,7 +149,7 @@ def initialize_directories(
     # Initialize directories in branch forks.
     for tissue in tissues:
         paths["out_tissue"] = os.path.join(
-            paths["out_set"], str(tissue),
+            paths["out_procedure"], str(tissue),
         )
         #paths[str(str(tissue) + "_out_test")] = os.path.join(
         #    paths["out_tissue"], "test",
@@ -185,7 +185,7 @@ def initialize_directories(
 # 1. Read source information from file.
 
 
-def define_table_column_types_sample():
+def define_type_columns_table_sample_file():
     """
     Defines the variable types of columns within table for attributes of
     samples.
@@ -209,11 +209,11 @@ def define_table_column_types_sample():
     types_columns["sample_plate"] = "string"
     types_columns["plate"] = "string"
     types_columns["sample"] = "string"
-    types_columns["sample_plate"] = "string"
-    types_columns["condition_code"] = "string"
-    types_columns["tissue"] = "string"
-    types_columns["condition"] = "string"
     types_columns["subject"] = "string"
+    types_columns["tissue"] = "string"
+    types_columns["condition_code"] = "string"
+    types_columns["condition_correction"] = "string"
+    types_columns["condition_interpretation"] = "string"
     types_columns["note_condition"] = "string"
     #types_columns["sex"] = "string"
     #types_columns["age"] = "int32"
@@ -223,7 +223,7 @@ def define_table_column_types_sample():
     return types_columns
 
 
-def define_table_column_types_sample_attribute():
+def define_type_columns_table_sample_attribute():
     """
     Defines the variable types of columns within table for attributes of
     samples.
@@ -257,36 +257,8 @@ def define_table_column_types_sample_attribute():
     return types_columns
 
 
-def define_table_column_types_main():
-    """
-    Defines the variable types of columns within table for values of intensity.
-
-    Review: TCW; 24 June 2024
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): variable types of columns within table
-
-    """
-
-    # Specify variable types in columns within table.
-    types_columns = dict()
-    types_columns["identifier_gene"] = "string"
-    types_columns["gene_id"] = "string"
-    types_columns["gene_name"] = "string"
-    types_columns["exon_number"] = "string"
-    types_columns["gene_type"] = "string"
-    types_columns["chromosome"] = "string"
-    # Return information.
-    return types_columns
-
-
 def read_source(
     paths=None,
-    tissue=None,
     report=None,
 ):
     """
@@ -298,8 +270,6 @@ def read_source(
     arguments:
         paths : (dict<str>): collection of paths to directories for procedure's
             files
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
         report (bool): whether to print reports
 
     raises:
@@ -314,34 +284,21 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
-    path_file_table_sample = os.path.join(
-        paths["in_parameters_private"], "transcriptomics",
-        "table_sample_file_rnaseq.tsv",
+    path_file_table_sample_file = os.path.join(
+        paths["in_parameters_private"], "table_sample_file_rnaseq.tsv",
     )
     path_file_table_sample_attribute = os.path.join(
-        paths["in_parameters_private"], "transcriptomics",
-        "table_sample_attribute.tsv",
+        paths["in_parameters_private"], "table_sample_attribute.csv",
     )
-    if (tissue == "adipose"):
-        path_file_table_main = os.path.join(
-            paths["in_data"], "quantification_2024-07-14",
-            "organization", "quantification_rna_reads_gene_adipose.tsv",
-        )
-    elif (tissue == "muscle"):
-        path_file_table_main = os.path.join(
-            paths["in_data"], "quantification_2024-07-14",
-            "organization", "quantification_rna_reads_gene_muscle.tsv",
-        )
-        pass
 
     # Collect information.
     pail = dict()
     # Read information from file.
 
-    # Table of samples and their attributes.
-    types_columns = define_table_column_types_sample()
-    pail["table_sample"] = pandas.read_csv(
-        path_file_table_sample,
+    # Table of matches between samples and files.
+    types_columns = define_type_columns_table_sample_file()
+    pail["table_sample_file"] = pandas.read_csv(
+        path_file_table_sample_file,
         sep="\t",
         header=0,
         dtype=types_columns,
@@ -351,11 +308,11 @@ def read_source(
         encoding="utf-8",
     )
 
-    # Table of values of intensity across samples and proteins.
-    types_columns = define_table_column_types_main()
-    pail["table_main"] = pandas.read_csv(
-        path_file_table_main,
-        sep="\t",
+    # Table of attributes for samples.
+    types_columns = define_type_columns_table_sample_attribute()
+    pail["table_sample_attribute"] = pandas.read_csv(
+        path_file_table_sample_attribute,
+        sep=",",
         header=0,
         dtype=types_columns,
         na_values=[
@@ -363,22 +320,18 @@ def read_source(
         ],
         encoding="utf-8",
     )
+
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_sample.py")
         print("function: read_source()")
-        print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
-        print("sample table: ")
-        print(pail["table_sample"])
+        print("table of matches between samples and files: ")
+        print(pail["table_sample_file"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
-        count_rows = (pail["table_main"].shape[0])
-        count_columns = (pail["table_main"].shape[1])
-        print("main table: ")
-        print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        print(pail["table_main"])
+        print("table of attributes for samples: ")
+        print(pail["table_sample_attribute"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -386,70 +339,518 @@ def read_source(
 
 
 ##########
+# 2. Organize table of matches between samples and files.
+
+
+def define_translation_columns_table_sample_file():
+    """
+    Defines translations for the names of columns in a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): translations for names of columns in a table
+
+    """
+
+
+    # Translate names of columns.
+    translations = dict()
+    translations["condition_interpretation"] = "condition_obsolete"
+    # Return information.
+    return translations
+
+
+def define_sequence_columns_table_sample_file():
+    """
+    Defines names of columns in sequence by which to filter and sort columns in
+    a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): names of columns in sequence by which to filter and sort
+            columns in table
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = [
+        "inclusion",
+        "identifier",
+        "tissue",
+        "sample",
+        "subject",
+        "condition_correction",
+        "study_clinic_visit",
+        "exercise_time_point",
+        "match_sample_file_attribute",
+        #"path_file",
+        #"sample_plate",
+        #"plate",
+        #"condition_code",
+        #"condition_interpretation",
+        #"note_condition",
+    ]
+    # Return information.
+    return columns_sequence
+
+
+def determine_sample_study_clinic_visit(
+    tissue=None,
+    instance=None,
+):
+    """
+    Determines the clinical visit of the study at which collection of a
+    sample occurred.
+
+    arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        instance (str): designation of study instance in terms of clinical
+            visit for sample collection
+
+    raises:
+
+    returns:
+        (str): indicator of clinical visit in the study at which collection of
+            a sample occurred, either 'first' or 'second'
+
+    """
+
+    # Determine indicator.
+    if (
+        (pandas.notna(tissue)) and
+        (len(str(tissue).strip()) > 0) and
+        (pandas.notna(instance)) and
+        (len(str(instance).strip()) > 0)
+    ):
+        # There is adequate information.
+        if (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() in ["1B", "2B", "3B"])
+        ):
+            indicator = "first"
+        elif (
+            (str(tissue).strip().lower() == "adipose") and
+            (str(instance).strip() == "B")
+        ):
+            indicator = "first"
+        elif (
+            (str(tissue).strip().lower() == "adipose") and
+            (str(instance).strip() == "PI")
+        ):
+            indicator = "second"
+        else:
+            indicator = ""
+    else:
+        indicator = ""
+        pass
+    # Return information.
+    return indicator
+
+
+def determine_muscle_exercise_time_point(
+    tissue=None,
+    instance=None,
+):
+    """
+    Determines the approximate categorical or ordinal duration of time after
+    exercise at which sample collection of muscle tissue occurred.
+
+    arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        instance (str): designation of study instance in terms of clinical
+            visit for sample collection
+
+    raises:
+
+    returns:
+        (str): approximate categorical or ordinal duration of time after
+            exercise, either '0_hour', '3_hour', or '48_hour'
+
+    """
+
+    # Determine indicator.
+    if (
+        (pandas.notna(tissue)) and
+        (len(str(tissue).strip()) > 0) and
+        (pandas.notna(instance)) and
+        (len(str(instance).strip()) > 0)
+    ):
+        # There is adequate information.
+        if (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() == "1B")
+        ):
+            indicator = "0_hour"
+        elif (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() == "2B")
+        ):
+            indicator = "3_hour"
+        elif (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() == "3B")
+        ):
+            indicator = "48_hour"
+        else:
+            indicator = ""
+    else:
+        indicator = ""
+        pass
+    # Return information.
+    return indicator
+
+
+def determine_match_sample_file_attribute(
+    subject=None,
+    study_clinic_visit=None,
+):
+    """
+    Determines a designator to match samples from their files of signals with
+    their attributes.
+
+    arguments:
+        subject (str): identifier of study participant subject
+        study_clinic_visit (str): indicator of clinical visit in the study at
+            which collection of a sample occurred, either 'first' or 'second'
+
+    raises:
+
+    returns:
+        (str): common designator to match samples from their files of signals
+            to their attributes
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(subject)) and
+        (len(str(subject).strip()) > 0) and
+        (pandas.notna(study_clinic_visit)) and
+        (len(str(study_clinic_visit).strip()) > 0)
+    ):
+        # There is adequate information.
+        subject = str(subject).strip()
+        study_clinic_visit = str(study_clinic_visit).strip()
+        designator = str(subject + "_" + study_clinic_visit)
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def organize_table_sample_file(
+    table=None,
+    translations_column=None,
+    columns_sequence=None,
+    report=None,
+):
+    """
+    Organizes information in table that designates matches between samples and
+    their corresponding files of data.
+
+    This function prepares the table of matches between samples and files for
+    merge with table of attributes for samples.
+
+    arguments:
+        table (object): Pandas data-frame table of information about samples
+        translations_column (dict<str>): translations for names of columns in a
+            table
+        columns_sequence (list<str>): names of columns in sequence by which to
+            filter and sort columns in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    translations_column = copy.deepcopy(translations_column)
+    columns_sequence = copy.deepcopy(columns_sequence)
+
+    # Translate names of columns.
+    table.rename(
+        columns=translations_column,
+        inplace=True,
+    )
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "tissue",
+            "subject",
+            "condition_correction",
+        ],
+        axis="index",
+        ascending=True,
+        inplace=True,
+    )
+    # Determine the clinical visit of the study at which collection of the
+    # sample occurred.
+    table["study_clinic_visit"] = table.apply(
+        lambda row:
+            determine_sample_study_clinic_visit(
+                tissue=row["tissue"],
+                instance=row["condition_correction"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine designation to match sample to attribute.
+    table["match_sample_file_attribute"] = table.apply(
+        lambda row:
+            determine_match_sample_file_attribute(
+                subject=row["subject"],
+                study_clinic_visit=row["study_clinic_visit"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine designation of time point from the study of exercise in muscle.
+    table["exercise_time_point"] = table.apply(
+        lambda row:
+            determine_muscle_exercise_time_point(
+                tissue=row["tissue"],
+                instance=row["condition_correction"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Filter and sort columns within table.
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: organize_table_sample_file()")
+        putly.print_terminal_partition(level=5)
+        print("table of matches between samples and files: ")
+        print(table.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table
+
+
+##########
+# 3. Organize table of attributes for samples.
+
+
+def define_translation_columns_table_sample_attribute():
+    """
+    Defines translations for the names of columns in a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): translations for names of columns in a table
+
+    """
+
+    # Translate names of columns.
+    translations = dict()
+    translations["Name"] = "subject_attribute"
+    translations["Visit"] = "study_clinic_visit_relative"
+    translations["Date"] = "date_visit"
+    translations["Age Group"] = "cohort_age_letter"
+    translations["Sex"] = "sex_letter"
+    translations["Intervention"] = "intervention"
+    translations["Age"] = "age"
+    translations["BMI (kg/m2)"] = "body_mass_index"
+    translations["Total % Fat"] = "body_fat_percent"
+    translations["Total Fat Mass"] = "body_fat_mass"
+    translations["Lean Mass"] = "body_lean_mass"
+    #translations["Weight (cm)"] = "weight_kg"
+    # Return information.
+    return translations
+
+
+def define_sequence_columns_table_sample_attribute():
+    """
+    Defines names of columns in sequence by which to filter and sort columns in
+    a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): names of columns in sequence by which to filter and sort
+            columns in table
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = [
+        "match_sample_file_attribute",
+        "cohort_age_letter",
+        "intervention",
+        "subject_attribute",
+        "study_clinic_visit_relative",
+        "date_visit",
+        "sex_letter",
+        #"sex_text",
+        #"sex_y",
+        "age",
+        "body_mass_index",
+        "body_fat_percent",
+        "body_fat_mass",
+        "body_lean_mass",
+    ]
+    # Return information.
+    return columns_sequence
+
+
+def determine_match_sample_attribute_file(
+    subject=None,
+    study_clinic_visit=None,
+):
+    """
+    Determines a designator to match samples from their files of signals with
+    their attributes.
+
+    arguments:
+        subject (str): identifier of study participant subject
+        study_clinic_visit (str): indicator of clinical visit in the study at
+            which collection of a sample occurred, either 'Pre' or 'Post'
+
+    raises:
+
+    returns:
+        (str): common designator to match samples from their files of signals
+            to their attributes
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(subject)) and
+        (len(str(subject).strip()) > 0) and
+        (pandas.notna(study_clinic_visit)) and
+        (len(str(study_clinic_visit).strip()) > 0)
+    ):
+        # There is adequate information.
+        subject = str(subject).strip()
+        study_clinic_visit = str(study_clinic_visit).strip().lower()
+        if (study_clinic_visit == "pre"):
+            visit = str("first")
+            designator = str(subject + "_" + visit)
+        elif (study_clinic_visit == "post"):
+            visit = str("second")
+            designator = str(subject + "_" + visit)
+        else:
+            designator = ""
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def organize_table_sample_attribute(
+    table=None,
+    translations_column=None,
+    columns_sequence=None,
+    report=None,
+):
+    """
+    Organizes information in table that provides attributes of samples.
+
+    This function prepares the table of sample attributes for merge with the
+    table of matches between samples and files.
+
+    arguments:
+        table (object): Pandas data-frame table of information about samples
+        translations_column (dict<str>): translations for names of columns in a
+            table
+        columns_sequence (list<str>): names of columns in sequence by which to
+            filter and sort columns in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    translations_column = copy.deepcopy(translations_column)
+    columns_sequence = copy.deepcopy(columns_sequence)
+
+    # Translate names of columns.
+    table.rename(
+        columns=translations_column,
+        inplace=True,
+    )
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "cohort_age_letter",
+            "intervention",
+            "subject_attribute",
+            "study_clinic_visit_relative",
+        ],
+        axis="index",
+        ascending=True,
+        inplace=True,
+    )
+    # Determine designation to match sample to attribute.
+    table["match_sample_file_attribute"] = table.apply(
+        lambda row:
+            determine_match_sample_attribute_file(
+                subject=row["subject_attribute"],
+                study_clinic_visit=row["study_clinic_visit_relative"],
+            ),
+        axis="columns", # apply function to each row
+    )
+
+
+    # Filter and sort columns within table.
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: organize_table_sample_attribute()")
+        putly.print_terminal_partition(level=5)
+        print("table of attributes for samples: ")
+        print(table.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table
+
+
+
+
+
+
+
+
+##########
 # 2. Organize information from source.
-
-
-
-def define_column_sequence_table_sample_supplement():
-    """
-    Defines the columns in sequence within table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): variable types of columns within table
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = [
-        "identifier",
-        "inclusion",
-        #"path_file",
-        "sample_plate",
-        "plate",
-        "sample",
-        "subject",
-        "tissue",
-        "condition_code",
-        "condition",
-        #"note_condition",
-    ]
-    # Return information.
-    return columns_sequence
-
-
-def define_column_sequence_table_sample():
-    """
-    Defines the columns in sequence within table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): variable types of columns within table
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = [
-        "identifier",
-        "inclusion",
-        #"path_file",
-        "sample_plate",
-        "plate",
-        "sample",
-        "subject",
-        "tissue",
-        "condition_code",
-        "condition",
-        #"note_condition",
-    ]
-    # Return information.
-    return columns_sequence
 
 
 def define_column_sequence_table_main_gene():
@@ -480,182 +881,6 @@ def define_column_sequence_table_main_gene():
 
 
 # dateutil.parser.parser
-
-
-
-def organize_table_sample(
-    table_sample=None,
-    columns_sample=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Organizes information in tables about samples and measurement signals.
-
-    This function sorts the sequence of samples before separating information
-    about various sets of samples and extracting their identifiers. It is
-    important to preserve the definitive sequence of samples from the table of
-    their attributes as this sequence will determine the sort sequence of
-    values in the table of signals.
-
-    arguments:
-        table_sample (object): Pandas data-frame table of information about
-            samples represented in the main table
-        columns_sample (list<str>): names of columns corresponding to
-            attributes of samples
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Copy information in table.
-    table_sample = table_sample.copy(deep=True)
-    # Copy other information.
-    columns_sample = copy.deepcopy(columns_sample)
-
-    # Sort rows within table.
-    table_sample.sort_values(
-        by=[
-            "subject",
-            "tissue",
-            "condition",
-        ],
-        axis="index",
-        ascending=True,
-        inplace=True,
-    )
-    # Filter and sort columns within table.
-    table_sample = porg.filter_sort_table_columns(
-        table=table_sample,
-        columns_sequence=columns_sample,
-        report=report,
-    )
-
-    # Separate information about sets of samples.
-    table_sample_tissue = table_sample.loc[
-        (table_sample["tissue"] == tissue), :
-    ].copy(deep=True)
-    table_sample_inclusion = table_sample_tissue.loc[
-        (table_sample_tissue["inclusion"] == 1), :
-    ].copy(deep=True)
-    #table_sample_selection = table_sample_inclusion.loc[
-    #    (
-    #        (table_sample_inclusion["condition"] == "control") |
-    #        (table_sample_inclusion["condition"] == "intervention_1")
-    #    ), :
-    #].copy(deep=True)
-    table_sample_selection = table_sample_inclusion.loc[
-        (table_sample_inclusion["condition"].isin([
-            "control",
-            "intervention_1"])
-        ), :
-    ].copy(deep=True)
-    table_sample_control = table_sample_inclusion.loc[
-        (table_sample_inclusion["condition"] == "control"), :
-    ]
-    table_sample_intervention_1 = table_sample_inclusion.loc[
-        (table_sample_inclusion["condition"] == "intervention_1"), :
-    ]
-    table_sample_intervention_2 = table_sample_inclusion.loc[
-        (table_sample_inclusion["condition"] == "intervention_2"), :
-    ]
-    table_sample_intervention = table_sample_inclusion.loc[
-        (table_sample_inclusion["condition"].isin([
-            "intervention_1",
-            "intervention_2"])
-        ), :
-    ]
-    # Extract identifiers of samples in separate groups.
-    samples_tissue = copy.deepcopy(
-        table_sample_tissue["identifier"].to_list()
-    )
-    samples_inclusion = copy.deepcopy(
-        table_sample_inclusion["identifier"].to_list()
-    )
-    samples_selection = copy.deepcopy(
-        table_sample_selection["identifier"].to_list()
-    )
-    samples_control = copy.deepcopy(
-        table_sample_control["identifier"].to_list()
-    )
-    samples_intervention_1 = copy.deepcopy(
-        table_sample_intervention_1["identifier"].to_list()
-    )
-    samples_intervention_2 = copy.deepcopy(
-        table_sample_intervention_2["identifier"].to_list()
-    )
-    samples_intervention = copy.deepcopy(
-        table_sample_intervention["identifier"].to_list()
-    )
-    # Organize indices in table.
-    tables = [
-        table_sample,
-        table_sample_tissue,
-        table_sample_inclusion,
-        table_sample_selection,
-    ]
-    for table in tables:
-        table.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-        )
-        table.set_index(
-            ["identifier"],
-            append=False,
-            drop=True,
-            inplace=True,
-        )
-        table.columns.rename(
-            "attribute",
-            inplace=True,
-        ) # single-dimensional index
-    # Collect information.
-    pail = dict()
-    pail["table_sample"] = table_sample
-    pail["table_sample_tissue"] = table_sample_tissue
-    pail["table_sample_inclusion"] = table_sample_inclusion
-    pail["table_sample_selection"] = table_sample_selection
-    pail["samples_tissue"] = samples_tissue
-    pail["samples_inclusion"] = samples_inclusion
-    pail["samples_selection"] = samples_selection
-    pail["samples_control"] = samples_control
-    pail["samples_intervention_1"] = samples_intervention_1
-    pail["samples_intervention_2"] = samples_intervention_2
-    pail["samples_intervention"] = samples_intervention
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
-        print("function: organize_table_sample()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("sample table, filtered by tissue and inclusion: ")
-        print(table_sample_inclusion)
-        putly.print_terminal_partition(level=5)
-        print("description of categorical experimental conditions:")
-        print(
-            table_sample_inclusion["condition"].describe(include=["category",])
-        )
-        print(
-            "counts of samples with each unique categorical value of "
-            + "experimental condition:")
-        print(table_sample_inclusion["condition"].value_counts(dropna=False))
-        putly.print_terminal_partition(level=5)
-        for name_list in pail.keys():
-            count_list = len(pail[name_list])
-            print("count sample list " + name_list + ": " + str(count_list))
-            pass
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return pail
 
 
 def organize_table_main(
@@ -752,702 +977,6 @@ def organize_table_main(
     return pail
 
 
-##########
-# 3. Filter columns and rows in main table.
-
-
-def define_keep_types_gene():
-    """
-    Defines the categorical types of genes for which to keep rows in the main
-    table.
-
-    Reference:
-    https://www.gencodegenes.org/pages/biotypes.html
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): types of gene to keep
-
-    """
-
-    # Specify categorical types.
-    types_gene = [
-        "protein_coding",
-        "lncRNA",
-        #"processed_pseudogene",
-        #"unprocessed_pseudogene",
-        "misc_RNA",
-        "snRNA",
-        "miRNA",
-        "TEC",
-        #"transcribed_unprocessed_pseudogene"
-        "snoRNA",
-        #"transcribed_processed_pseudogene",
-        #"rRNA_pseudogene",
-        #"IG_V_pseudogene",
-        #"transcribed_unitary_pseudogene",
-        "IG_V_gene",
-        "TR_V_gene",
-        #"unitary_pseudogene",
-        "TR_J_gene",
-        "rRNA",
-        "scaRNA",
-        "IG_D_gene",
-        #"TR_V_pseudogene",
-        "Mt_tRNA",
-        #"artifact",
-        "IG_J_gene",
-        "IG_C_gene",
-        #"IG_C_pseudogene",
-        "ribozyme",
-        "TR_C_gene",
-        "sRNA",
-        "TR_D_gene",
-        #"pseudogene",
-        "vault_RNA",
-        #"TR_J_pseudogene",
-        #"IG_J_pseudogene",
-        "Mt_rRNA",
-        #"translated_processed_pseudogene",
-        "scRNA",
-        #"IG_pseudogene",
-    ]
-    # Return information.
-    return types_gene
-
-
-def determine_keep_series_by_identity(
-    row_identifier=None,
-    row_type=None,
-    identifier_prefix=None,
-    types_gene=None,
-):
-    """
-    Determines whether to keep a row from a table.
-
-    arguments:
-        row_identifier (str): current row's identifier of gene
-        row_type (str): current row's type of gene
-        identifier_prefix (str): prefix in identifier of gene to keep
-        types_gene (list<str>): types of gene to keep
-
-    raises:
-
-    returns:
-        (int): logical binary representation of whether to keep current row
-
-    """
-
-    # Determine whether to keep current row from table.
-    #(any(row_type == type_gene for type_gene in types_gene))
-    if (
-        (pandas.notna(row_identifier)) and
-        (len(str(row_identifier)) > 0) and
-        (str(identifier_prefix) in str(row_identifier)) and
-        (str(row_type) in types_gene)
-    ):
-        indicator = 1
-    else:
-        indicator = 0
-        pass
-    # Return information.
-    return indicator
-
-
-def filter_table_main_rows_signal(
-    table_main=None,
-    samples_all=None,
-    samples_control=None,
-    samples_intervention=None,
-    filter_rows_signal_by_condition=None,
-    threshold_signal_low=None,
-    threshold_signal_high=None,
-    proportion_signal_all=None,
-    proportion_signal_control=None,
-    proportion_signal_intervention=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Filters information in table for gene features across rows.
-
-    This function filters rows for gene features by different thresholds on the
-    proportion of a gene's signal intensities that must have non-missing,
-    within-threshold, valid values across sets of samples in either the control
-    or intervention experimental conditions or both. The reason for using these
-    different thresholds is to allow genes to have signals that are detectable
-    in only one experimental condition or the other. An example would be an
-    experimental intervention that activates or deactivates transcriptional
-    expression of specific genes.
-
-    arguments:
-        table_main (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
-        samples_all (list<str>): identifiers of samples in both control and
-            intervention experimental conditions corresponding to names of
-            columns for measurement values of signal intensity across features
-        samples_control (list<str>): identifiers of samples in control
-            experimental condition corresponding to names of columns for
-            measurement values of signal intensity across features
-        samples_intervention (list<str>): identifiers of samples in
-            intervention experimental condition corresponding to names of
-            columns for measurement values of signal intensity across features
-        filter_rows_signal_by_condition (bool): whether to filter rows by
-            signal with separate consideration of columns for different
-            experimental conditions
-        threshold_signal_low (float): threshold below which
-            (value <= threshold) all values are considered invalid and missing
-        threshold_signal_high (float): threshold above which
-            (value > threshold) all values are considered invalid and missing
-        proportion_signal_all (float): proportion of signal intensities
-            across all samples in any experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_control (float): proportion of signal intensities
-            across samples in control experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_intervention (float): proportion of values of signal
-            intensities across samples in intervention experimental condition
-            that must have non-missing, within-threshold, valid values in
-            order to keep the row for each gene feature
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table of values of intensity across
-            samples in columns and proteins in rows
-
-    """
-
-    # Copy information in table.
-    table_filter = table_main.copy(deep=True)
-    # Copy other information.
-    samples_all = copy.deepcopy(samples_all)
-    samples_control = copy.deepcopy(samples_control)
-    samples_intervention = copy.deepcopy(samples_intervention)
-
-    # Collect names of temporary columns.
-    names_columns_temporary = list()
-
-    ##########
-    # Filter rows in table on basis of signal validity.
-
-    # Filter rows in table by signal validity across all samples.
-    # porg.test_extract_organize_values_from_series()
-    table_filter["match_keep_signal_all"] = table_filter.apply(
-        lambda row:
-            porg.determine_series_signal_validity_threshold(
-                series=row,
-                keys_signal=samples_all,
-                threshold_low=threshold_signal_low,
-                threshold_high=threshold_signal_high,
-                proportion=proportion_signal_all,
-                report=False,
-            ),
-        axis="columns", # apply function to each row
-    )
-    table_filter = table_filter.loc[
-        (table_filter["match_keep_signal_all"] == 1), :
-    ]
-    names_columns_temporary.append("match_keep_signal_all")
-
-    # Filter rows in table by signal validity across samples in control or
-    # intervention experimental conditions, respectively.
-    if filter_rows_signal_by_condition:
-        table_filter["match_keep_signal_control"] = table_filter.apply(
-            lambda row:
-                porg.determine_series_signal_validity_threshold(
-                    series=row,
-                    keys_signal=samples_control,
-                    threshold_low=threshold_signal_low,
-                    threshold_high=threshold_signal_high,
-                    proportion=proportion_signal_control,
-                    report=False,
-                ),
-            axis="columns", # apply function to each row
-        )
-        table_filter["match_keep_signal_intervention"] = table_filter.apply(
-            lambda row:
-                porg.determine_series_signal_validity_threshold(
-                    series=row,
-                    keys_signal=samples_intervention,
-                    threshold_low=threshold_signal_low,
-                    threshold_high=threshold_signal_high,
-                    proportion=proportion_signal_intervention,
-                    report=False,
-                ),
-            axis="columns", # apply function to each row
-        )
-        table_filter = table_filter.loc[
-            (
-                (table_filter["match_keep_signal_control"] == 1) |
-                (table_filter["match_keep_signal_intervention"] == 1)
-            ), :
-        ]
-        names_columns_temporary.append("match_keep_signal_control")
-        names_columns_temporary.append("match_keep_signal_intervention")
-        pass
-
-    # Remove unnecessary columns.
-    table_filter.drop(
-        labels=names_columns_temporary,
-        axis="columns",
-        inplace=True
-    )
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
-        print("function: filter_table_main_rows_signal()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return table_filter
-
-
-def filter_table_main(
-    table_main=None,
-    columns_gene=None,
-    samples_all=None,
-    samples_control=None,
-    samples_intervention=None,
-    filter_rows_identity=None,
-    filter_rows_signal=None,
-    filter_rows_signal_by_condition=None,
-    threshold_signal_low=None,
-    threshold_signal_high=None,
-    proportion_signal_all=None,
-    proportion_signal_control=None,
-    proportion_signal_intervention=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Filters information in table.
-
-    This function filters rows for gene features by different thresholds on the
-    proportion of a gene's signal intensities that must have non-missing,
-    within-threshold, valid values across sets of samples in either the control
-    or intervention experimental conditions or both. The reason for using these
-    different thresholds is to allow genes to have signals that are detectable
-    in only one experimental condition or the other. An example would be an
-    experimental intervention that activates or deactivates transcriptional
-    expression of specific genes.
-
-    arguments:
-        table_main (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
-        columns_gene (list<str>): names of columns corresponding to
-            information about genes
-        samples_all (list<str>): identifiers of samples in both control and
-            intervention experimental conditions corresponding to names of
-            columns for measurement values of signal intensity across features
-        samples_control (list<str>): identifiers of samples in control
-            experimental condition corresponding to names of columns for
-            measurement values of signal intensity across features
-        samples_intervention (list<str>): identifiers of samples in
-            intervention experimental condition corresponding to names of
-            columns for measurement values of signal intensity across features
-        filter_rows_identity (bool): whether to filter rows by identity
-        filter_rows_signal (bool): whether to filter rows by signal
-        filter_rows_signal_by_condition (bool): whether to filter rows by
-            signal with separate consideration of columns for different
-            experimental conditions
-        threshold_signal_low (float): threshold below which
-            (value <= threshold) all values are considered invalid and missing
-        threshold_signal_high (float): threshold above which
-            (value > threshold) all values are considered invalid and missing
-        proportion_signal_all (float): proportion of signal intensities
-            across all samples in any experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_control (float): proportion of signal intensities
-            across samples in control experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_intervention (float): proportion of values of signal
-            intensities across samples in intervention experimental condition
-            that must have non-missing, within-threshold, valid values in
-            order to keep the row for each gene feature
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table of values of intensity across
-            samples in columns and proteins in rows
-
-    """
-
-    # Copy information in table.
-    table_filter = table_main.copy(deep=True)
-    # Copy other information.
-    columns_gene = copy.deepcopy(columns_gene)
-    samples_all = copy.deepcopy(samples_all)
-    samples_control = copy.deepcopy(samples_control)
-    samples_intervention = copy.deepcopy(samples_intervention)
-
-    # Filter information in table.
-
-    ##########
-    # Filter rows within table on basis of gene feature identity.
-    if filter_rows_identity:
-        types_gene = define_keep_types_gene()
-        table_filter["match_keep_identity"] = table_filter.apply(
-            lambda row:
-                determine_keep_series_by_identity(
-                    row_identifier=row["identifier_gene"],
-                    row_type=row["gene_type"],
-                    identifier_prefix="ENSG",
-                    types_gene=types_gene,
-                ),
-            axis="columns", # apply function to each row
-        )
-        table_filter = table_filter.loc[
-            (table_filter["match_keep_identity"] == 1), :
-        ]
-        # Remove unnecessary columns.
-        table_filter.drop(
-            labels=["match_keep_identity",],
-            axis="columns",
-            inplace=True
-        )
-        pass
-
-    ##########
-    # Filter rows within table on basis of signal validity.
-    if filter_rows_signal:
-        table_filter = filter_table_main_rows_signal(
-            table_main=table_filter,
-            samples_all=samples_all,
-            samples_control=samples_control,
-            samples_intervention=samples_intervention,
-            filter_rows_signal_by_condition=filter_rows_signal_by_condition,
-            threshold_signal_low=threshold_signal_low,
-            threshold_signal_high=threshold_signal_high,
-            proportion_signal_all=proportion_signal_all,
-            proportion_signal_control=proportion_signal_control,
-            proportion_signal_intervention=proportion_signal_intervention,
-            tissue=tissue,
-            report=report,
-        )
-        pass
-
-    ##########
-    # Filter and sort columns within table.
-    columns_sequence = copy.deepcopy(columns_gene)
-    #columns_sequence.extend(samples_control)
-    #columns_sequence.extend(samples_intervention)
-    columns_sequence.extend(samples_all)
-    table_filter = porg.filter_sort_table_columns(
-        table=table_filter,
-        columns_sequence=columns_sequence,
-        report=report,
-    )
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
-        print("function: filter_table_main()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("source main table:")
-        count_rows = (table_main.shape[0])
-        count_columns = (table_main.shape[1])
-        print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        print(table_main)
-        putly.print_terminal_partition(level=5)
-        print("product main table:")
-        print(table_filter)
-        putly.print_terminal_partition(level=5)
-        count_rows = (table_filter.shape[0])
-        count_columns = (table_filter.shape[1])
-        print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        putly.print_terminal_partition(level=5)
-        print("description of categorical gene type:")
-        print(table_filter["gene_type"].describe(include=["category",]))
-        putly.print_terminal_partition(level=5)
-        print(
-            "counts of genes with each unique categorical value of "
-            + "gene type:")
-        print(table_filter["gene_type"].value_counts(dropna=False))
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return table_filter
-
-
-##########
-# 4. Separate tables for information of distinct types.
-
-
-def separate_table_main_columns(
-    table_main=None,
-    columns_gene=None,
-    columns_signal=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Splits or separates information in table by columns.
-
-    arguments:
-        table_main (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
-        columns_gene (list<str>): names of columns corresponding to
-            information about genes
-        columns_signal (list<str>): names of columns corresponding to
-            identifiers of samples in both control and intervention
-            experimental conditions for measurement values of signal intensity
-            across features
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Copy information in table.
-    table_split = table_main.copy(deep=True)
-    # Copy other information.
-    columns_gene = copy.deepcopy(columns_gene)
-    columns_signal = copy.deepcopy(columns_signal)
-    # Separate information into separate tables.
-    #columns_gene.remove("identifier_gene")
-    columns_signal.insert(0, "identifier_gene")
-    table_gene = table_split.loc[
-        :, table_split.columns.isin(columns_gene)
-    ].copy(deep=True)
-    table_signal = table_split.loc[
-        :, table_split.columns.isin(columns_signal)
-    ].copy(deep=True)
-    # Translate names of columns.
-    translations = dict()
-    translations["identifier_gene"] = "identifier"
-    table_gene.rename(
-        columns=translations,
-        inplace=True,
-    )
-    # Organize indices in table.
-    table_gene.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
-    table_signal.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
-    table_gene.set_index(
-        ["identifier"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_signal.set_index(
-        ["identifier_gene"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    # Organize indices in table.
-    table_gene.columns.rename(
-        "attribute",
-        inplace=True,
-    ) # single-dimensional index
-    table_signal.columns.rename(
-        "sample",
-        inplace=True,
-    ) # single-dimensional index
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
-        print("function: separate_table_main_columns()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("source main table:")
-        count_rows = (table_split.shape[0])
-        count_columns = (table_split.shape[1])
-        print("count of rows in table: " + str(count_rows))
-        print("count of columns in table: " + str(count_columns))
-        print(table_main)
-        putly.print_terminal_partition(level=5)
-        count_rows = (table_gene.shape[0])
-        count_columns = (table_gene.shape[1])
-        print("table of information about genes:")
-        print(table_gene)
-        print("count of rows in table: " + str(count_rows))
-        print("count of columns in table: " + str(count_columns))
-        putly.print_terminal_partition(level=5)
-        count_rows = (table_signal.shape[0])
-        count_columns = (table_signal.shape[1])
-        print("table of information about signals:")
-        print(table_signal)
-        print("count of rows in table: " + str(count_rows))
-        print("count of columns in table: " + str(count_columns))
-        putly.print_terminal_partition(level=5)
-        pass
-    # Collect information.
-    pail = dict()
-    pail["table_gene"] = table_gene
-    pail["table_signal"] = table_signal
-    # Return information.
-    return pail
-
-
-##########
-# 5. Fill missing values of signal intensity.
-
-
-
-##########
-# 6. Check the coherence of separate tables for analysis.
-
-
-def check_coherence_table_sample_table_signal(
-    table_sample=None,
-    table_signal=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Checks the coherence, specifically identity and sequence of samples, of
-    information in separate tables for sample attributes and gene signals
-    across samples.
-
-    arguments:
-        table_sample (object): Pandas data-frame table of attributes for
-            samples
-        table_signal (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Copy information in table.
-    table_sample = table_sample.copy(deep=True)
-    table_sample_extract = table_sample.copy(deep=True)
-    table_signal = table_signal.copy(deep=True)
-    # Organize indices in table.
-    table_sample_extract.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
-    # Extract identifiers of samples from each separate table.
-    samples_sample = copy.deepcopy(
-        table_sample_extract["identifier"].to_list()
-    )
-    samples_signal = copy.deepcopy(
-        table_signal.columns.to_list()
-    )
-    # Confirm that both sets of samples are inclusive.
-    inclusion = putly.compare_lists_by_mutual_inclusion(
-        list_primary=samples_sample,
-        list_secondary=samples_signal,
-    )
-    # Confirm that both sets of samples are identical across sequence.
-    identity = putly.compare_lists_by_elemental_identity(
-        list_primary=samples_sample,
-        list_secondary=samples_signal,
-    )
-    # Confirm that both sets of samples are equal.
-    equality = (samples_sample == samples_signal)
-    # Perform tests of comparisons.
-    test_primary = ["a", "b", "c", "d", "e", "f", "g",]
-    test_secondary = ["a", "b", "c", "d", "g", "f", "e",]
-    test_inclusion = putly.compare_lists_by_mutual_inclusion(
-        list_primary=test_primary,
-        list_secondary=test_secondary,
-    )
-    test_identity = putly.compare_lists_by_elemental_identity(
-        list_primary=test_primary,
-        list_secondary=test_secondary,
-    )
-    test_equality = (test_primary == test_secondary)
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
-        print("function: check_coherence_table_sample_table_signal()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        count_rows = (table_sample.shape[0])
-        count_columns = (table_sample.shape[1])
-        print("table of information about samples:")
-        print(table_sample)
-        print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        putly.print_terminal_partition(level=5)
-        count_rows = (table_signal.shape[0])
-        count_columns = (table_signal.shape[1])
-        print("table of information about signals:")
-        print(table_signal)
-        print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        putly.print_terminal_partition(level=5)
-        print("sample identifiers from rows of sample table:")
-        print(samples_sample)
-        putly.print_terminal_partition(level=5)
-        print("sample identifiers from columns of signal table:")
-        print(samples_signal)
-        putly.print_terminal_partition(level=5)
-        print("real comparisons of sample identifiers:")
-        print("inclusion: " + str(inclusion))
-        print("identity: " + str(identity))
-        print("equality: " + str(equality))
-        putly.print_terminal_partition(level=5)
-        print("test comparisons:")
-        print("inclusion: " + str(test_inclusion))
-        print("identity: " + str(test_identity))
-        print("equality: " + str(test_equality))
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    pass
-
-
-##########
-# TODO: TCW; 18 July 2024
-# For analysis (by regression, for example) it will make most sense to transpose the "signal" table
-# to orient samples across rows (convenience in merging in sample attributes)
-# and genes across columns (features, along with sample attributes as covariates).
-
 
 
 
@@ -1459,14 +988,13 @@ def check_coherence_table_sample_table_signal(
 # Control procedure with split for parallelization.
 
 
-def control_split_procedure(
+def control_branch_procedure(
     tissue=None,
     paths=None,
     report=None,
 ):
     """
-    Organizes information in tables about samples, features, and measurement
-    signals.
+    Control branch of procedure.
 
     arguments:
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
@@ -1481,14 +1009,6 @@ def control_split_procedure(
 
 
     """
-
-    ##########
-    # 1. Read source information from file.
-    pail_source = read_source(
-        tissue=tissue,
-        paths=paths,
-        report=report,
-    )
 
     ##########
     # 2. Organize information from source.
@@ -1613,102 +1133,6 @@ def control_split_procedure(
     pass
 
 
-def control_parallel_instance(
-    instance=None,
-    parameters=None,
-):
-    """
-    Control procedure to organize within tables the information about genetic
-    correlations from LDSC.
-
-    arguments:
-        instance (dict): parameters specific to current instance
-            tissue (str): name of tissue, either 'adipose' or 'muscle', which
-                distinguishes study design and sets of samples
-        parameters (dict): parameters common to all instances
-            paths : (dict<str>): collection of paths to directories for
-                procedure's files
-            report (bool): whether to print reports
-
-    raises:
-
-    returns:
-
-    """
-
-    ##########
-    # Extract parameters.
-    # Extract parameters specific to each instance.
-    tissue = instance["tissue"]
-    # Extract parameters common across all instances.
-    paths = parameters["paths"]
-    report = parameters["report"]
-
-    ##########
-    # Control procedure with split for parallelization.
-    control_split_procedure(
-        tissue=tissue, # adipose, muscle
-        paths=paths,
-        report=report,
-    )
-
-    pass
-
-
-def control_parallel_instances(
-    paths=None,
-    report=None,
-):
-    """
-    Control procedure for parallel instances.
-
-    arguments:
-        paths : (dict<str>): collection of paths to directories for procedure's
-            files
-        report (bool): whether to print reports
-
-
-    raises:
-
-    returns:
-
-    """
-
-    # Collect parameters common across all instances.
-    parameters = dict()
-    parameters["paths"] = paths
-    parameters["report"] = report
-
-    # Collect parameters specific to each instance.
-    instances = [
-        {
-            "tissue": "muscle",
-        },
-        {
-            "tissue": "adipose",
-        },
-    ]
-
-    # Execute procedure iteratively with parallelization across instances.
-    if True:
-        prall.drive_procedure_parallel(
-            function_control=(
-                control_parallel_instance
-            ),
-            instances=instances,
-            parameters=parameters,
-            cores=2,
-            report=True,
-        )
-    else:
-        # Execute procedure directly for testing.
-        control_parallel_instance(
-            instance=instances[1],
-            parameters=parameters,
-        )
-    pass
-
-
 def execute_procedure(
     path_directory_dock=None,
 ):
@@ -1729,35 +1153,68 @@ def execute_procedure(
     # Report.
     print("system: local")
     print("project: exercise")
-    print("technology: transcriptomics")
-    print("procedure: 2_organization")
-    print("set: organization")
+    print("routine: transcriptomics")
+    print("procedure: organize_sample")
 
     ##########
     # Initialize directories.
     paths = initialize_directories(
         project="exercise",
-        technology="transcriptomics",
-        set="organization",
+        routine="transcriptomics",
+        procedure="organize_sample",
         tissues=["muscle", "adipose",],
         path_directory_dock=path_directory_dock,
         restore=True,
     )
 
     ##########
-    # Control procedure with split for parallelization.
-    #control_split_procedure(
-    #    tissue="adipose", # adipose, muscle
-    #    paths=paths,
-    #    report=True,
-    #)
-
-    ##########
-    # Control procedure for parallel instances.
-    control_parallel_instances(
+    # 1. Read source information from file.
+    pail_source = read_source(
         paths=paths,
         report=True,
     )
+
+    ##########
+    # 2. Organize table of matches between samples and files.
+    translations_sample_file = define_translation_columns_table_sample_file()
+    columns_sample_file = define_sequence_columns_table_sample_file()
+    table_sample_file = organize_table_sample_file(
+        table=pail_source["table_sample_file"],
+        translations_column=translations_sample_file,
+        columns_sequence=columns_sample_file,
+        report=True,
+    )
+
+    ##########
+    # 3. Organize table of attributes for samples.
+    translations_sample_attribute = (
+        define_translation_columns_table_sample_attribute()
+    )
+    columns_sample_attribute = define_sequence_columns_table_sample_attribute()
+    table_sample_attribute = organize_table_sample_attribute(
+        table=pail_source["table_sample_attribute"],
+        translations_column=translations_sample_attribute,
+        columns_sequence=columns_sample_attribute,
+        report=True,
+    )
+
+
+
+
+
+    if False:
+        ##########
+        # Control procedure branches with split by tissue type.
+        control_branch_procedure(
+            tissue="adipose", # adipose, muscle
+            paths=paths,
+            report=True,
+        )
+        control_branch_procedure(
+            tissue="muscle", # adipose, muscle
+            paths=paths,
+            report=True,
+        )
 
     pass
 
