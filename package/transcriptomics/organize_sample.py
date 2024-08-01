@@ -52,6 +52,8 @@ import copy
 import random
 import itertools
 import time
+from datetime import datetime
+#import dateutil # requires explicit installation
 
 # Relevant
 import numpy
@@ -358,6 +360,7 @@ def define_translation_columns_table_sample_file():
 
     # Translate names of columns.
     translations = dict()
+    translations["identifier"] = "identifier_signal"
     translations["condition_interpretation"] = "condition_obsolete"
     # Return information.
     return translations
@@ -381,7 +384,7 @@ def define_sequence_columns_table_sample_file():
     # Specify sequence of columns within table.
     columns_sequence = [
         "inclusion",
-        "identifier",
+        "identifier_signal",
         "tissue",
         "sample",
         "subject",
@@ -571,7 +574,7 @@ def organize_table_sample_file(
     raises:
 
     returns:
-        (dict<object>): collection of information
+        (object): Pandas data-frame table
 
     """
 
@@ -666,10 +669,10 @@ def define_translation_columns_table_sample_attribute():
     translations = dict()
     translations["Name"] = "subject_attribute"
     translations["Visit"] = "study_clinic_visit_relative"
-    translations["Date"] = "date_visit"
+    translations["Date"] = "date_visit_text_raw"
     translations["Age Group"] = "cohort_age_letter"
     translations["Sex"] = "sex_letter"
-    translations["Intervention"] = "intervention"
+    translations["Intervention"] = "intervention_text"
     translations["Age"] = "age"
     translations["BMI (kg/m2)"] = "body_mass_index"
     translations["Total % Fat"] = "body_fat_percent"
@@ -698,14 +701,18 @@ def define_sequence_columns_table_sample_attribute():
     # Specify sequence of columns within table.
     columns_sequence = [
         "match_sample_file_attribute",
+        "cohort_age",
+        "cohort_age_text",
         "cohort_age_letter",
         "intervention",
+        "intervention_text",
         "subject_attribute",
         "study_clinic_visit_relative",
-        "date_visit",
+        "date_visit_text",
+        "date_visit_text_raw",
+        "sex_y",
         "sex_letter",
-        #"sex_text",
-        #"sex_y",
+        "sex_text",
         "age",
         "body_mass_index",
         "body_fat_percent",
@@ -762,6 +769,218 @@ def determine_match_sample_attribute_file(
     return designator
 
 
+def determine_cohort_age_text(
+    cohort_age_letter=None,
+):
+    """
+    Determines a designator for cohort by age.
+
+    arguments:
+        cohort_age_letter (str): designator of cohort by age
+
+    raises:
+
+    returns:
+        (str): designator of cohort by age
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(cohort_age_letter)) and
+        (len(str(cohort_age_letter).strip()) > 0)
+    ):
+        # There is adequate information.
+        cohort_age_letter = str(cohort_age_letter).strip().upper()
+        if (cohort_age_letter == "E"):
+            designator = str("elder")
+        elif (cohort_age_letter == "Y"):
+            designator = str("younger")
+        else:
+            designator = ""
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def determine_cohort_age(
+    cohort_age_text=None,
+):
+    """
+    Determines a designator for cohort by age.
+
+    arguments:
+        cohort_age_text (str): designator of cohort by age
+
+    raises:
+
+    returns:
+        (float): designator of cohort by age
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(cohort_age_text)) and
+        (len(str(cohort_age_text).strip()) > 0)
+    ):
+        # There is adequate information.
+        cohort_age_text = str(cohort_age_text).strip().lower()
+        if (cohort_age_text == "elder"):
+            designator = 1
+        elif (cohort_age_text == "younger"):
+            designator = 0
+        else:
+            designator = float("nan")
+    else:
+        designator = float("nan")
+        pass
+    # Return information.
+    return designator
+
+
+def determine_intervention(
+    intervention_text=None,
+):
+    """
+    Determines a designator for intervention.
+
+    arguments:
+        intervention_text (str): designator of intervention
+
+    raises:
+
+    returns:
+        (float): designator of intervention
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(intervention_text)) and
+        (len(str(intervention_text).strip()) > 0)
+    ):
+        # There is adequate information.
+        intervention_text = str(intervention_text).strip().lower()
+        if (intervention_text == "active"):
+            designator = 1
+        elif (intervention_text == "placebo"):
+            designator = 0
+        else:
+            designator = float("nan")
+    else:
+        designator = float("nan")
+        pass
+    # Return information.
+    return designator
+
+
+def determine_sex_text(
+    sex_letter=None,
+):
+    """
+    Determines a designator for sex.
+
+    arguments:
+        sex_letter (str): designator of sex
+
+    raises:
+
+    returns:
+        (str): designator of sex
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(sex_letter)) and
+        (len(str(sex_letter).strip()) > 0)
+    ):
+        # There is adequate information.
+        sex_letter = str(sex_letter).strip().upper()
+        if (sex_letter == "F"):
+            designator = str("female")
+        elif (sex_letter == "M"):
+            designator = str("male")
+        else:
+            designator = ""
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def determine_sex_y(
+    sex_text=None,
+):
+    """
+    Determines a designator for sex.
+
+    arguments:
+        sex_text (str): designator of sex
+
+    raises:
+
+    returns:
+        (float): designator of sex
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(sex_text)) and
+        (len(str(sex_text).strip()) > 0)
+    ):
+        # There is adequate information.
+        sex_text = str(sex_text).strip().lower()
+        if (sex_text == "female"):
+            designator = 0
+        elif (sex_text == "male"):
+            designator = 1
+        else:
+            designator = float("nan")
+    else:
+        designator = float("nan")
+        pass
+    # Return information.
+    return designator
+
+
+def determine_date_visit_text(
+    date_visit_text_raw=None,
+):
+    """
+    Determines a designator for date of visit to the clinic for study.
+
+    arguments:
+        date_visit_text (str): designator of date
+
+    raises:
+
+    returns:
+        (object): designator of date
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(date_visit_text_raw)) and
+        (len(str(date_visit_text_raw).strip()) > 0)
+    ):
+        # There is adequate information.
+        date_visit_text_raw = str(date_visit_text_raw).strip()
+        date_visit = datetime.strptime(date_visit_text_raw, '%m/%d/%Y').date()
+        designator = date_visit.strftime('%Y-%m-%d')
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
 def organize_table_sample_attribute(
     table=None,
     translations_column=None,
@@ -785,7 +1004,7 @@ def organize_table_sample_attribute(
     raises:
 
     returns:
-        (dict<object>): collection of information
+        (object): Pandas data-frame table
 
     """
 
@@ -800,18 +1019,6 @@ def organize_table_sample_attribute(
         columns=translations_column,
         inplace=True,
     )
-    # Sort rows within table.
-    table.sort_values(
-        by=[
-            "cohort_age_letter",
-            "intervention",
-            "subject_attribute",
-            "study_clinic_visit_relative",
-        ],
-        axis="index",
-        ascending=True,
-        inplace=True,
-    )
     # Determine designation to match sample to attribute.
     table["match_sample_file_attribute"] = table.apply(
         lambda row:
@@ -821,8 +1028,70 @@ def organize_table_sample_attribute(
             ),
         axis="columns", # apply function to each row
     )
+    # Determine designations of cohort by age.
+    table["cohort_age_text"] = table.apply(
+        lambda row:
+            determine_cohort_age_text(
+                cohort_age_letter=row["cohort_age_letter"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["cohort_age"] = table.apply(
+        lambda row:
+            determine_cohort_age(
+                cohort_age_text=row["cohort_age_text"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine designations of intervention.
+    table["intervention_text"] = table.apply(
+        lambda row: str(row["intervention_text"]).strip().lower(),
+        axis="columns", # apply function to each row
+    )
+    table["intervention"] = table.apply(
+        lambda row:
+            determine_intervention(
+                intervention_text=row["intervention_text"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine designations of sex.
+    table["sex_text"] = table.apply(
+        lambda row:
+            determine_sex_text(
+                sex_letter=row["sex_letter"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["sex_y"] = table.apply(
+        lambda row:
+            determine_sex_y(
+                sex_text=row["sex_text"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine date of visit to the clinic for study.
+    table["date_visit_text"] = table.apply(
+        lambda row:
+            determine_date_visit_text(
+                date_visit_text_raw=row["date_visit_text_raw"],
+            ),
+        axis="columns", # apply function to each row
+    )
 
-
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "cohort_age",
+            "intervention",
+            "subject_attribute",
+            "study_clinic_visit_relative",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
     # Filter and sort columns within table.
     table = porg.filter_sort_table_columns(
         table=table,
@@ -843,6 +1112,96 @@ def organize_table_sample_attribute(
     return table
 
 
+##########
+# 4. Combine within the same table the matches between samples and files
+# along with their further attributes.
+
+
+# "match_sample_file_attribute"
+    table_sample = combine_table_sample_file_attribute(
+        table_sample_file=table_sample_file,
+        table_sample_attribute=table_sample_attribute,
+        columns_transfer=columns_transfer,
+        report=True,
+    )
+
+
+##########
+# 4. Combine within the same table the matches between samples and files
+# along with their further attributes.
+
+
+def combine_table_sample_file_attribute(
+    table_sample_file=None,
+    table_sample_attribute=None,
+    columns_transfer=None,
+    report=None,
+):
+    """
+    Combines in the same table information about samples.
+
+    arguments:
+        table_sample_file (object): Pandas data-frame table of information
+            about samples at the level of individual files of data
+        table_sample_attribute (object): Pandas data-frame table of information
+            about samples at the level of individual subjects and their
+            clinical visits for the study
+        columns_transfer (list<str>): names of columns for attributes to
+            transfer
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table_sample_file = table_sample_file.copy(deep=True)
+    table_sample_attribute = table_sample_attribute.copy(deep=True)
+
+    # Transfer attributes.
+    table = porg.transfer_table_rows_attributes_reference(
+        table_main=table_sample_file,
+        column_main_key="match_sample_file_attribute",
+        table_reference=table_sample_attribute,
+        column_reference_key="match_sample_file_attribute",
+        columns_reference_transfer=columns_transfer,
+        prefix_reference_main="",
+        suffix_reference_main="",
+        report=report,
+    )
+
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "tissue",
+            "cohort_age",
+            "intervention",
+            "sex_y",
+            "subject",
+            "study_clinic_visit",
+            "exercise_time_point",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: combine_table_sample_file_attribute()")
+        putly.print_terminal_partition(level=5)
+        print("table of files and attributes for samples: ")
+        print(table.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table
 
 
 
@@ -879,8 +1238,6 @@ def define_column_sequence_table_main_gene():
     # Return information.
     return columns_sequence
 
-
-# dateutil.parser.parser
 
 
 def organize_table_main(
@@ -1198,6 +1555,17 @@ def execute_procedure(
         report=True,
     )
 
+    ##########
+    # 4. Combine within the same table the matches between samples and files
+    # along with their further attributes.
+    columns_transfer = copy.deepcopy(columns_sample_attribute)
+    columns_transfer.remove("match_sample_file_attribute")
+    table_sample = combine_table_sample_file_attribute(
+        table_sample_file=table_sample_file,
+        table_sample_attribute=table_sample_attribute,
+        columns_transfer=columns_transfer,
+        report=True,
+    )
 
 
 
