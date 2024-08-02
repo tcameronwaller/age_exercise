@@ -80,25 +80,28 @@ import partner.parallelization as prall
 
 def initialize_directories(
     project=None,
-    technology=None,
-    set=None,
-    tissues=None,
+    routine=None,
+    procedure=None,
+    tissue=None,
     path_directory_dock=None,
     restore=None,
+    report=None,
 ):
     """
     Initialize directories for procedure's product files.
 
     arguments:
         project (str): name of project
-        technology (str): name of technology, either 'transcriptomics' or
+        routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
-        set (str): name of set or step in process procedure
-        tissues (list<str>): names of tissue that distinguish study design and
-            sets of samples
-        path_directory_dock (str): path to dock directory for source and
-            product directories and files
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
         restore (bool): whether to remove previous versions of data
+        report (bool): whether to print reports
 
     raises:
 
@@ -112,72 +115,70 @@ def initialize_directories(
     # Define paths to directories.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", str(project), str(technology),
+        paths["dock"], "in_data", str(project), str(routine),
     )
     paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(technology),
+        paths["dock"], "in_parameters", str(project), str(routine),
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(technology),
+        paths["dock"], "in_parameters_private", str(project), str(routine),
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
-    paths["out_technology"] = os.path.join(
-        paths["out_project"], str(technology),
+    paths["out_routine"] = os.path.join(
+        paths["out_project"], str(routine),
     )
-    paths["out_set"] = os.path.join(
-        paths["out_technology"], str(set),
+    paths["out_procedure"] = os.path.join(
+        paths["out_routine"], str(procedure),
     )
+    paths["out_tissue"] = os.path.join(
+        paths["out_procedure"], str(tissue),
+    )
+    #paths[str("out_test")] = os.path.join(
+    #    paths["out_tissue"], "test",
+    #)
+    paths[str("out_data")] = os.path.join(
+        paths["out_tissue"], "data",
+    )
+    #paths[str("out_plot")] = os.path.join(
+    #    paths["out_tissue"], "plot",
+    #)
     # Initialize directories in main branch.
     paths_initialization = [
         paths["out_project"],
-        paths["out_technology"],
-        paths["out_set"],
+        paths["out_routine"],
+        paths["out_procedure"],
+        paths["out_tissue"],
+        paths["out_data")],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
     if restore:
         for path in paths_initialization:
             putly.remove_directory(path=path)
+            pass
     # Create directories.
     for path in paths_initialization:
         putly.create_directories(
             path=path,
         )
-    # Initialize directories in branch forks.
-    for tissue in tissues:
-        paths["out_tissue"] = os.path.join(
-            paths["out_set"], str(tissue),
-        )
-        #paths[str(str(tissue) + "_out_test")] = os.path.join(
-        #    paths["out_tissue"], "test",
-        #)
-        paths[str(str(tissue) + "_out_data")] = os.path.join(
-            paths["out_tissue"], "data",
-        )
-        #paths[str(str(tissue) + "_out_plot")] = os.path.join(
-        #    paths["out_tissue"], "plot",
-        #)
-        # Initialize directories.
-        paths_initialization = [
-            paths["out_tissue"],
-            #paths[str(str(tissue) + "_out_test")],
-            paths[str(str(tissue) + "_out_data")],
-            #paths[str(str(tissue) + "_out_plot")],
-        ]
-        # Remove previous directories and files to avoid version or batch
-        # confusion.
-        if restore:
-            for path in paths_initialization:
-                putly.remove_directory(path=path)
-        # Create directories.
-        for path in paths_initialization:
-            putly.create_directories(
-                path=path,
-            )
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: initialize_directories()")
+        putly.print_terminal_partition(level=5)
+        print("path to dock directory for procedure's files: ")
+        print(path_directory_dock)
+        putly.print_terminal_partition(level=5)
+        pass
     # Return information.
     return paths
+
+
+
 
 
 ##########
@@ -477,6 +478,11 @@ def define_column_sequence_table_main_gene():
     # Return information.
     return columns_sequence
 
+
+
+# TODO: TCW; 2 August 2024
+# TODO: rename this function to focus on "selection" of sample sets
+# TODO: parallel branches should include parameters for this selection
 
 def organize_table_sample(
     table_sample=None,
@@ -1462,28 +1468,46 @@ def check_coherence_table_sample_table_signal(
 # Control procedure with split for parallelization.
 
 
-def control_split_procedure(
+def control_branch_procedure(
+    project=None,
+    routine=None,
+    procedure=None,
     tissue=None,
-    paths=None,
+    path_directory_dock=None,
     report=None,
 ):
     """
-    Organizes information in tables about samples, features, and measurement
-    signals.
+    Control branch of procedure.
 
     arguments:
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        paths : (dict<str>): collection of paths to directories for procedure's
-            files
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
         report (bool): whether to print reports
 
     raises:
 
     returns:
 
-
     """
+
+    ##########
+    # Initialize directories.
+    paths = initialize_directories(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        tissue=tissue,
+        path_directory_dock=path_directory_dock,
+        restore=True,
+        report=report,
+    )
 
     ##########
     # 1. Read source information from file.
@@ -1677,10 +1701,21 @@ def control_parallel_instances(
     # Collect parameters specific to each instance.
     instances = [
         {
+            "name": "muscle_exercise_age",
             "tissue": "muscle",
+            "selection_cohort": {
+                "inclusion": [1,],
+            },
+            "variable_factor": "exercise_time_point",
+            "value_control": "0_hour",
+            "value_case": "3_hour",
         },
         {
+            "name": "adipose_diet"
             "tissue": "adipose",
+            "selection_cohort": {
+                "cohort_age_text": ["elder",],
+            },
         },
     ]
 
@@ -1711,8 +1746,8 @@ def execute_procedure(
     Function to execute module's main behavior.
 
     arguments:
-        path_directory_dock (str): path to dock directory for source and
-            product directories and files
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
 
     raises:
 
@@ -1727,17 +1762,6 @@ def execute_procedure(
     print("technology: transcriptomics")
     print("procedure: 2_organization")
     print("set: organization")
-
-    ##########
-    # Initialize directories.
-    paths = initialize_directories(
-        project="exercise",
-        technology="transcriptomics",
-        set="organization",
-        tissues=["muscle", "adipose",],
-        path_directory_dock=path_directory_dock,
-        restore=True,
-    )
 
     ##########
     # Control procedure with split for parallelization.

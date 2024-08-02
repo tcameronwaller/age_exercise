@@ -148,7 +148,7 @@ def initialize_directories(
         putly.create_directories(
             path=path,
         )
-    # Initialize directories in branch forks.
+    # Initialize directories in procedural branches.
     for tissue in tissues:
         paths["out_tissue"] = os.path.join(
             paths["out_procedure"], str(tissue),
@@ -1204,139 +1204,6 @@ def combine_table_sample_file_attribute(
     return table
 
 
-
-
-
-
-##########
-# 2. Organize information from source.
-
-
-def define_column_sequence_table_main_gene():
-    """
-    Defines the columns in sequence within table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): variable types of columns within table
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = [
-        "identifier_gene",
-        "gene_identifier",
-        "gene_name",
-        #"gene_exon_number",
-        "gene_type",
-        "gene_chromosome",
-        #"Unnamed: 160",
-    ]
-    # Return information.
-    return columns_sequence
-
-
-
-def organize_table_main(
-    table_main=None,
-    columns_gene=None,
-    samples=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Organizes information in tables about samples and measurement signals.
-
-    arguments:
-        table_main (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
-        columns_gene (list<str>): names of columns corresponding to
-            information about genes
-        samples (list<str>): identifiers of samples corresponding to names of
-            columns for measurement values of signal intensity across features
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Copy information in table.
-    table_main = table_main.copy(deep=True)
-    # Copy other information.
-    columns_gene = copy.deepcopy(columns_gene)
-    samples = copy.deepcopy(samples)
-
-    # Translate names of columns.
-    translations = dict()
-    translations["gene_id"] = "gene_identifier"
-    translations["exon_number"] = "gene_exon_number"
-    translations["chromosome"] = "gene_chromosome"
-    table_main.rename(
-        columns=translations,
-        inplace=True,
-    )
-    # Replace values of zero for signal intensity with missing values.
-    # Only replace values within table's columns for samples.
-    # This implementation is more concise than iteration across specific
-    # columns.
-    # This operation is inaccurate for quantification of RNA sequence read
-    # data. In this case, it might even be more reasonable to replace missing
-    # values with values of zero.
-    #table_main[samples] = table_main[samples].replace(
-    #    to_replace=0,
-    #    value=pandas.NA,
-    #)
-    # Replace values less than zero with missing values.
-    table_main[samples][table_main[samples] < 0] = pandas.NA
-
-    # Filter and sort columns within table.
-    columns_sequence = copy.deepcopy(columns_gene)
-    columns_sequence.extend(samples)
-    table_main = porg.filter_sort_table_columns(
-        table=table_main,
-        columns_sequence=columns_sequence,
-        report=report,
-    )
-
-    # Collect information.
-    pail = dict()
-    pail["table_main"] = table_main
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
-        print("function: organize_table_main()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("main table: ")
-        print(table_main)
-        putly.print_terminal_partition(level=5)
-        print("description of categorical gene type:")
-        print(table_main["gene_type"].describe(include=["category",]))
-        putly.print_terminal_partition(level=5)
-        print(
-            "counts of genes with each unique categorical value of "
-            + "gene type:")
-        print(table_main["gene_type"].value_counts(dropna=False))
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return pail
-
-
-
-
-
 ###############################################################################
 # Procedure
 
@@ -1383,7 +1250,7 @@ def control_branch_procedure(
     table_sample_tissue = table_sample_inclusion.loc[
         (table_sample_inclusion["tissue"] == tissue), :
     ].copy(deep=True)
-    
+
 
 
 
@@ -1426,8 +1293,8 @@ def execute_procedure(
     Function to execute module's main behavior.
 
     arguments:
-        path_directory_dock (str): path to dock directory for source and
-            product directories and files
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
 
     raises:
 
@@ -1441,6 +1308,19 @@ def execute_procedure(
     print("project: exercise")
     print("routine: transcriptomics")
     print("procedure: organize_sample")
+
+    ##########
+    # Define parameters specific to each instance of procedural branches.
+    instances = [
+        {
+            "tissue": "muscle",
+        },
+        {
+            "tissue": "adipose",
+        },
+    ]
+
+
 
     ##########
     # Initialize directories.
