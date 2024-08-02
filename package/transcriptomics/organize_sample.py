@@ -1346,6 +1346,7 @@ def organize_table_main(
 
 
 def control_branch_procedure(
+    table_sample=None,
     tissue=None,
     paths=None,
     report=None,
@@ -1354,6 +1355,10 @@ def control_branch_procedure(
     Control branch of procedure.
 
     arguments:
+        table_sample (object): Pandas data-frame table of information
+            about samples, both at the level of individual files in data
+            about measurement signals and at the level of individual subjects
+            in their clinical visits for the study
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
             distinguishes study design and sets of samples
         paths : (dict<str>): collection of paths to directories for procedure's
@@ -1364,129 +1369,53 @@ def control_branch_procedure(
 
     returns:
 
-
     """
 
-    ##########
-    # 2. Organize information from source.
-    columns_sample = define_column_sequence_table_sample()
-    columns_gene = define_column_sequence_table_main_gene()
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
 
-    pail_organization_supplement = organize_table_sample_supplement(
-        table_sample=pail_source["table_sample"],
-        columns_sample=columns_sample,
-        tissue=tissue,
-        report=report,
-    )
-
-
-
-    pail_organization_sample = organize_table_sample(
-        table_sample=pail_source["table_sample"],
-        columns_sample=columns_sample,
-        tissue=tissue,
-        report=report,
-    )
-    pail_organization_main = organize_table_main(
-        table_main=pail_source["table_main"],
-        columns_gene=columns_gene,
-        samples=pail_organization_sample["samples_selection"],
-        tissue=tissue,
-        report=report,
-    )
-
-    ##########
-    # 3. Filter columns and rows in main table.
-    table_filter = filter_table_main(
-        table_main=pail_organization_main["table_main"],
-        columns_gene=columns_gene,
-        samples_all=pail_organization_sample["samples_selection"],
-        samples_control=pail_organization_sample["samples_control"],
-        samples_intervention=(
-            pail_organization_sample["samples_intervention_1"]
-        ),
-        filter_rows_identity=True,
-        filter_rows_signal=True,
-        filter_rows_signal_by_condition=True,
-        threshold_signal_low=10, # DESeq2 recommendation for bulk RNAseq
-        threshold_signal_high=None,
-        proportion_signal_all=0.10, # proportion smaller condition to total
-        proportion_signal_control=0.5,
-        proportion_signal_intervention=0.5,
-        tissue=tissue,
-        report=report,
-    )
-
-    ##########
-    # 4. Separate tables for information of distinct types.
-    pail_separate = separate_table_main_columns(
-        table_main=table_filter,
-        columns_gene=columns_gene,
-        columns_signal=pail_organization_sample["samples_selection"],
-        tissue=tissue,
-        report=report,
-    )
-
-    ##########
-    # 5. Fill missing values of signal intensity.
-    table_signal = porg.fill_missing_values_table_by_row(
-        table=pail_separate["table_signal"],
-        columns=pail_organization_sample["samples_selection"],
-        method="zero",
-        report=report,
-    )
+    # Filter rows for samples by inclusion indicator.
+    table_sample_inclusion = table_sample.loc[
+        (table_sample["inclusion"] == 1), :
+    ].copy(deep=True)
+    # Separate information about sets of samples for difference experimental
+    # conditions or groups.
+    table_sample_tissue = table_sample_inclusion.loc[
+        (table_sample_inclusion["tissue"] == tissue), :
+    ].copy(deep=True)
+    
 
 
-    ##########
-    # 6. Check the coherence of separate tables for analysis.
-    check_coherence_table_sample_table_signal(
-        table_sample=pail_organization_sample["table_sample_selection"],
-        table_signal=table_signal,
-        tissue=tissue,
-        report=report,
-    )
-
-
-    # TODO: TCW; 24 July 2024
-    # TODO:
-    # 1. - In future, add a pseudo-count of 1 to any zeros or missing values.
-    #    - Silverman et al, 2020 (PubMed:33101615) is a good review of methods for handling zeros.
-    # 2. - In future, apply a variety of scale-adjustment and normalization methods.
-    #    - DESeq2 algorithm (PubMed:25516281), edgeR algorithm (PubMed:20196867), MRN algorithm (PubMed:26442135)
-    #    - Evans, 2018 (PubMed:28334202)
-    # 3. - In future, apply logarithmic transformation and evaluate distributions (histograms).
-    # 4. - In future, evaluate coefficient of variance of each gene across control samples.
 
     ##########
     # Collect information.
     # Collections of files.
-    pail_write_data = dict()
-    pail_write_data[str("table_sample")] = (
-        pail_organization_sample["table_sample_selection"]
-    )
-    pail_write_data[str("table_gene")] = (
-        pail_separate["table_gene"]
-    )
-    pail_write_data[str("table_signal")] = (
-        pail_separate["table_signal"]
-    )
+    pail_write_tables = dict()
+    pail_write_tables[str("table_sample")] = table_sample
+    pail_write_objects = dict()
+    pail_write_objects[str("samples")]
 
     ##########
     # Write product information to file.
     putly.write_tables_to_file(
-        pail_write=pail_write_data,
+        pail_write=pail_write_tables,
         path_directory=paths[str(str(tissue) + "_out_data")],
         reset_index=False,
         write_index=True,
         type="text",
     )
     putly.write_tables_to_file(
-        pail_write=pail_write_data,
+        pail_write=pail_write_tables,
         path_directory=paths[str(str(tissue) + "_out_data")],
         reset_index=False,
         write_index=True,
         type="pickle",
     )
+    putly.write_objects_to_file_pickle(
+        pail_write=pail_write_objects,
+        path_directory=paths[str(str(tissue) + "_out_data")],
+    )
+
     pass
 
 
@@ -1567,17 +1496,18 @@ def execute_procedure(
         report=True,
     )
 
+    ##########
+    # Control procedure branches with split by tissue type.
+    control_branch_procedure(
+        table_sample=table_sample,
+        tissue="adipose", # adipose, muscle
+        paths=paths,
+        report=True,
+    )
 
 
 
     if False:
-        ##########
-        # Control procedure branches with split by tissue type.
-        control_branch_procedure(
-            tissue="adipose", # adipose, muscle
-            paths=paths,
-            report=True,
-        )
         control_branch_procedure(
             tissue="muscle", # adipose, muscle
             paths=paths,

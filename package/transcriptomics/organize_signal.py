@@ -478,10 +478,6 @@ def define_column_sequence_table_main_gene():
     return columns_sequence
 
 
-# dateutil.parser.parser
-
-
-
 def organize_table_sample(
     table_sample=None,
     columns_sample=None,
@@ -1454,6 +1450,14 @@ def check_coherence_table_sample_table_signal(
 # Procedure
 
 
+# TODO: TCW; 1 August 2024
+# It might be helpful to split up the procedure in more ways to prepare signals
+# for different experimental conditions.
+# For example: younger versus older
+# For example: 3-hours after exercise versus before exercise
+# For example: placebo versus active intervention
+
+
 ##########
 # Control procedure with split for parallelization.
 
@@ -1493,14 +1497,6 @@ def control_split_procedure(
     # 2. Organize information from source.
     columns_sample = define_column_sequence_table_sample()
     columns_gene = define_column_sequence_table_main_gene()
-
-    pail_organization_supplement = organize_table_sample_supplement(
-        table_sample=pail_source["table_sample"],
-        columns_sample=columns_sample,
-        tissue=tissue,
-        report=report,
-    )
-
 
 
     pail_organization_sample = organize_table_sample(
