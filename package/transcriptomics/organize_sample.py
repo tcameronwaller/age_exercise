@@ -77,16 +77,16 @@ import partner.parallelization as prall
 
 
 ##########
-# Initialization
+# 1. Initialize directories for read of source and write of product files.
 
 
 def initialize_directories(
     project=None,
     routine=None,
     procedure=None,
-    tissues=None,
     path_directory_dock=None,
     restore=None,
+    report=None,
 ):
     """
     Initialize directories for procedure's product files.
@@ -97,11 +97,10 @@ def initialize_directories(
             'proteomics'
         procedure (str): name of procedure, a set or step in the routine
             process
-        tissues (list<str>): names of tissue that distinguish study design and
-            sets of samples
-        path_directory_dock (str): path to dock directory for source and
-            product directories and files
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
         restore (bool): whether to remove previous versions of data
+        report (bool): whether to print reports
 
     raises:
 
@@ -132,59 +131,50 @@ def initialize_directories(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
+    #paths[str("out_test")] = os.path.join(
+    #    paths["out_procedure"], "test",
+    #)
+    paths[str("out_data")] = os.path.join(
+        paths["out_procedure"], "data",
+    )
+    #paths[str("out_plot")] = os.path.join(
+    #    paths["out_procedure"], "plot",
+    #)
     # Initialize directories in main branch.
     paths_initialization = [
         paths["out_project"],
         paths["out_routine"],
         paths["out_procedure"],
+        paths["out_data")],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
     if restore:
         for path in paths_initialization:
             putly.remove_directory(path=path)
+            pass
     # Create directories.
     for path in paths_initialization:
         putly.create_directories(
             path=path,
         )
-    # Initialize directories in procedural branches.
-    for tissue in tissues:
-        paths["out_tissue"] = os.path.join(
-            paths["out_procedure"], str(tissue),
-        )
-        #paths[str(str(tissue) + "_out_test")] = os.path.join(
-        #    paths["out_tissue"], "test",
-        #)
-        paths[str(str(tissue) + "_out_data")] = os.path.join(
-            paths["out_tissue"], "data",
-        )
-        #paths[str(str(tissue) + "_out_plot")] = os.path.join(
-        #    paths["out_tissue"], "plot",
-        #)
-        # Initialize directories.
-        paths_initialization = [
-            paths["out_tissue"],
-            #paths[str(str(tissue) + "_out_test")],
-            paths[str(str(tissue) + "_out_data")],
-            #paths[str(str(tissue) + "_out_plot")],
-        ]
-        # Remove previous directories and files to avoid version or batch
-        # confusion.
-        if restore:
-            for path in paths_initialization:
-                putly.remove_directory(path=path)
-        # Create directories.
-        for path in paths_initialization:
-            putly.create_directories(
-                path=path,
-            )
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: initialize_directories()")
+        putly.print_terminal_partition(level=5)
+        print("path to dock directory for procedure's files: ")
+        print(path_directory_dock)
+        putly.print_terminal_partition(level=5)
+        pass
     # Return information.
     return paths
 
 
 ##########
-# 1. Read source information from file.
+# 2. Read source information from file.
 
 
 def define_type_columns_table_sample_file():
@@ -341,7 +331,7 @@ def read_source(
 
 
 ##########
-# 2. Organize table of matches between samples and files.
+# 3. Organize table of matches between samples and files.
 
 
 def define_translation_columns_table_sample_file():
@@ -649,7 +639,7 @@ def organize_table_sample_file(
 
 
 ##########
-# 3. Organize table of attributes for samples.
+# 4. Organize table of attributes for samples.
 
 
 def define_translation_columns_table_sample_attribute():
@@ -1127,7 +1117,7 @@ def organize_table_sample_attribute(
 
 
 ##########
-# 4. Combine within the same table the matches between samples and files
+# 5. Combine within the same table the matches between samples and files
 # along with their further attributes.
 
 
@@ -1208,84 +1198,6 @@ def combine_table_sample_file_attribute(
 # Procedure
 
 
-##########
-# Control procedure with split for parallelization.
-
-
-def control_branch_procedure(
-    table_sample=None,
-    tissue=None,
-    paths=None,
-    report=None,
-):
-    """
-    Control branch of procedure.
-
-    arguments:
-        table_sample (object): Pandas data-frame table of information
-            about samples, both at the level of individual files in data
-            about measurement signals and at the level of individual subjects
-            in their clinical visits for the study
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        paths : (dict<str>): collection of paths to directories for procedure's
-            files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-
-    """
-
-    # Copy information in table.
-    table_sample = table_sample.copy(deep=True)
-
-    # Filter rows for samples by inclusion indicator.
-    table_sample_inclusion = table_sample.loc[
-        (table_sample["inclusion"] == 1), :
-    ].copy(deep=True)
-    # Separate information about sets of samples for difference experimental
-    # conditions or groups.
-    table_sample_tissue = table_sample_inclusion.loc[
-        (table_sample_inclusion["tissue"] == tissue), :
-    ].copy(deep=True)
-
-
-
-
-    ##########
-    # Collect information.
-    # Collections of files.
-    pail_write_tables = dict()
-    pail_write_tables[str("table_sample")] = table_sample
-    pail_write_objects = dict()
-    pail_write_objects[str("samples")]
-
-    ##########
-    # Write product information to file.
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths[str(str(tissue) + "_out_data")],
-        reset_index=False,
-        write_index=True,
-        type="text",
-    )
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths[str(str(tissue) + "_out_data")],
-        reset_index=False,
-        write_index=True,
-        type="pickle",
-    )
-    putly.write_objects_to_file_pickle(
-        pail_write=pail_write_objects,
-        path_directory=paths[str(str(tissue) + "_out_data")],
-    )
-
-    pass
-
-
 def execute_procedure(
     path_directory_dock=None,
 ):
@@ -1303,45 +1215,43 @@ def execute_procedure(
     """
 
     ##########
+    # Parameters.
+    report = True
+
+    ##########
     # Report.
-    print("system: local")
-    print("project: exercise")
-    print("routine: transcriptomics")
-    print("procedure: organize_sample")
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: execute_procedure()")
+        putly.print_terminal_partition(level=5)
+        print("system: local")
+        print("project: exercise")
+        print("routine: transcriptomics")
+        print("procedure: organize_sample")
+        putly.print_terminal_partition(level=5)
+        pass
 
     ##########
-    # Define parameters specific to each instance of procedural branches.
-    instances = [
-        {
-            "tissue": "muscle",
-        },
-        {
-            "tissue": "adipose",
-        },
-    ]
-
-
-
-    ##########
-    # Initialize directories.
+    # 1. Initialize directories for read of source and write of product files.
     paths = initialize_directories(
         project="exercise",
         routine="transcriptomics",
         procedure="organize_sample",
-        tissues=["muscle", "adipose",],
         path_directory_dock=path_directory_dock,
         restore=True,
+        report=report,
     )
 
     ##########
-    # 1. Read source information from file.
+    # 2. Read source information from file.
     pail_source = read_source(
         paths=paths,
         report=True,
     )
 
     ##########
-    # 2. Organize table of matches between samples and files.
+    # 3. Organize table of matches between samples and files.
     translations_sample_file = define_translation_columns_table_sample_file()
     columns_sample_file = define_sequence_columns_table_sample_file()
     table_sample_file = organize_table_sample_file(
@@ -1352,7 +1262,7 @@ def execute_procedure(
     )
 
     ##########
-    # 3. Organize table of attributes for samples.
+    # 4. Organize table of attributes for samples.
     translations_sample_attribute = (
         define_translation_columns_table_sample_attribute()
     )
@@ -1365,7 +1275,7 @@ def execute_procedure(
     )
 
     ##########
-    # 4. Combine within the same table the matches between samples and files
+    # 5. Combine within the same table the matches between samples and files
     # along with their further attributes.
     columns_transfer = copy.deepcopy(columns_sample_attribute)
     columns_transfer.remove("match_sample_file_attribute")
@@ -1377,21 +1287,33 @@ def execute_procedure(
     )
 
     ##########
-    # Control procedure branches with split by tissue type.
-    control_branch_procedure(
-        table_sample=table_sample,
-        tissue="adipose", # adipose, muscle
-        paths=paths,
-        report=True,
+    # Collect information.
+    # Collections of files.
+    pail_write_tables = dict()
+    pail_write_tables[str("table_sample")] = table_sample
+    pail_write_objects = dict()
+    #pail_write_objects[str("samples")]
+
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_data"],
+        reset_index=False,
+        write_index=True,
+        type="text",
     )
-
-
-
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_data"],
+        reset_index=False,
+        write_index=True,
+        type="pickle",
+    )
     if False:
-        control_branch_procedure(
-            tissue="muscle", # adipose, muscle
-            paths=paths,
-            report=True,
+        putly.write_objects_to_file_pickle(
+            pail_write=pail_write_objects,
+            path_directory=paths["out_data"],
         )
 
     pass

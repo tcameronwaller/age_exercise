@@ -75,7 +75,7 @@ import partner.parallelization as prall
 
 
 ##########
-# Initialization
+# 1. Initialize directories for read of source and write of product files.
 
 
 def initialize_directories(
@@ -176,9 +176,6 @@ def initialize_directories(
         pass
     # Return information.
     return paths
-
-
-
 
 
 ##########
@@ -386,8 +383,7 @@ def read_source(
 
 
 ##########
-# 2. Organize information from source.
-
+# 2. Select sets of samples for specific analyses.
 
 
 def define_column_sequence_table_sample_supplement():
@@ -452,39 +448,11 @@ def define_column_sequence_table_sample():
     return columns_sequence
 
 
-def define_column_sequence_table_main_gene():
-    """
-    Defines the columns in sequence within table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): variable types of columns within table
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = [
-        "identifier_gene",
-        "gene_identifier",
-        "gene_name",
-        #"gene_exon_number",
-        "gene_type",
-        "gene_chromosome",
-        #"Unnamed: 160",
-    ]
-    # Return information.
-    return columns_sequence
-
-
-
 # TODO: TCW; 2 August 2024
 # TODO: rename this function to focus on "selection" of sample sets
 # TODO: parallel branches should include parameters for this selection
 
-def organize_table_sample(
+def select_table_samples(
     table_sample=None,
     columns_sample=None,
     tissue=None,
@@ -657,6 +625,80 @@ def organize_table_sample(
         pass
     # Return information.
     return pail
+
+
+def useful_stuff_for_select_table_samples(
+    table_sample=None,
+    tissue=None,
+    paths=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        table_sample (object): Pandas data-frame table of information
+            about samples, both at the level of individual files in data
+            about measurement signals and at the level of individual subjects
+            in their clinical visits for the study
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        paths : (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
+
+    # Filter rows for samples by inclusion indicator.
+    table_sample_inclusion = table_sample.loc[
+        (table_sample["inclusion"] == 1), :
+    ].copy(deep=True)
+    # Separate information about sets of samples for difference experimental
+    # conditions or groups.
+    table_sample_tissue = table_sample_inclusion.loc[
+        (table_sample_inclusion["tissue"] == tissue), :
+    ].copy(deep=True)
+
+    pass
+
+
+
+##########
+# 2. Organize information from source.
+
+
+def define_column_sequence_table_main_gene():
+    """
+    Defines the columns in sequence within table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): variable types of columns within table
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = [
+        "identifier_gene",
+        "gene_identifier",
+        "gene_name",
+        #"gene_exon_number",
+        "gene_type",
+        "gene_chromosome",
+        #"Unnamed: 160",
+    ]
+    # Return information.
+    return columns_sequence
 
 
 def organize_table_main(
@@ -1498,7 +1540,7 @@ def control_branch_procedure(
     """
 
     ##########
-    # Initialize directories.
+    # 1. Initialize directories for read of source and write of product files.
     paths = initialize_directories(
         project=project,
         routine=routine,
@@ -1727,7 +1769,7 @@ def control_parallel_instances(
             ),
             instances=instances,
             parameters=parameters,
-            cores=2,
+            cores=5,
             report=True,
         )
     else:
