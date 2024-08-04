@@ -131,13 +131,13 @@ def initialize_directories(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
-    #paths[str("out_test")] = os.path.join(
+    #paths["out_test"] = os.path.join(
     #    paths["out_procedure"], "test",
     #)
-    paths[str("out_data")] = os.path.join(
+    paths["out_data"] = os.path.join(
         paths["out_procedure"], "data",
     )
-    #paths[str("out_plot")] = os.path.join(
+    #paths["out_plot"] = os.path.join(
     #    paths["out_procedure"], "plot",
     #)
     # Initialize directories in main branch.
@@ -145,7 +145,7 @@ def initialize_directories(
         paths["out_project"],
         paths["out_routine"],
         paths["out_procedure"],
-        paths["out_data")],
+        paths["out_data"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
