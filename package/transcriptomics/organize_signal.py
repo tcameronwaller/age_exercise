@@ -1753,7 +1753,7 @@ def control_parallel_instances(
             "value_case": "3_hour",
         },
         {
-            "name": "adipose_diet"
+            "name": "adipose_diet",
             "tissue": "adipose",
             "selection_cohort": {
                 "cohort_age_text": ["elder",],
