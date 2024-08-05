@@ -452,7 +452,7 @@ def define_column_sequence_table_sample():
 # TODO: rename this function to focus on "selection" of sample sets
 # TODO: parallel branches should include parameters for this selection
 
-def select_table_samples(
+def select_table_sample_sets(
     table_sample=None,
     columns_sample=None,
     tissue=None,
@@ -469,7 +469,7 @@ def select_table_samples(
 
     arguments:
         table_sample (object): Pandas data-frame table of information about
-            samples represented in the main table
+            samples that correspond to signals within accompanying main table
         columns_sample (list<str>): names of columns corresponding to
             attributes of samples
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
@@ -539,7 +539,7 @@ def select_table_samples(
             "intervention_1",
             "intervention_2"])
         ), :
-    ]
+    ].copy(deep=True)
     # Extract identifiers of samples in separate groups.
     samples_tissue = copy.deepcopy(
         table_sample_tissue["identifier"].to_list()
@@ -1515,6 +1515,9 @@ def control_branch_procedure(
     routine=None,
     procedure=None,
     tissue=None,
+    name_set=None,
+    cohort_selection=None,
+
     path_directory_dock=None,
     report=None,
 ):
@@ -1717,15 +1720,23 @@ def control_parallel_instance(
 
 
 def control_parallel_instances(
-    paths=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
     report=None,
 ):
     """
     Control procedure for parallel instances.
 
     arguments:
-        paths : (dict<str>): collection of paths to directories for procedure's
-            files
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
         report (bool): whether to print reports
 
 
@@ -1737,28 +1748,14 @@ def control_parallel_instances(
 
     # Collect parameters common across all instances.
     parameters = dict()
-    parameters["paths"] = paths
+    parameters["project"] = project
+    parameters["routine"] = routine
+    parameters["procedure"] = procedure
+    parameters["path_directory_dock"] = path_directory_dock
     parameters["report"] = report
 
     # Collect parameters specific to each instance.
     instances = [
-        {
-            "name": "muscle_exercise_age",
-            "tissue": "muscle",
-            "selection_cohort": {
-                "inclusion": [1,],
-            },
-            "variable_factor": "exercise_time_point",
-            "value_control": "0_hour",
-            "value_case": "3_hour",
-        },
-        {
-            "name": "adipose_diet",
-            "tissue": "adipose",
-            "selection_cohort": {
-                "cohort_age_text": ["elder",],
-            },
-        },
     ]
 
     # Execute procedure iteratively with parallelization across instances.
@@ -1798,12 +1795,25 @@ def execute_procedure(
     """
 
     ##########
+    # Parameters.
+    project=None,
+    routine=None,
+    procedure=None,
+    report = True
+
+    ##########
     # Report.
-    print("system: local")
-    print("project: exercise")
-    print("technology: transcriptomics")
-    print("procedure: 2_organization")
-    print("set: organization")
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: execute_procedure()")
+        putly.print_terminal_partition(level=5)
+        print("system: local")
+        print("project: " + str(project))
+        print("routine: " + str(routine))
+        print("procedure: " + str(procedure))
+        putly.print_terminal_partition(level=5)
+        pass
 
     ##########
     # Control procedure with split for parallelization.
@@ -1816,8 +1826,11 @@ def execute_procedure(
     ##########
     # Control procedure for parallel instances.
     control_parallel_instances(
-        paths=paths,
-        report=True,
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        report=report,
     )
 
     pass

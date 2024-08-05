@@ -1194,6 +1194,354 @@ def combine_table_sample_file_attribute(
     return table
 
 
+##########
+# 6. Describe factors in table of samples.
+
+
+def describe_table_sample_factors(
+    table_sample=None,
+    report=None,
+):
+    """
+    Describes factors in table of information about samples.
+
+    arguments:
+        table_sample (object): Pandas data-frame table of information about
+            samples that correspond to signals within accompanying main table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
+
+    # Filter rows for selection of relevant samples.
+    table_inclusion = table_sample.loc[
+        (table_sample["inclusion"] == 1), :
+    ].copy(deep=True)
+    table_elder = table_inclusion.loc[
+        (table_inclusion["cohort_age_text"] == "elder"), :
+    ].copy(deep=True)
+    table_tissue = table_elder.loc[
+        (table_elder["tissue"] == "adipose"), :
+    ].copy(deep=True)
+
+    # Create cross tabulation.
+    cross_tabulation = pandas.crosstab(
+        table_tissue["study_clinic_visit"].astype("category"),
+        table_tissue["intervention_text"].astype("category"),
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=2)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: describe_table_sample_factors()")
+        putly.print_terminal_partition(level=4)
+        print("tissue: adipose")
+        print(cross_tabulation)
+        putly.print_terminal_partition(level=4)
+        pass
+
+
+    # Return information.
+    pass
+
+
+##########
+# 7. Describe sets of samples for specific analyses.
+
+
+def define_selections_sample_set():
+    """
+    Defines selection criteria for sets of samples in specific analyses.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<dict<str>>): names and values of features for selection of
+            samples in sets for specific analyses
+
+    """
+
+    # Define instances that determine sets of samples.
+
+    # format for 'name_set': {tissue}_{cohort-details}_{condition-details}
+
+    instances = [
+        {
+            "name_set": "muscle_elder_exercise-3hr",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["elder",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+        {
+            "name_set": "muscle_elder_exercise-48hr",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["elder",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "48_hour",],
+            },
+        },
+        {
+            "name_set": "muscle_younger_exercise-3hr",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["younger",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+        {
+            "name_set": "muscle_younger_exercise-48hr",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["younger",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "48_hour",],
+            },
+        },
+        {
+            "name_set": "muscle_exercise-0hr_age",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "exercise_time_point": ["0_hour",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+            },
+        },
+        {
+            "name_set": "muscle_exercise-3hr_age",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "exercise_time_point": ["3_hour",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+            },
+        },
+        {
+            "name_set": "muscle_exercise-48hr_age",
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "exercise_time_point": ["48_hour",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+            },
+        },
+        {
+            "name_set": "adipose_visit-first_age",
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "study_clinic_visit": ["first",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+            },
+        },
+        {
+            "name_set": str(
+                "adipose_elder_visit-intervention"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+            },
+            "factor_availability": {
+                "study_clinic_visit": ["first", "second",],
+                "intervention_text": ["placebo", "active",],
+            },
+        },
+
+
+        {
+            "name_set": str(
+                "adipose_elder-visit-first_intervention"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "study_clinic_visit": ["first",],
+            },
+            "factor_availability": {
+                "intervention_text": ["placebo", "active",],
+            },
+        },
+        {
+            "name_set": str(
+                "adipose_elder-visit-second_intervention"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "study_clinic_visit": ["second",],
+            },
+            "factor_availability": {
+                "intervention_text": ["placebo", "active",],
+            },
+        },
+        {
+            "name_set": str(
+                "adipose_elder-placebo_visit"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "intervention_text": ["placebo",],
+            },
+            "factor_availability": {
+                "study_clinic_visit": ["first", "second",],
+            },
+        },
+        {
+            "name_set": str(
+                "adipose_elder-active_visit"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "intervention_text": ["active",],
+            },
+            "factor_availability": {
+                "study_clinic_visit": ["first", "second",],
+            },
+        },
+    ]
+    # Return information.
+    return instances
+
+
+def describe_table_sample_sets(
+    table_sample=None,
+    selections=None,
+    report=None,
+):
+    """
+    Describes samples in sets for specific analyses.
+
+    arguments:
+        table_sample (object): Pandas data-frame table of information about
+            samples that correspond to signals within accompanying main table
+        selections (list<dict<str>>): names and values of features for
+            selection of samples in sets for specific analyses
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=2)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: describe_table_sample_sets()")
+        putly.print_terminal_partition(level=5)
+        print("count of selections: " + str(len(selections)))
+        putly.print_terminal_partition(level=5)
+        pass
+
+
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
+    # Copy other information.
+    selections = copy.deepcopy(selections)
+
+    # Iterate on instances of selection criteria for sets of samples.
+    for selection in selections:
+        # Report.
+        if report:
+            putly.print_terminal_partition(level=3)
+            print("name_set: " + str(selection["name_set"]))
+            print("tissue: " + str(selection["tissue"]))
+            putly.print_terminal_partition(level=4)
+            pass
+        # Iterate on features and values for selection of samples in cohort.
+        table_cohort = table_sample.copy(deep=True)
+        for feature in selection["cohort_selection"].keys():
+            table_cohort = table_cohort.loc[(
+                table_cohort[feature].isin(
+                    selection["cohort_selection"][feature])
+            ), :].copy(deep=True)
+        # Iterate on factors and values for selection of samples on the basis
+        # of availability.
+        table_factor = table_cohort.copy(deep=True)
+        for factor in selection["factor_availability"].keys():
+            table_factor = table_factor.loc[(
+                table_factor[factor].isin(
+                    selection["factor_availability"][factor])
+            ), :].copy(deep=True)
+            # Report.
+            if report:
+                putly.print_terminal_partition(level=5)
+                print("factor: " + str(factor))
+                print(
+                    "counts of samples with each unique categorical value of "
+                    + "factor:")
+                print(table_factor[factor].value_counts(dropna=False))
+                putly.print_terminal_partition(level=5)
+                pass
+            pass
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=2)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: describe_table_sample_sets()")
+        putly.print_terminal_partition(level=5)
+        print("description complete")
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    pass
+
+
+
+
 ###############################################################################
 # Procedure
 
@@ -1247,7 +1595,7 @@ def execute_procedure(
     # 2. Read source information from file.
     pail_source = read_source(
         paths=paths,
-        report=True,
+        report=report,
     )
 
     ##########
@@ -1258,7 +1606,7 @@ def execute_procedure(
         table=pail_source["table_sample_file"],
         translations_column=translations_sample_file,
         columns_sequence=columns_sample_file,
-        report=True,
+        report=report,
     )
 
     ##########
@@ -1271,7 +1619,7 @@ def execute_procedure(
         table=pail_source["table_sample_attribute"],
         translations_column=translations_sample_attribute,
         columns_sequence=columns_sample_attribute,
-        report=True,
+        report=report,
     )
 
     ##########
@@ -1283,7 +1631,23 @@ def execute_procedure(
         table_sample_file=table_sample_file,
         table_sample_attribute=table_sample_attribute,
         columns_transfer=columns_transfer,
-        report=True,
+        report=report,
+    )
+
+    ##########
+    # 6. Describe factors in table of samples.
+    describe_table_sample_factors(
+        table_sample=table_sample,
+        report=report,
+    )
+
+    ##########
+    # 7. Describe sets of samples for specific analyses.
+    selections = define_selections_sample_set()
+    describe_table_sample_sets(
+        table_sample=table_sample,
+        selections=selections,
+        report=report,
     )
 
     ##########
