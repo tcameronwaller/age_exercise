@@ -31,12 +31,9 @@ path_directory_tool=$(<"$path_directory_paths/path_directory_tool.txt")
 path_directory_repository_partner=$(<"$path_directory_paths/path_directory_repository_partner.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
 path_directory_dock="$path_directory_process/dock"
-# tissue: muscle
-path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organization/muscle/data"
-path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2/muscle"
 # tissue: adipose
-#path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organization/adipose/data"
-#path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2/adipose"
+path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/adipose/adipose_elder-active_visit/data"
+path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2/adipose/adipose_elder-active_visit"
 
 # Files.
 path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
