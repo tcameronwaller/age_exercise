@@ -1219,7 +1219,7 @@ def describe_table_sample_factors(
     # Copy information in table.
     table_sample = table_sample.copy(deep=True)
 
-    # Filter rows for selection of relevant samples.
+    # Filter rows in table for selection of relevant samples.
     table_inclusion = table_sample.loc[
         (table_sample["inclusion"] == 1), :
     ].copy(deep=True)
