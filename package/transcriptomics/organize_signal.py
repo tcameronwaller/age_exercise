@@ -497,6 +497,13 @@ def select_sets_identifier_table_sample(
     cohort_selection = copy.deepcopy(cohort_selection)
     factor_availability = copy.deepcopy(factor_availability)
 
+    # Translate names of columns.
+    translations = dict()
+    translations["identifier_signal"] = "identifier"
+    table_sample.rename(
+        columns=translations,
+        inplace=True,
+    )
 
     # Filter rows in table for selection of relevant samples.
     # Filter by inclusion indicator.
@@ -538,13 +545,13 @@ def select_sets_identifier_table_sample(
 
     # Extract identifiers of samples in separate groups.
     samples_inclusion = copy.deepcopy(
-        table_inclusion["identifier_signal"].to_list()
+        table_inclusion["identifier"].to_list()
     )
     samples_tissue = copy.deepcopy(
-        table_tissue["identifier_signal"].to_list()
+        table_tissue["identifier"].to_list()
     )
     samples_selection = copy.deepcopy(
-        table_selection["identifier_signal"].to_list()
+        table_selection["identifier"].to_list()
     )
 
     # Collect information.
@@ -1343,7 +1350,7 @@ def check_coherence_table_sample_table_signal(
     #)
     # Extract identifiers of samples from each separate table.
     samples_sample = copy.deepcopy(
-        table_sample_extract["identifier_signal"].to_list()
+        table_sample_extract["identifier"].to_list()
     )
     samples_signal = copy.deepcopy(
         table_signal.columns.to_list()
