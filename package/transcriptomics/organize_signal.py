@@ -78,6 +78,80 @@ import partner.parallelization as prall
 # 1. Initialize directories for read of source and write of product files.
 
 
+def preinitialize_directories(
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    restore=None,
+    report=None,
+):
+    """
+    Initialize directories for procedure's product files.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        restore (bool): whether to remove previous versions of data
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<str>): collection of paths to directories for procedure's files
+
+    """
+
+    # Collect paths.
+    paths = dict()
+    # Define paths to directories.
+    paths["dock"] = path_directory_dock
+    paths["out_project"] = os.path.join(
+        paths["dock"], str("out_" + project),
+    )
+    paths["out_routine"] = os.path.join(
+        paths["out_project"], str(routine),
+    )
+    paths["out_procedure"] = os.path.join(
+        paths["out_routine"], str(procedure),
+    )
+    # Initialize directories in main branch.
+    paths_initialization = [
+        #paths["out_project"],
+        #paths["out_routine"],
+        paths["out_procedure"],
+    ]
+    # Remove previous directories and files to avoid version or batch
+    # confusion.
+    if restore:
+        for path in paths_initialization:
+            putly.remove_directory(path=path) # caution
+            pass
+    # Create directories.
+    for path in paths_initialization:
+        putly.create_directories(
+            path=path,
+        )
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: preinitialize_directories()")
+        putly.print_terminal_partition(level=5)
+        print("path to dock directory for procedure's files: ")
+        print(path_directory_dock)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return paths
+
+
 def initialize_directories(
     project=None,
     routine=None,
@@ -151,10 +225,10 @@ def initialize_directories(
     #)
     # Initialize directories in main branch.
     paths_initialization = [
-        paths["out_project"],
-        paths["out_routine"],
-        paths["out_procedure"],
-        paths["out_tissue"],
+        #paths["out_project"],
+        #paths["out_routine"],
+        #paths["out_procedure"], # omit to avoid conflict in parallel branches
+        #paths["out_tissue"], # omit to avoid conflict in parallel branches
         paths["out_set"],
         paths["out_data"],
     ]
@@ -162,7 +236,7 @@ def initialize_directories(
     # confusion.
     if restore:
         for path in paths_initialization:
-            putly.remove_directory(path=path)
+            putly.remove_directory(path=path) # caution
             pass
     # Create directories.
     for path in paths_initialization:
@@ -317,6 +391,7 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
+    print(paths["out_routine"])
     path_file_table_sample = os.path.join(
         paths["out_routine"], "organize_sample", "data",
         "table_sample.pickle",
@@ -463,20 +538,20 @@ def select_sets_identifier_table_sample(
 
     # Extract identifiers of samples in separate groups.
     samples_inclusion = copy.deepcopy(
-        table_sample_inclusion["identifier_signal"].to_list()
+        table_inclusion["identifier_signal"].to_list()
     )
     samples_tissue = copy.deepcopy(
-        table_sample_tissue["identifier_signal"].to_list()
+        table_tissue["identifier_signal"].to_list()
     )
     samples_selection = copy.deepcopy(
-        table_sample_selection["identifier_signal"].to_list()
+        table_selection["identifier_signal"].to_list()
     )
 
     # Collect information.
     pail = dict()
     pail["table_inclusion"] = table_inclusion
     pail["table_tissue"] = table_tissue
-    pail["table_selection"] = table_sample_selection
+    pail["table_selection"] = table_selection
     pail["samples_inclusion"] = samples_inclusion
     pail["samples_tissue"] = samples_tissue
     pail["samples_selection"] = samples_selection
@@ -494,18 +569,16 @@ def select_sets_identifier_table_sample(
         print(str(factor_availability.keys()))
         putly.print_terminal_partition(level=5)
         print("sample table, filtered by inclusion and tissue:")
-        print(table_tissue)
+        print(table_tissue.iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         print("sample table, filtered by set selection rules:")
-        print(table_selection)
-        putly.print_terminal_partition(level=5)
-        print("description of first categorical factor:")
-        print("first factor: " + str(factor_availability.keys()[0]))
-        print(
-            table_selection[factor_availability.keys()[0]].describe(
-                include=["category",]
-            )
-        )
+        print(table_selection.iloc[0:10, 0:])
+        #putly.print_terminal_partition(level=5)
+        #print("description of first categorical factor:")
+        #print("first factor: " + str(factor_availability.keys()[0]))
+        #table_selection[list(factor_availability.keys())[0]].describe(
+        #    include=["category",]
+        #)
         putly.print_terminal_partition(level=4)
         print(
             "counts of samples with each unique categorical value of each " +
@@ -636,7 +709,7 @@ def organize_table_main(
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
         print("main table: ")
-        print(table_main)
+        print(table_main.iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         print("description of categorical gene type:")
         print(table_main["gene_type"].describe(include=["category",]))
@@ -1196,19 +1269,19 @@ def separate_table_main_columns(
         count_columns = (table_split.shape[1])
         print("count of rows in table: " + str(count_rows))
         print("count of columns in table: " + str(count_columns))
-        print(table_main)
+        print(table_main.iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         count_rows = (table_gene.shape[0])
         count_columns = (table_gene.shape[1])
         print("table of information about genes:")
-        print(table_gene)
+        print(table_gene.iloc[0:10, 0:])
         print("count of rows in table: " + str(count_rows))
         print("count of columns in table: " + str(count_columns))
         putly.print_terminal_partition(level=5)
         count_rows = (table_signal.shape[0])
         count_columns = (table_signal.shape[1])
         print("table of information about signals:")
-        print(table_signal)
+        print(table_signal.iloc[0:10, 0:])
         print("count of rows in table: " + str(count_rows))
         print("count of columns in table: " + str(count_columns))
         putly.print_terminal_partition(level=5)
@@ -1263,14 +1336,14 @@ def check_coherence_table_sample_table_signal(
     table_sample_extract = table_sample.copy(deep=True)
     table_signal = table_signal.copy(deep=True)
     # Organize indices in table.
-    table_sample_extract.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
+    #table_sample_extract.reset_index(
+    #    level=None,
+    #    inplace=True,
+    #    drop=False, # remove index; do not move to regular columns
+    #)
     # Extract identifiers of samples from each separate table.
     samples_sample = copy.deepcopy(
-        table_sample_extract["identifier"].to_list()
+        table_sample_extract["identifier_signal"].to_list()
     )
     samples_signal = copy.deepcopy(
         table_signal.columns.to_list()
@@ -1331,7 +1404,7 @@ def check_coherence_table_sample_table_signal(
         print("identity: " + str(identity))
         print("equality: " + str(equality))
         putly.print_terminal_partition(level=5)
-        print("test comparisons:")
+        print("fake comparisons to check the tests themselves:")
         print("inclusion: " + str(test_inclusion))
         print("identity: " + str(test_identity))
         print("equality: " + str(test_equality))
@@ -1711,9 +1784,9 @@ def execute_procedure(
 
     ##########
     # Parameters.
-    project=None,
-    routine=None,
-    procedure=None,
+    project="exercise"
+    routine="transcriptomics"
+    procedure="organize_signal"
     report = True
 
     ##########
@@ -1729,6 +1802,17 @@ def execute_procedure(
         print("procedure: " + str(procedure))
         putly.print_terminal_partition(level=5)
         pass
+
+    ##########
+    # Preinitialize directories before parallel branches.
+    paths = preinitialize_directories(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=True,
+        report=report,
+    )
 
     ##########
     # Control procedure with split for parallelization.
