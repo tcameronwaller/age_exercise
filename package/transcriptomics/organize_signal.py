@@ -554,6 +554,26 @@ def select_sets_identifier_table_sample(
         table_selection["identifier"].to_list()
     )
 
+    # Organize indices in tables.
+    tables = [
+        table_inclusion,
+        table_tissue,
+        table_selection,
+    ]
+    for table in tables:
+        table.reset_index(
+            level=None,
+            inplace=True,
+            drop=True, # remove index; do not move to regular columns
+        )
+        table.set_index(
+            ["identifier"],
+            append=False,
+            drop=True,
+            inplace=True,
+        )
+        pass
+
     # Collect information.
     pail = dict()
     pail["table_inclusion"] = table_inclusion
@@ -1343,11 +1363,11 @@ def check_coherence_table_sample_table_signal(
     table_sample_extract = table_sample.copy(deep=True)
     table_signal = table_signal.copy(deep=True)
     # Organize indices in table.
-    #table_sample_extract.reset_index(
-    #    level=None,
-    #    inplace=True,
-    #    drop=False, # remove index; do not move to regular columns
-    #)
+    table_sample_extract.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
     # Extract identifiers of samples from each separate table.
     samples_sample = copy.deepcopy(
         table_sample_extract["identifier"].to_list()

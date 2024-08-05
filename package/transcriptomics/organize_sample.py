@@ -1664,14 +1664,14 @@ def execute_procedure(
         pail_write=pail_write_tables,
         path_directory=paths["out_data"],
         reset_index=False,
-        write_index=True,
+        write_index=False,
         type="text",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_data"],
         reset_index=False,
-        write_index=True,
+        write_index=False,
         type="pickle",
     )
     if False:
