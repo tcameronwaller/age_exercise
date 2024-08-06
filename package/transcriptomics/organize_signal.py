@@ -1449,6 +1449,22 @@ def check_coherence_table_sample_table_signal(
 
 
 
+##########
+# Downstream analyses
+
+# differential expression in DESeq2
+# regression analyses in custom models
+
+##########
+# Downstream visualizations
+
+# volcano plots of fold changes
+# Venn diagrams of sets of differentially expressed genes (up or down)
+# heatmaps of gene signals across persons
+# pairwise correlation matrices with hierarchical clustering
+# 
+
+
 
 ###############################################################################
 # Procedure

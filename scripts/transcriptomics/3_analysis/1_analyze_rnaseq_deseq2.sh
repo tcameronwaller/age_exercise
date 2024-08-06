@@ -42,6 +42,7 @@ path_file_source_table_signal="${path_directory_source}/table_signal.tsv"
 path_file_product_table="${path_directory_product}/table_result_deseq2.tsv"
 
 # Scripts.
+#path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
 
 # Executable handles.
@@ -57,12 +58,18 @@ mkdir -p $path_directory_product
 # Organize parameters.
 
 # Parameters.
-threads=5
-report="true"
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error
 #set -v # enable print input to standard error
 set +v # disable print input to standard error
+formula_text="subject,study_clinic_visit" # "subject + study_clinic_visit"
+condition="study_clinic_visit"
+levels_condition="first,second"
+supplement="sex_text"
+levels_supplement="female,male"
+subject="subject"
+threads="5"
+report="true"
 
 
 ###############################################################################
@@ -74,6 +81,12 @@ $path_file_source_table_sample \
 $path_file_source_table_gene \
 $path_file_source_table_signal \
 $path_file_product_table \
+$formula_text \
+$condition \
+$levels_condition \
+$supplement \
+$levels_supplement \
+$subject \
 $threads \
 $report
 
