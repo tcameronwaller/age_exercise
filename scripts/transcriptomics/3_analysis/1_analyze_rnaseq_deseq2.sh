@@ -57,6 +57,11 @@ mkdir -p $path_directory_product
 ###############################################################################
 # Organize parameters.
 
+# fold changes and the formulaic design of analysis:
+# (fold change) = (last level of last factor) / (first level of last factor)
+#... which is synonymous to...")
+# (fold change) = (last level of last factor) vs (first level of last factor)
+
 # Parameters.
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error

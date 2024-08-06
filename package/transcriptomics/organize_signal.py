@@ -1462,7 +1462,7 @@ def check_coherence_table_sample_table_signal(
 # Venn diagrams of sets of differentially expressed genes (up or down)
 # heatmaps of gene signals across persons
 # pairwise correlation matrices with hierarchical clustering
-# 
+#
 
 
 
@@ -1716,6 +1716,101 @@ def control_parallel_instance(
     pass
 
 
+def collect_scrap_parallel_instances_for_analysis_sets(
+):
+    """
+    Collect scrap parallel instances for analysis sets.
+
+    arguments:
+
+    raises:
+
+    returns:
+
+    """
+
+    # Collect parameters specific to each instance.
+    # tissue: adipose
+    instances = [
+        {
+            "name_set": str(
+                "adipose_elder-visit-second_intervention"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "study_clinic_visit": ["second",],
+            },
+            "factor_availability": {
+                "intervention_text": ["placebo", "active",],
+            },
+        },
+        {
+            "name_set": str(
+                "adipose_elder-active_visit"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "intervention_text": ["active",],
+            },
+            "factor_availability": {
+                "study_clinic_visit": ["first", "second",],
+            },
+        },
+    ]
+    # tissue: muscle
+    instances = [
+        {
+            "name_set": str(
+                "muscle_exercise-0hr_age"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "exercise_time_point": ["0_hour",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+            },
+        },
+        {
+            "name_set": str(
+                "muscle_younger_exercise"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["younger",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+        {
+            "name_set": str(
+                "muscle_elder_exercise"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["elder",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+    ]
+    pass
+
+
 def control_parallel_instances(
     project=None,
     routine=None,
@@ -1755,32 +1850,44 @@ def control_parallel_instances(
     instances = [
         {
             "name_set": str(
-                "adipose_elder-visit-second_intervention"
+                "muscle_exercise-0hr_age"
             ),
-            "tissue": "adipose",
+            "tissue": "muscle",
             "cohort_selection": {
                 "inclusion": [1,],
-                "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "study_clinic_visit": ["second",],
+                "tissue": ["muscle",],
+                "exercise_time_point": ["0_hour",],
             },
             "factor_availability": {
-                "intervention_text": ["placebo", "active",],
+                "cohort_age_text": ["younger", "elder",],
             },
         },
         {
             "name_set": str(
-                "adipose_elder-active_visit"
+                "muscle_younger_exercise"
             ),
-            "tissue": "adipose",
+            "tissue": "muscle",
             "cohort_selection": {
                 "inclusion": [1,],
-                "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "intervention_text": ["active",],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["younger",],
             },
             "factor_availability": {
-                "study_clinic_visit": ["first", "second",],
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+        {
+            "name_set": str(
+                "muscle_elder_exercise"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["elder",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
             },
         },
     ]
