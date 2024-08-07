@@ -101,7 +101,7 @@ do
     echo "----------"
   fi
   # Execute procedure for current record's parameters.
-  if [ $raw_inclusion == "1" ]; then
+  if [ "$raw_inclusion" == "1" ]; then
 
     ##########
     # Organize paths for current instance.
