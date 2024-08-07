@@ -84,7 +84,7 @@ do
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
-    echo "----------"
+    echo "--------------------------------------------------"
     echo "field 0, inclusion: ${raw_inclusion}"
     echo "field 1, name_set: ${raw_name_set}"
     echo "field 2, tissue: ${raw_tissue}"
@@ -117,9 +117,19 @@ do
     rm -r $path_directory_product # caution
     mkdir -p $path_directory_product
 
+    # Report.
+    if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
+      echo "----------"
+      echo "path_file_source_table_sample: $path_file_source_table_sample"
+      echo "path_file_source_table_gene: $path_file_source_table_gene"
+      echo "path_file_source_table_signal: $path_file_source_table_signal"
+      echo "path_file_product_table: $path_file_product_table"
+      echo "--------------------------------------------------"
+    fi
+
     ##########
     # Execute program script in R.
-    if false; then
+    if true; then
       $path_execution_r $path_script_deseq2 \
       $path_file_source_table_sample \
       $path_file_source_table_gene \
