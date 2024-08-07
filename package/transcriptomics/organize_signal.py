@@ -1864,7 +1864,7 @@ def control_parallel_instances(
         },
         {
             "name_set": str(
-                "muscle_younger_exercise"
+                "muscle_younger_exercise-3hr"
             ),
             "tissue": "muscle",
             "cohort_selection": {
@@ -1878,7 +1878,7 @@ def control_parallel_instances(
         },
         {
             "name_set": str(
-                "muscle_elder_exercise"
+                "muscle_elder_exercise-3hr"
             ),
             "tissue": "muscle",
             "cohort_selection": {
