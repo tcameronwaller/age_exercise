@@ -260,7 +260,7 @@ def read_source(
     integer variable types.
 
     arguments:
-        paths : (dict<str>): collection of paths to directories for procedure's
+        paths (dict<str>): collection of paths to directories for procedure's
             files
         report (bool): whether to print reports
 

@@ -48,6 +48,7 @@ import textwrap
 
 import exercise.transcriptomics.organize_sample
 import exercise.transcriptomics.organize_signal
+import exercise.transcriptomics.select_gene_sets
 import exercise.proteomics.organization
 
 #dir()
@@ -212,7 +213,15 @@ def define_subparser_transcriptomics(
             "Organize information about signals."
         )
     )
-
+    parser_routine.add_argument(
+        "-select_gene_sets",
+        "--select_gene_sets",
+        dest="select_gene_sets",
+        action="store_true",
+        help=(
+            "Analyze information about genes with differential expression."
+        )
+    )
 
     # Define behavior.
     parser_routine.set_defaults(func=evaluate_parameters_transcriptomics)
@@ -324,6 +333,16 @@ def evaluate_parameters_transcriptomics(arguments):
         )
         # Execute procedure.
         exercise.transcriptomics.organize_signal.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+    if arguments.select_gene_sets:
+        # Report status.
+        print(
+           "... executing exercise.transcriptomics.select_gene_sets " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        exercise.transcriptomics.select_gene_sets.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 

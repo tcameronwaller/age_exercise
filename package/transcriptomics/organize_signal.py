@@ -1,7 +1,7 @@
 """
 Supply functionality for process and analysis of data from transcriptomics.
 
-This module 'organize_sample' is part of the 'transcriptomics' package within
+This module 'organize_signal' is part of the 'transcriptomics' package within
 the 'exercise' package.
 
 Author:
@@ -362,8 +362,8 @@ def define_column_types_table_main():
 
 
 def read_source(
-    paths=None,
     tissue=None,
+    paths=None,
     report=None,
 ):
     """
@@ -373,10 +373,10 @@ def read_source(
     integer variable types.
 
     arguments:
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
         paths : (dict<str>): collection of paths to directories for procedure's
             files
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
         report (bool): whether to print reports
 
     raises:
@@ -432,7 +432,7 @@ def read_source(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: read_source()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -586,7 +586,7 @@ def select_sets_identifier_table_sample(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: select_sets_identifier_table_sample()")
         print("name_set: " + str(name_set))
         print("tissue: " + tissue)
@@ -639,7 +639,8 @@ def define_column_sequence_table_main_gene():
     raises:
 
     returns:
-        (list<str>): variable types of columns within table
+        (list<str>): names of columns in sequence by which to filter and sort
+            columns in table
 
     """
 
@@ -731,7 +732,7 @@ def organize_table_main(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: organize_table_main()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -1006,7 +1007,7 @@ def filter_table_main_rows_signal(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: filter_table_main_rows_signal()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -1162,7 +1163,7 @@ def filter_table_main(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: filter_table_main()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -1287,7 +1288,7 @@ def separate_table_main_columns(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: separate_table_main_columns()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -1402,7 +1403,7 @@ def check_coherence_table_sample_table_signal(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organization.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: check_coherence_table_sample_table_signal()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
