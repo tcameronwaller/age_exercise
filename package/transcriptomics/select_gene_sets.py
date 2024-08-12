@@ -1,7 +1,7 @@
 """
 Supply functionality for process and analysis of data from transcriptomics.
 
-This module 'analyze_de_genes' is part of the 'transcriptomics' package within
+This module 'select_gene_sets' is part of the 'transcriptomics' package within
 the 'exercise' package.
 
 Author:
@@ -143,7 +143,7 @@ def preinitialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.analyze_de_genes.py")
+        print("module: exercise.transcriptomics.select_gene_sets.py")
         print("function: preinitialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -249,7 +249,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.analyze_de_genes.py")
+        print("module: exercise.transcriptomics.select_gene_sets.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -353,13 +353,10 @@ def read_source(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.analyze_de_genes.py")
+        print("module: exercise.transcriptomics.select_gene_sets.py")
         print("function: read_source()")
         print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("deseq2 table: ")
-        print(pail["table_deseq2"])
-        putly.print_terminal_partition(level=5)
+        putly.print_terminal_partition(level=4)
         count_rows = (pail["table_deseq2"].shape[0])
         count_columns = (pail["table_deseq2"].shape[1])
         print("deseq2 table: ")
@@ -395,14 +392,15 @@ def define_column_sequence_table_change_deseq2():
     columns_sequence = [
         "identifier_gene",
         #"baseMean",
-        "log2FoldChange",
-        "lfcSE",
+        "fold_change_log2",
+        "fold_change_log2_standard_error",
         #"stat",
-        "pvalue",
-        "padj",
+        "p_value",
+        "p_value_negative_log10",
+        "q_value",
+        "q_value_negative_log10",
         "gene_identifier",
         "gene_name",
-        #"gene_exon_number",
         "gene_type",
         "gene_chromosome",
     ]
@@ -411,7 +409,7 @@ def define_column_sequence_table_change_deseq2():
 
 
 def organize_table_change_deseq2(
-    table_change=None,
+    table=None,
     columns_sequence=None,
     tissue=None,
     name_set=None,
@@ -421,10 +419,8 @@ def organize_table_change_deseq2(
     Organizes information in table about differential expression of genes.
 
     arguments:
-        table_change (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
+        table (object): Pandas data-frame table of information about genes
+            that demonstrate differential expression
         columns_sequence (list<str>): names of columns in sequence by which to
             filter and sort columns in table
         tissue (list<str>): name of tissue that distinguishes study design and
@@ -441,68 +437,190 @@ def organize_table_change_deseq2(
     """
 
     # Copy information in table.
-    table_main = table_main.copy(deep=True)
+    table_change = table.copy(deep=True)
     # Copy other information.
-    columns_gene = copy.deepcopy(columns_gene)
-    samples = copy.deepcopy(samples)
+    columns_sequence = copy.deepcopy(columns_sequence)
 
     # Translate names of columns.
     translations = dict()
-    translations["gene_id"] = "gene_identifier"
-    translations["exon_number"] = "gene_exon_number"
-    translations["chromosome"] = "gene_chromosome"
-    table_main.rename(
+    translations["log2FoldChange"] = "fold_change_log2"
+    translations["lfcSE"] = "fold_change_log2_standard_error"
+    translations["pvalue"] = "p_value"
+    translations["padj"] = "q_value"
+    table_change.rename(
         columns=translations,
         inplace=True,
     )
-    # Replace values of zero for signal intensity with missing values.
-    # Only replace values within table's columns for samples.
-    # This implementation is more concise than iteration across specific
-    # columns.
-    # This operation is inaccurate for quantification of RNA sequence read
-    # data. In this case, it might even be more reasonable to replace missing
-    # values with values of zero.
-    #table_main[samples] = table_main[samples].replace(
-    #    to_replace=0,
-    #    value=pandas.NA,
+
+    # Filter rows in table for selection of non-missing values for fold change.
+    table_change = table_change.loc[
+        (
+            (pandas.notna(table_change["fold_change_log2"])) &
+            (pandas.notna(table_change["fold_change_log2_standard_error"])) &
+            (pandas.notna(table_change["p_value"])) &
+            (pandas.notna(table_change["q_value"]))
+        ), :
+    ]
+
+    # Calculate the negative, base-ten logarithm of the p-value for
+    # differential expression of each gene.
+    #table_change["p_value_negative_log10"] = numpy.log10(
+    #    table_change["p_value"]
     #)
-    # Replace values less than zero with missing values.
-    table_main[samples][table_main[samples] < 0] = pandas.NA
+    table_change["p_value_negative_log10"] = table_change.apply(
+        lambda row: (-1*math.log(row["p_value"], 10)),
+        axis="columns", # apply function to each row
+    )
+    table_change["q_value_negative_log10"] = table_change.apply(
+        lambda row: (-1*math.log(row["q_value"], 10)),
+        axis="columns", # apply function to each row
+    )
 
     # Filter and sort columns within table.
-    columns_sequence = copy.deepcopy(columns_gene)
-    columns_sequence.extend(samples)
-    table_main = porg.filter_sort_table_columns(
-        table=table_main,
+    table_change = porg.filter_sort_table_columns(
+        table=table_change,
         columns_sequence=columns_sequence,
         report=report,
     )
 
     # Collect information.
     pail = dict()
-    pail["table_main"] = table_main
+    pail["table_change"] = table_change
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_signal.py")
-        print("function: organize_table_main()")
+        print("function: organize_table_change_deseq2()")
+        putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("main table: ")
-        print(table_main.iloc[0:10, 0:])
-        putly.print_terminal_partition(level=5)
-        print("description of categorical gene type:")
-        print(table_main["gene_type"].describe(include=["category",]))
-        putly.print_terminal_partition(level=5)
-        print(
-            "counts of genes with each unique categorical value of "
-            + "gene type:")
-        print(table_main["gene_type"].value_counts(dropna=False))
+        print("name_set: " + name_set)
+        putly.print_terminal_partition(level=4)
+        count_rows = (pail["table_change"].shape[0])
+        count_columns = (pail["table_change"].shape[1])
+        print("table of genes with differential expression: ")
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        print(pail["table_change"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
     return pail
 
+
+##########
+# 4. Select sets of genes with differential expression.
+
+
+#    pail_selection = select_sets_differential_expression_gene(
+#        table=pail_organization["table_change"],
+#        threshold_p=float(3.0), # negative base ten logarithm
+#        threshold_fold_change=math.log(float(1.5), 2), # base two logarithm
+#        column_p="p_value_negative_log10",
+#        column_change="fold_change_log2",
+#        tissue=tissue,
+#        name_set=name_set,
+#        report=report,
+#    )
+
+
+def select_sets_differential_expression_gene(
+    table=None,
+    threshold_p=None,
+    threshold_fold_change=None,
+    column_p=None,
+    column_change=None,
+    tissue=None,
+    name_set=None,
+    report=None,
+):
+    """
+    Selects sets of genes applying filters at specific thresholds on their
+    statistics for differential expression.
+
+    arguments:
+        table (object): Pandas data-frame table of information about genes
+            that demonstrate differential expression
+        threshold_p (float): value for threshold on p-values of differential
+            expression on a scale of negative base-ten logarithm
+        threshold_fold_change (float): value for threshold on fold change of
+            differential expression on a scale of base-two logarithm
+        column_p (str): name of column on which to apply the threshold for
+            p-value
+        column_change (str): name of column on which to apply the threshold for
+            fold change
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        name_set (str): name for set of samples and parameters in the
+            analysis of differential expression
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+
+    # Filter rows in table for selection of sets of genes that demonstrate
+    # specific characteristics of differential expression.
+    table_threshold = table.loc[
+        (
+            (table[column_p] > threshold_p) &
+            (abs(table[column_change]) > threshold_fold_change)
+        ), :
+    ].copy(deep=True)
+    table_threshold_up = table.loc[
+        (
+            (table[column_p] > threshold_p) &
+            (table[column_change] > threshold_fold_change)
+        ), :
+    ].copy(deep=True)
+    table_threshold_down = table.loc[
+        (
+            (table[column_p] > threshold_p) &
+            (table[column_change] < (-1*threshold_fold_change))
+        ), :
+    ].copy(deep=True)
+
+    # Extract identifiers genes with differential expression beyond thresholds.
+    genes_threshold = copy.deepcopy(
+        table_threshold["gene_identifier"].to_list()
+    )
+    genes_up = copy.deepcopy(
+        table_threshold_up["gene_identifier"].to_list()
+    )
+    genes_down = copy.deepcopy(
+        table_threshold_down["gene_identifier"].to_list()
+    )
+
+    # Collect information.
+    pail = dict()
+    pail["genes_threshold"] = genes_threshold
+    pail["genes_up"] = genes_up
+    pail["genes_down"] = genes_down
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: select_sets_differential_expression_gene()")
+        putly.print_terminal_partition(level=5)
+        print("tissue: " + tissue)
+        print("name_set: " + name_set)
+        putly.print_terminal_partition(level=4)
+        count_both = (len(pail["genes_threshold"]))
+        count_up = (len(pail["genes_up"]))
+        count_down = (len(pail["genes_down"]))
+        print("count of genes beyond thresholds: " + str(count_both))
+        print("count of those with positive change: " + str(count_up))
+        print("count of those with negative change: " + str(count_down))
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
 
 
 
@@ -514,8 +632,6 @@ def organize_table_change_deseq2(
 #    - maybe the volcano plot could look normal, except that the genes that pass
 #    - filter by 95% CI could be the ones that I actually highlight in orange
 # 2.
-
-
 
 
 ##########
@@ -594,14 +710,29 @@ def control_branch_procedure(
     ##########
     # 3. Organize from source the information about differential expression of
     #    genes.
-    columns_gene = define_column_sequence_table_change_deseq2()
+    columns_sequence = define_column_sequence_table_change_deseq2()
     pail_organization = organize_table_change_deseq2(
-        table_change=pail_source["table_deseq2"],
+        table=pail_source["table_deseq2"],
         columns_sequence=columns_sequence,
         tissue=tissue,
         name_set=name_set,
         report=report,
     )
+    #pail_organization["table_change"]
+
+    ##########
+    # 4. Select sets of genes with differential expression.
+    pail_selection = select_sets_differential_expression_gene(
+        table=pail_organization["table_change"],
+        threshold_p=float(2.0), # negative base ten logarithm
+        threshold_fold_change=math.log(float(1.5), 2), # base two logarithm
+        column_p="q_value_negative_log10",
+        column_change="fold_change_log2",
+        tissue=tissue,
+        name_set=name_set,
+        report=report,
+    )
+
 
 
 
@@ -896,14 +1027,14 @@ def execute_procedure(
     # Parameters.
     project="exercise"
     routine="transcriptomics"
-    procedure="analyze_de_genes"
+    procedure="select_gene_sets"
     report = True
 
     ##########
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.analyze_de_genes.py")
+        print("module: exercise.transcriptomics.select_gene_sets.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
