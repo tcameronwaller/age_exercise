@@ -1865,6 +1865,20 @@ def control_parallel_instances(
         },
         {
             "name_set": str(
+                "muscle_all_age-exercise-3hr"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+        {
+            "name_set": str(
                 "muscle_younger_exercise-3hr"
             ),
             "tissue": "muscle",

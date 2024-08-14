@@ -223,16 +223,17 @@ def initialize_directories(
     paths["out_data"] = os.path.join(
         paths["out_set"], "data",
     )
-    #paths["out_plot"] = os.path.join(
-    #    paths["out_set"], "plot",
-    #)
+    paths["out_plot"] = os.path.join(
+        paths["out_set"], "plot",
+    )
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
         #paths["out_routine"],
-        paths["out_procedure"], # omit to avoid conflict in parallel branches
+        #paths["out_procedure"], # omit to avoid conflict in parallel branches
         paths["out_set"],
         paths["out_data"],
+        paths["out_plot"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
@@ -286,8 +287,8 @@ def define_column_types_table_deseq2():
     types_columns["log2FoldChange"] = "float32"
     types_columns["lfcSE"] = "float32"
     types_columns["stat"] = "float32"
-    types_columns["pvalue"] = "float32"
-    types_columns["padj"] = "float32"
+    types_columns["pvalue"] = "float64"
+    types_columns["padj"] = "float64"
     types_columns["gene_identifier"] = "string"
     types_columns["gene_name"] = "string"
     types_columns["gene_type"] = "string"
@@ -396,8 +397,10 @@ def define_column_sequence_table_change_deseq2():
         "fold_change_log2_standard_error",
         #"stat",
         "p_value",
+        "p_value_threshold",
         "p_value_negative_log10",
         "q_value",
+        "q_value_threshold",
         "q_value_negative_log10",
         "gene_identifier",
         "gene_name",
@@ -452,13 +455,46 @@ def organize_table_change_deseq2(
         inplace=True,
     )
 
+    # Replace values of zero for p-value and q-value with reasonable
+    # approximation of precision.
+    # Set threshold on very small values of p-value and q-value.
+    # DESeq2 returns values of zero for p-value and q-value when the actual
+    # value is smaller than a threshold of approximately 1E-250.
+    #table_change["p_value_fill"] = table_change["p_value"].replace(
+    #    to_replace=0.0,
+    #    value=1E-250,
+    #)
+    #table_change["q_value_fill"] = table_change["q_value"].replace(
+    #    to_replace=0.0,
+    #    value=1E-250,
+    #)
+    table_change = table_change.loc[
+        (
+            (pandas.notna(table_change["p_value"])) &
+            (pandas.notna(table_change["q_value"])) &
+            (table_change["p_value"] >= float(0)) &
+            (table_change["q_value"] >= float(0))
+        ), :
+    ]
+    table_change["p_value_threshold"] = table_change.apply(
+        lambda row:
+            1E-250 if (float(row["p_value"]) < 1E-250) else row["p_value"],
+        axis="columns", # apply function to each row
+    )
+    table_change["q_value_threshold"] = table_change.apply(
+        lambda row:
+            1E-250 if (float(row["q_value"]) < 1E-250) else row["q_value"],
+        axis="columns", # apply function to each row
+    )
     # Filter rows in table for selection of non-missing values for fold change.
     table_change = table_change.loc[
         (
             (pandas.notna(table_change["fold_change_log2"])) &
             (pandas.notna(table_change["fold_change_log2_standard_error"])) &
-            (pandas.notna(table_change["p_value"])) &
-            (pandas.notna(table_change["q_value"]))
+            (pandas.notna(table_change["p_value_threshold"])) &
+            (pandas.notna(table_change["q_value_threshold"])) &
+            (table_change["p_value_threshold"] > float(0)) &
+            (table_change["q_value_threshold"] > float(0))
         ), :
     ]
 
@@ -468,11 +504,11 @@ def organize_table_change_deseq2(
     #    table_change["p_value"]
     #)
     table_change["p_value_negative_log10"] = table_change.apply(
-        lambda row: (-1*math.log(row["p_value"], 10)),
+        lambda row: (-1*math.log(row["p_value_threshold"], 10)),
         axis="columns", # apply function to each row
     )
     table_change["q_value_negative_log10"] = table_change.apply(
-        lambda row: (-1*math.log(row["q_value"], 10)),
+        lambda row: (-1*math.log(row["q_value_threshold"], 10)),
         axis="columns", # apply function to each row
     )
 
@@ -511,24 +547,14 @@ def organize_table_change_deseq2(
 # 4. Select sets of genes with differential expression.
 
 
-#    pail_selection = select_sets_differential_expression_gene(
-#        table=pail_organization["table_change"],
-#        threshold_p=float(3.0), # negative base ten logarithm
-#        threshold_fold_change=math.log(float(1.5), 2), # base two logarithm
-#        column_p="p_value_negative_log10",
-#        column_change="fold_change_log2",
-#        tissue=tissue,
-#        name_set=name_set,
-#        report=report,
-#    )
-
-
 def select_sets_differential_expression_gene(
     table=None,
-    threshold_p=None,
-    threshold_fold_change=None,
+    column_identifier=None,
+    column_name=None,
+    column_fold=None,
     column_p=None,
-    column_change=None,
+    threshold_fold=None,
+    threshold_p=None,
     tissue=None,
     name_set=None,
     report=None,
@@ -540,14 +566,21 @@ def select_sets_differential_expression_gene(
     arguments:
         table (object): Pandas data-frame table of information about genes
             that demonstrate differential expression
-        threshold_p (float): value for threshold on p-values of differential
-            expression on a scale of negative base-ten logarithm
-        threshold_fold_change (float): value for threshold on fold change of
-            differential expression on a scale of base-two logarithm
-        column_p (str): name of column on which to apply the threshold for
-            p-value
-        column_change (str): name of column on which to apply the threshold for
-            fold change
+        column_identifier (str): name of column in table for the unique
+            identifier corresponding to the fold change
+        column_name (str): name of column in table for the name corresponding
+            to the fold change
+        column_fold (str): name of column in table on which to apply the
+            threshold for the fold change
+        column_p (str): name of column in table on which to apply the threshold
+            for the p-value or q-value corresponding to the fold change
+            estimate
+        threshold_fold (float): value for threshold on fold change
+            (fold change > threshold) that is on the same scale, such as
+            base-two logarithm, as the actual values themselves
+        threshold_p (float): value for threshold on p-values or q-values
+            (p-value > threshold) that is on the same scale, such as negative
+            base-ten logarithm, as the actual values themselves
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         name_set (str): name for set of samples and parameters in the
@@ -564,37 +597,25 @@ def select_sets_differential_expression_gene(
     # Copy information in table.
     table = table.copy(deep=True)
 
-
     # Filter rows in table for selection of sets of genes that demonstrate
     # specific characteristics of differential expression.
-    table_threshold = table.loc[
-        (
-            (table[column_p] > threshold_p) &
-            (abs(table[column_change]) > threshold_fold_change)
-        ), :
-    ].copy(deep=True)
-    table_threshold_up = table.loc[
-        (
-            (table[column_p] > threshold_p) &
-            (table[column_change] > threshold_fold_change)
-        ), :
-    ].copy(deep=True)
-    table_threshold_down = table.loc[
-        (
-            (table[column_p] > threshold_p) &
-            (table[column_change] < (-1*threshold_fold_change))
-        ), :
-    ].copy(deep=True)
-
+    pail_threshold = porg.segregate_fold_change_values_by_thresholds(
+        table=table,
+        column_fold=column_fold,
+        column_p=column_p,
+        threshold_fold=threshold_fold,
+        threshold_p=threshold_p,
+        report=False,
+    )
     # Extract identifiers genes with differential expression beyond thresholds.
     genes_threshold = copy.deepcopy(
-        table_threshold["gene_identifier"].to_list()
+        pail_threshold["table_pass_any"][column_identifier].to_list()
     )
     genes_up = copy.deepcopy(
-        table_threshold_up["gene_identifier"].to_list()
+        pail_threshold["table_pass_up"][column_identifier].to_list()
     )
     genes_down = copy.deepcopy(
-        table_threshold_down["gene_identifier"].to_list()
+        pail_threshold["table_pass_down"][column_identifier].to_list()
     )
 
     # Collect information.
@@ -621,6 +642,118 @@ def select_sets_differential_expression_gene(
         pass
     # Return information.
     return pail
+
+
+##########
+# 5. Create chart to represent fold changes and write to file.
+
+
+def create_write_chart_fold_change(
+    table=None,
+    column_identifier=None,
+    column_name=None,
+    column_fold=None,
+    column_p=None,
+    threshold_fold=None,
+    threshold_p=None,
+    tissue=None,
+    name_set=None,
+    paths=None,
+    report=None,
+):
+    """
+    Create chart representation of fold change and write to file.
+
+    arguments:
+        table (object): Pandas data-frame table of information about genes
+            that demonstrate differential expression
+        column_identifier (str): name of column in table for the unique
+            identifier corresponding to the fold change
+        column_name (str): name of column in table for the name corresponding
+            to the fold change
+        column_fold (str): name of column in table on which to apply the
+            threshold for the fold change
+        column_p (str): name of column in table on which to apply the threshold
+            for the p-value or q-value corresponding to the fold change
+            estimate
+        threshold_fold (float): value for threshold on fold change
+            (fold change > threshold) that is on the same scale, such as
+            base-two logarithm, as the actual values themselves
+        threshold_p (float): value for threshold on p-values or q-values
+            (p-value > threshold) that is on the same scale, such as negative
+            base-ten logarithm, as the actual values themselves
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        name_set (str): name for set of samples and parameters in the
+            analysis of differential expression
+        paths : (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    # Organize parameters.
+    name_figure = name_set
+    path_directory = paths["out_plot"]
+
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Create figure.
+    figure = pplot.plot_scatter_fold_change_volcano(
+        table=table,
+        column_identifier=column_identifier,
+        column_name=column_name,
+        column_fold=column_fold,
+        column_p=column_p,
+        threshold_fold=threshold_fold, # base two logarithm
+        threshold_p=threshold_p, # negative base ten logarithm
+        identifiers_emphasis=[
+            "ENSG00000119508.18", # gene name: NR4A3
+        ],
+        emphasis_label=True,
+        count_label=True,
+        minimum_abscissa=(
+            (numpy.nanmin(table[column_fold].to_numpy())) - 0.5
+        ),
+        maximum_abscissa=(
+            (numpy.nanmax(table[column_fold].to_numpy())) + 0.5
+        ),
+        minimum_ordinate=-0.1,
+        maximum_ordinate=(
+            (numpy.nanmax(table[column_p].to_numpy())) + 1
+        ),
+        title_abscissa="log2(Fold Change)",
+        title_ordinate="-1*log10(BH FDR q-value)",
+        size_title_abscissa="eight", # ten
+        size_title_ordinate="eight", # ten
+        size_label_abscissa="twelve", # multi-panel: ten; individual: twelve
+        size_label_ordinate="twelve", # multi-panel: ten; individual: twelve
+        size_label_emphasis="twelve",
+        size_label_count="twelve",
+        aspect="landscape", # square, portrait, landscape, ...
+        fonts=fonts,
+        colors=colors,
+        report=report,
+    )
+    # Write figure to file.
+    pplot.write_product_plot_figure(
+        figure=figure,
+        format="jpg", # jpg, png, svg
+        resolution=300,
+        name_file=name_figure,
+        path_directory=path_directory,
+    )
+    # Return information.
+    return figure
+
+
 
 
 
@@ -724,50 +857,54 @@ def control_branch_procedure(
     # 4. Select sets of genes with differential expression.
     pail_selection = select_sets_differential_expression_gene(
         table=pail_organization["table_change"],
-        threshold_p=float(2.0), # negative base ten logarithm
-        threshold_fold_change=math.log(float(1.5), 2), # base two logarithm
+        column_identifier="gene_identifier",
+        column_name="gene_name",
+        column_fold="fold_change_log2",
         column_p="q_value_negative_log10",
-        column_change="fold_change_log2",
+        threshold_fold=math.log(float(1.7), 2), # base two logarithm
+        threshold_p=float(2.0), # negative base ten logarithm
         tissue=tissue,
         name_set=name_set,
         report=report,
     )
 
+    ##########
+    # 5. Create chart to represent fold changes and write to file.
+    create_write_chart_fold_change(
+        table=pail_organization["table_change"],
+        column_identifier="gene_identifier",
+        column_name="gene_name",
+        column_fold="fold_change_log2",
+        column_p="q_value_negative_log10",
+        threshold_fold=math.log(float(1.7), 2), # base two logarithm
+        threshold_p=float(2.0), # negative base ten logarithm
+        tissue=tissue,
+        name_set=name_set,
+        paths=paths,
+        report=report,
+    )
 
 
-
-    if False:
-        ##########
-        # Collect information.
-        # Collections of files.
-        pail_write_data = dict()
-        pail_write_data[str("table_sample")] = (
-            pail_sample["table_selection"]
-        )
-        pail_write_data[str("table_gene")] = (
-            pail_separate["table_gene"]
-        )
-        pail_write_data[str("table_signal")] = (
-            pail_separate["table_signal"]
-        )
-
-        ##########
-        # Write product information to file.
-        putly.write_tables_to_file(
-            pail_write=pail_write_data,
-            path_directory=paths["out_data"],
-            reset_index=False,
-            write_index=True,
-            type="text",
-        )
-        putly.write_tables_to_file(
-            pail_write=pail_write_data,
-            path_directory=paths["out_data"],
-            reset_index=False,
-            write_index=True,
-            type="pickle",
-        )
-        pass
+    ##########
+    # Collect information.
+    # Collections of files.
+    #pail_write_tables = dict()
+    pail_write_lists = dict()
+    pail_write_lists[str("genes_threshold")] = (
+        pail_selection["genes_threshold"]
+    )
+    pail_write_lists[str("genes_up")] = (
+        pail_selection["genes_up"]
+    )
+    pail_write_lists[str("genes_down")] = (
+        pail_selection["genes_down"]
+    )
+    ##########
+    # Write product information to file.
+    putly.write_lists_to_file_text(
+        pail_write=pail_write_lists,
+        path_directory=paths["out_data"],
+    )
     pass
 
 
@@ -971,6 +1108,12 @@ def control_parallel_instances(
         },
         {
             "name_set": str(
+                "muscle_all_age-exercise-3hr"
+            ),
+            "tissue": "muscle",
+        },
+        {
+            "name_set": str(
                 "muscle_younger_exercise-3hr"
             ),
             "tissue": "muscle",
@@ -997,7 +1140,7 @@ def control_parallel_instances(
     else:
         # Execute procedure directly for testing.
         control_parallel_instance(
-            instance=instances[0],
+            instance=instances[1],
             parameters=parameters,
         )
     pass
