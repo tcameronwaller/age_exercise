@@ -34,7 +34,8 @@ path_directory_dock="$path_directory_process/dock"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private/exercise/transcriptomics"
 
 # Files.
-path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
+#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
+path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_test_temp.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
@@ -76,11 +77,13 @@ do
   raw_formula_text="${array[5]}"
   raw_condition="${array[6]}"
   raw_levels_condition="${array[7]}"
-  raw_supplement="${array[8]}"
-  raw_levels_supplement="${array[9]}"
-  raw_subject="${array[10]}"
-  raw_threshold_significance="${array[11]}"
-  raw_note="${array[12]}"
+  raw_supplement_1="${array[8]}"
+  raw_levels_supplement_1="${array[9]}"
+  raw_supplement_2="${array[10]}"
+  raw_levels_supplement_2="${array[11]}"
+  raw_subject="${array[12]}"
+  raw_threshold_significance="${array[13]}"
+  raw_note="${array[14]}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
@@ -93,11 +96,13 @@ do
     echo "field 5, formula_text: ${raw_formula_text}"
     echo "field 6, condition: ${raw_condition}"
     echo "field 7, levels_condition: ${raw_levels_condition}"
-    echo "field 8, supplement: ${raw_supplement}"
-    echo "field 9, levels_supplement: ${raw_levels_supplement}"
-    echo "field 10, subject: ${raw_subject}"
-    echo "field 11, threshold_significance: ${raw_threshold_significance}"
-    echo "field 12, note: ${raw_note}"
+    echo "field 8, supplement_1: ${raw_supplement_1}"
+    echo "field 9, levels_supplement_1: ${raw_levels_supplement_1}"
+    echo "field 10, supplement_2: ${raw_supplement_2}"
+    echo "field 11, levels_supplement_2: ${raw_levels_supplement_2}"
+    echo "field 12, subject: ${raw_subject}"
+    echo "field 13, threshold_significance: ${raw_threshold_significance}"
+    echo "field 14, note: ${raw_note}"
     echo "----------"
   fi
   # Execute procedure for current record's parameters.
@@ -138,8 +143,10 @@ do
       $raw_formula_text \
       $raw_condition \
       $raw_levels_condition \
-      $raw_supplement \
-      $raw_levels_supplement \
+      $raw_supplement_1 \
+      $raw_levels_supplement_1 \
+      $raw_supplement_2 \
+      $raw_levels_supplement_2 \
       $raw_subject \
       $raw_threshold_significance \
       $threads \

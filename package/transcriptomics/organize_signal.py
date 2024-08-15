@@ -111,6 +111,15 @@ def preinitialize_directories(
     paths = dict()
     # Define paths to directories.
     paths["dock"] = path_directory_dock
+    paths["in_data"] = os.path.join(
+        paths["dock"], "in_data", str(project), str(routine),
+    )
+    paths["in_parameters"] = os.path.join(
+        paths["dock"], "in_parameters", str(project), str(routine),
+    )
+    paths["in_parameters_private"] = os.path.join(
+        paths["dock"], "in_parameters_private", str(project), str(routine),
+    )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
@@ -260,6 +269,145 @@ def initialize_directories(
 
 ##########
 # 2. Read source information from file.
+
+# define_column_types_table_parameter_instances
+
+
+def define_column_types_table_parameter_instances():
+    """
+    Defines the variable types of columns within table for attributes of
+    samples.
+
+    Review: TCW; 14 August 2024
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): variable types of columns within table
+
+    """
+
+    # Specify variable types of columns within table.
+    types_columns = dict()
+    types_columns["inclusion"] = "int32"
+    types_columns["name_set"] = "string"
+    types_columns["tissue"] = "string"
+    types_columns["cohort_selection"] = "string"
+    types_columns["factor_availability"] = "string"
+    types_columns["formula_text"] = "string"
+    types_columns["condition"] = "string"
+    types_columns["levels_condition"] = "string"
+    types_columns["supplement_1"] = "string"
+    types_columns["levels_supplement_1"] = "string"
+    types_columns["supplement_2"] = "string"
+    types_columns["levels_supplement_2"] = "string"
+    types_columns["subject"] = "string"
+    types_columns["threshold_significance"] = "string"
+    types_columns["note"] = "string"
+    # Return information.
+    return types_columns
+
+
+def read_organize_source_parameter_instances(
+    paths=None,
+    report=None,
+):
+    """
+    Reads and organizes source information from file.
+
+    Notice that Pandas does not accommodate missing values within series of
+    integer variable types.
+
+    arguments:
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        paths : (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of source information read from file
+
+    """
+
+    # Define paths to parent directories.
+    #paths["in_data"]
+    #paths["in_parameters"]
+    #paths["in_parameters_private"]
+
+    # Define paths to child files.
+    path_file_table_parameter = os.path.join(
+        paths["in_parameters_private"],
+        "table_set_differential_expression.tsv",
+    )
+
+    # Read information from file.
+
+    # Table of parameters for parallel instances.
+    types_columns = define_column_types_table_parameter_instances()
+    table = pandas.read_csv(
+        path_file_table_parameter,
+        sep="\t",
+        header=0,
+        dtype=types_columns,
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
+        encoding="utf-8",
+    )
+
+    # Extract information from complex fields.
+    table["cohort_selection_1"] = table.apply(
+        lambda row:
+            str(row["cohort_selection"]).strip().split(";")[0],
+        axis="columns", # apply function to each row
+    )
+
+    # Collect information.
+    instances = list()
+    for index, row in table.iterrows():
+        if (row["inclusion"]):
+            pail = dict()
+            pail["name_set"] = str(row["name_set"])
+            pail["tissue"] = str(row["tissue"])
+            pail["cohort_selection"] = dict()
+            for part in row["cohort_selection"].strip().split(";"):
+                part_split = part.split(":")
+                pail["cohort_selection"][part_split[0]] = (
+                    part_split[1].split(",")
+                )
+                pass
+            pail["factor_availability"] = dict()
+            for part in row["factor_availability"].strip().split(";"):
+                part_split = part.split(":")
+                pail["factor_availability"][part_split[0]] = (
+                    part_split[1].split(",")
+                )
+                pass
+            instances.append(pail)
+            pass
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: read_organize_source_parameter_instances()")
+        putly.print_terminal_partition(level=5)
+        print("parameter table:")
+        print(table)
+        putly.print_terminal_partition(level=5)
+        print("instances:")
+        print(instances)
+        putly.print_terminal_partition(level=5)
+        print("instance[0]:")
+        print(instances[0])
+        pass
+    # Return information.
+    return instances
 
 
 def define_column_types_table_sample():
@@ -1813,6 +1961,7 @@ def collect_scrap_parallel_instances_for_analysis_sets(
 
 
 def control_parallel_instances(
+    instances=None,
     project=None,
     routine=None,
     procedure=None,
@@ -1823,6 +1972,7 @@ def control_parallel_instances(
     Control procedure for parallel instances.
 
     arguments:
+        instances (list<dict>): parameters to control parallel instances
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -1846,66 +1996,6 @@ def control_parallel_instances(
     parameters["procedure"] = procedure
     parameters["path_directory_dock"] = path_directory_dock
     parameters["report"] = report
-
-    # Collect parameters specific to each instance.
-    instances = [
-        {
-            "name_set": str(
-                "muscle_exercise-0hr_age"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "exercise_time_point": ["0_hour",],
-            },
-            "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_all_age-exercise-3hr"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-            },
-            "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_younger_exercise-3hr"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "cohort_age_text": ["younger",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_elder_exercise-3hr"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "cohort_age_text": ["elder",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-    ]
 
     # Execute procedure iteratively with parallelization across instances.
     if True:
@@ -1980,16 +2070,16 @@ def execute_procedure(
     )
 
     ##########
-    # Control procedure with split for parallelization.
-    #control_split_procedure(
-    #    tissue="adipose", # adipose, muscle
-    #    paths=paths,
-    #    report=True,
-    #)
+    # Read and organize parameters for parallel instances.
+    instances = read_organize_source_parameter_instances(
+        paths=paths,
+        report=report,
+    )
 
     ##########
     # Control procedure for parallel instances.
     control_parallel_instances(
+        instances=instances,
         project=project,
         routine=routine,
         procedure=procedure,

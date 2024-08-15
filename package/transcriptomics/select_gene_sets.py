@@ -716,6 +716,7 @@ def create_write_chart_fold_change(
         threshold_p=threshold_p, # negative base ten logarithm
         identifiers_emphasis=[
             "ENSG00000119508.18", # gene name: NR4A3
+            "ENSG00000105329.11", # gene name: TGFB1
         ],
         emphasis_label=True,
         count_label=True,
