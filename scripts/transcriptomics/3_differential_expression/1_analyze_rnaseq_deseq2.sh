@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 14 August 2024
-# Review: TCW; 14 August 2024
+# Date, last execution or modification: 15 August 2024
+# Review: TCW; 15 August 2024
 ###############################################################################
 # Note
 
@@ -105,6 +105,7 @@ do
     echo "----------"
   fi
   # Execute procedure for current record's parameters.
+  #  && [ "$raw_name_set" == "muscle_exercise-0hr_sex" ]
   if [ "$raw_inclusion" == "1" ]; then
 
     ##########

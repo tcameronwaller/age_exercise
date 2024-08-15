@@ -270,8 +270,6 @@ def initialize_directories(
 ##########
 # 2. Read source information from file.
 
-# define_column_types_table_parameter_instances
-
 
 def define_column_types_table_parameter_instances():
     """
@@ -358,13 +356,6 @@ def read_organize_source_parameter_instances(
             "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
         ],
         encoding="utf-8",
-    )
-
-    # Extract information from complex fields.
-    table["cohort_selection_1"] = table.apply(
-        lambda row:
-            str(row["cohort_selection"]).strip().split(";")[0],
-        axis="columns", # apply function to each row
     )
 
     # Collect information.
@@ -1974,7 +1965,8 @@ def control_parallel_instances(
     Control procedure for parallel instances.
 
     arguments:
-        instances (list<dict>): parameters to control parallel instances
+        instances (list<dict>): parameters to control individual instances in
+            parallel
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -1983,7 +1975,6 @@ def control_parallel_instances(
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         report (bool): whether to print reports
-
 
     raises:
 

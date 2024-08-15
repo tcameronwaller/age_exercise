@@ -71,6 +71,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
+import exercise.transcriptomics.organize_signal as exrosig
 
 ###############################################################################
 # Functionality
@@ -113,6 +114,15 @@ def preinitialize_directories(
     paths = dict()
     # Define paths to directories.
     paths["dock"] = path_directory_dock
+    paths["in_data"] = os.path.join(
+        paths["dock"], "in_data", str(project), str(routine),
+    )
+    paths["in_parameters"] = os.path.join(
+        paths["dock"], "in_parameters", str(project), str(routine),
+    )
+    paths["in_parameters_private"] = os.path.join(
+        paths["dock"], "in_parameters_private", str(project), str(routine),
+    )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
@@ -478,12 +488,12 @@ def organize_table_change_deseq2(
     ]
     table_change["p_value_threshold"] = table_change.apply(
         lambda row:
-            1E-250 if (float(row["p_value"]) < 1E-250) else row["p_value"],
+            1E-290 if (float(row["p_value"]) < 1E-290) else row["p_value"],
         axis="columns", # apply function to each row
     )
     table_change["q_value_threshold"] = table_change.apply(
         lambda row:
-            1E-250 if (float(row["q_value"]) < 1E-250) else row["q_value"],
+            1E-290 if (float(row["q_value"]) < 1E-290) else row["q_value"],
         axis="columns", # apply function to each row
     )
     # Filter rows in table for selection of non-missing values for fold change.
@@ -755,9 +765,6 @@ def create_write_chart_fold_change(
     return figure
 
 
-
-
-
 # TODO: TCW; 8 August 2024
 # NEXT STEPS
 # 1. filter genes by fold change and by p-value
@@ -969,102 +976,8 @@ def control_parallel_instance(
     pass
 
 
-def collect_scrap_parallel_instances_for_analysis_sets(
-):
-    """
-    Collect scrap parallel instances for analysis sets.
-
-    arguments:
-
-    raises:
-
-    returns:
-
-    """
-
-    # Collect parameters specific to each instance.
-    # tissue: adipose
-    instances = [
-        {
-            "name_set": str(
-                "adipose_elder-visit-second_intervention"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "study_clinic_visit": ["second",],
-            },
-            "factor_availability": {
-                "intervention_text": ["placebo", "active",],
-            },
-        },
-        {
-            "name_set": str(
-                "adipose_elder-active_visit"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "intervention_text": ["active",],
-            },
-            "factor_availability": {
-                "study_clinic_visit": ["first", "second",],
-            },
-        },
-    ]
-    # tissue: muscle
-    instances = [
-        {
-            "name_set": str(
-                "muscle_exercise-0hr_age"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "exercise_time_point": ["0_hour",],
-            },
-            "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_younger_exercise"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "cohort_age_text": ["younger",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_elder_exercise"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "cohort_age_text": ["elder",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-    ]
-    pass
-
-
 def control_parallel_instances(
+    instances=None,
     project=None,
     routine=None,
     procedure=None,
@@ -1075,6 +988,8 @@ def control_parallel_instances(
     Control procedure for parallel instances.
 
     arguments:
+        instances (list<dict>): parameters to control individual instances in
+            parallel
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -1083,7 +998,6 @@ def control_parallel_instances(
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         report (bool): whether to print reports
-
 
     raises:
 
@@ -1099,36 +1013,8 @@ def control_parallel_instances(
     parameters["path_directory_dock"] = path_directory_dock
     parameters["report"] = report
 
-    # Collect parameters specific to each instance.
-    instances = [
-        {
-            "name_set": str(
-                "muscle_exercise-0hr_age"
-            ),
-            "tissue": "muscle",
-        },
-        {
-            "name_set": str(
-                "muscle_all_age-exercise-3hr"
-            ),
-            "tissue": "muscle",
-        },
-        {
-            "name_set": str(
-                "muscle_younger_exercise-3hr"
-            ),
-            "tissue": "muscle",
-        },
-        {
-            "name_set": str(
-                "muscle_elder_exercise-3hr"
-            ),
-            "tissue": "muscle",
-        },
-    ]
-
     # Execute procedure iteratively with parallelization across instances.
-    if False:
+    if True:
         prall.drive_procedure_parallel(
             function_control=(
                 control_parallel_instance
@@ -1200,16 +1086,16 @@ def execute_procedure(
     )
 
     ##########
-    # Control procedure with split for parallelization.
-    #control_split_procedure(
-    #    tissue="adipose", # adipose, muscle
-    #    paths=paths,
-    #    report=True,
-    #)
+    # Read and organize parameters for parallel instances.
+    instances = exrosig.read_organize_source_parameter_instances(
+        paths=paths,
+        report=report,
+    )
 
     ##########
     # Control procedure for parallel instances.
     control_parallel_instances(
+        instances=instances,
         project=project,
         routine=routine,
         procedure=procedure,
