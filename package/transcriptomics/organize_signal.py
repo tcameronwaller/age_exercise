@@ -370,7 +370,7 @@ def read_organize_source_parameter_instances(
     # Collect information.
     instances = list()
     for index, row in table.iterrows():
-        if (row["inclusion"]):
+        if (int(row["inclusion"]) == 1):
             pail = dict()
             pail["name_set"] = str(row["name_set"])
             pail["tissue"] = str(row["tissue"])
@@ -428,7 +428,7 @@ def define_column_types_table_sample():
 
     # Specify variable types of columns within table.
     types_columns = dict()
-    types_columns["inclusion"] = "int32"
+    types_columns["inclusion"] = "int32" # "int32"
     types_columns["identifier"] = "string"
     types_columns["path_file"] = "string"
     types_columns["sample_plate"] = "string"
@@ -673,10 +673,12 @@ def select_sets_identifier_table_sample(
     # Filter rows in table by rules for selection of a specific set.
     # Iterate on features and values for selection of samples in cohort.
     table_cohort = table_inclusion.copy(deep=True)
+    table_cohort["inclusion"] = table_cohort["inclusion"].astype("str")
     for feature in cohort_selection.keys():
         table_cohort = table_cohort.loc[(
             table_cohort[feature].isin(cohort_selection[feature])
         ), :].copy(deep=True)
+
     # Iterate on factors and values for selection of samples on the basis
     # of availability.
     table_factor = table_cohort.copy(deep=True)
@@ -685,6 +687,7 @@ def select_sets_identifier_table_sample(
             table_factor[factor].isin(factor_availability[factor])
         ), :].copy(deep=True)
     table_selection = table_factor.copy(deep=True)
+
     # Separate samples for unique values of factor.
     # This operation would necessarily assume that there were two and only two
     # unique values of a single factor.
@@ -1691,7 +1694,7 @@ def control_branch_procedure(
         factor_availability=factor_availability,
         report=report,
     )
-    #pail_sample["samples_selection"]
+    #print(pail_sample["samples_selection"])
 
 
     ##########
@@ -1743,7 +1746,6 @@ def control_branch_procedure(
         method="zero",
         report=report,
     )
-
 
     ##########
     # 8. Check the coherence of separate tables for analysis.
@@ -2011,7 +2013,7 @@ def control_parallel_instances(
     else:
         # Execute procedure directly for testing.
         control_parallel_instance(
-            instance=instances[1],
+            instance=instances[0],
             parameters=parameters,
         )
     pass
