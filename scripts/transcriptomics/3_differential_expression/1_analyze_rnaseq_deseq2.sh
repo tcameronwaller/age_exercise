@@ -34,8 +34,7 @@ path_directory_dock="$path_directory_process/dock"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private/exercise/transcriptomics"
 
 # Files.
-#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
-path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_test_temp.tsv"
+path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
