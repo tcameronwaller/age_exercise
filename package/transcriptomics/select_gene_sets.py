@@ -307,6 +307,37 @@ def define_column_types_table_deseq2():
     return types_columns
 
 
+def define_column_types_table_gene_emphasis():
+    """
+    Defines the names and types of variable columns within table from DESeq2.
+
+    Review: TCW; 7 August 2024
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): variable types of columns within table
+
+    """
+
+    # Specify variable types of columns within table.
+    types_columns = dict()
+    types_columns["identifier"] = "string"
+    types_columns["gene_identifier"] = "string"
+    types_columns["gene_name"] = "string"
+    types_columns["gene_type"] = "string"
+    types_columns["gene_chromosome"] = "string"
+    types_columns["aerobic_acute"] = "float32"
+    types_columns["aerobic_chronic"] = "float32"
+    types_columns["resistance_acute"] = "float32"
+    types_columns["resistance_chronic"] = "float32"
+    types_columns["inactivity"] = "float32"
+    # Return information.
+    return types_columns
+
+
 def read_source(
     tissue=None,
     name_set=None,
@@ -344,6 +375,10 @@ def read_source(
         paths["out_routine"], "deseq2", tissue, name_set,
         "table_result_deseq2.tsv",
     )
+    path_file_table_gene_emphasis = os.path.join(
+        paths["in_parameters_private"],
+        "table_gene_emphasis_exercise.tsv",
+    )
 
     # Collect information.
     pail = dict()
@@ -361,6 +396,29 @@ def read_source(
         ],
         encoding="utf-8",
     )
+
+    # Table of information about genes for special emphasis.
+    types_columns = define_column_types_table_gene_emphasis()
+    table_gene_emphasis = pandas.read_csv(
+        path_file_table_gene_emphasis,
+        sep="\t",
+        header=0,
+        dtype=types_columns,
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
+        encoding="utf-8",
+    )
+    pail["table_gene_emphasis"] = table_gene_emphasis.loc[
+        (
+            (table_gene_emphasis["aerobic_acute"] == 1) |
+            (table_gene_emphasis["aerobic_chronic"] == 1) |
+            (table_gene_emphasis["resistance_acute"] == 1) |
+            (table_gene_emphasis["resistance_chronic"] == 1) |
+            (table_gene_emphasis["inactivity"] == 1)
+        ), :
+    ]
+
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -412,6 +470,7 @@ def define_column_sequence_table_change_deseq2():
         "q_value",
         "q_value_threshold",
         "q_value_negative_log10",
+        "rank_fold_p",
         "gene_identifier",
         "gene_name",
         "gene_type",
@@ -519,6 +578,17 @@ def organize_table_change_deseq2(
     )
     table_change["q_value_negative_log10"] = table_change.apply(
         lambda row: (-1*math.log(row["q_value_threshold"], 10)),
+        axis="columns", # apply function to each row
+    )
+
+    # Calculate a metric by which to rank genes with differential expression
+    # for subsequent analysis by gene set enrichment (GSEA).
+    # Use the p-value rather than the q-value since the q-value tends to have
+    # ties between groups of comparisons.
+    table_change["rank_fold_p"] = table_change.apply(
+        lambda row: (
+            (row["fold_change_log2"])*(row["p_value_negative_log10"])
+        ),
         axis="columns", # apply function to each row
     )
 
@@ -654,8 +724,11 @@ def select_sets_differential_expression_gene(
     return pail
 
 
+
+
+
 ##########
-# 5. Create chart to represent fold changes and write to file.
+# 6. Create chart to represent fold changes and write to file.
 
 
 def create_write_chart_fold_change(
@@ -666,6 +739,7 @@ def create_write_chart_fold_change(
     column_p=None,
     threshold_fold=None,
     threshold_p=None,
+    identifiers_emphasis=None,
     tissue=None,
     name_set=None,
     paths=None,
@@ -673,6 +747,9 @@ def create_write_chart_fold_change(
 ):
     """
     Create chart representation of fold change and write to file.
+
+    Selection of genes come from the study below.
+    Pillon et al, Nature Communications, 2020; (PubMed:31980607)
 
     arguments:
         table (object): Pandas data-frame table of information about genes
@@ -692,6 +769,10 @@ def create_write_chart_fold_change(
         threshold_p (float): value for threshold on p-values or q-values
             (p-value > threshold) that is on the same scale, such as negative
             base-ten logarithm, as the actual values themselves
+        identifiers_emphasis (list<str>): identifiers corresponding to a
+            special selection of fold changes for which to emphasize points on
+            chart and for which to create text labels adjacent to the points
+            on the chart
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         name_set (str): name for set of samples and parameters in the
@@ -724,10 +805,7 @@ def create_write_chart_fold_change(
         column_p=column_p,
         threshold_fold=threshold_fold, # base two logarithm
         threshold_p=threshold_p, # negative base ten logarithm
-        identifiers_emphasis=[
-            "ENSG00000119508.18", # gene name: NR4A3
-            "ENSG00000105329.11", # gene name: TGFB1
-        ],
+        identifiers_emphasis=identifiers_emphasis,
         emphasis_label=True,
         count_label=True,
         minimum_abscissa=(
@@ -747,7 +825,7 @@ def create_write_chart_fold_change(
         size_label_abscissa="twelve", # multi-panel: ten; individual: twelve
         size_label_ordinate="twelve", # multi-panel: ten; individual: twelve
         size_label_emphasis="twelve",
-        size_label_count="twelve",
+        size_label_count="ten",
         aspect="landscape", # square, portrait, landscape, ...
         fonts=fonts,
         colors=colors,
@@ -757,7 +835,7 @@ def create_write_chart_fold_change(
     pplot.write_product_plot_figure(
         figure=figure,
         format="jpg", # jpg, png, svg
-        resolution=300,
+        resolution=150,
         name_file=name_figure,
         path_directory=path_directory,
     )
@@ -877,7 +955,24 @@ def control_branch_procedure(
     )
 
     ##########
-    # 5. Create chart to represent fold changes and write to file.
+    # 5. Prepare rank lists of genes for analysis by gene set enrichment
+    #    analysis.
+    if False:
+        pail_rank = rank_list_gene(
+            table=pail_organization["table_change"],
+            column_identifier="gene_identifier",
+            column_name="gene_name",
+            column_rank="rank_fold_p",
+            tissue=tissue,
+            name_set=name_set,
+            report=report,
+        )
+
+    ##########
+    # 6. Create chart to represent fold changes and write to file.
+    identifiers_emphasis = (
+        pail_source["table_gene_emphasis"]["gene_identifier"].to_list()
+    )
     create_write_chart_fold_change(
         table=pail_organization["table_change"],
         column_identifier="gene_identifier",
@@ -886,6 +981,7 @@ def control_branch_procedure(
         column_p="q_value_negative_log10",
         threshold_fold=math.log(float(1.7), 2), # base two logarithm
         threshold_p=float(2.0), # negative base ten logarithm
+        identifiers_emphasis=identifiers_emphasis,
         tissue=tissue,
         name_set=name_set,
         paths=paths,
@@ -896,7 +992,6 @@ def control_branch_procedure(
     ##########
     # Collect information.
     # Collections of files.
-    #pail_write_tables = dict()
     pail_write_lists = dict()
     pail_write_lists[str("genes_threshold")] = (
         pail_selection["genes_threshold"]
@@ -907,12 +1002,24 @@ def control_branch_procedure(
     pail_write_lists[str("genes_down")] = (
         pail_selection["genes_down"]
     )
+    pail_write_tables = dict()
+    #pail_write_tables[str("table_rank_gene")] = (
+    #    pail_rank["table_rank"]
+    #)
+
     ##########
     # Write product information to file.
     putly.write_lists_to_file_text(
         pail_write=pail_write_lists,
         path_directory=paths["out_data"],
     )
+    #putly.write_tables_to_file(
+    #    pail_write=pail_write_tables,
+    #    path_directory=paths["out_data"],
+    #    reset_index=False,
+    #    write_index=True,
+    #    type="text",
+    #)
     pass
 
 
