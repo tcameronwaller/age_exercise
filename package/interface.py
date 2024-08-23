@@ -49,7 +49,7 @@ import textwrap
 import exercise.transcriptomics.organize_sample
 import exercise.transcriptomics.organize_signal
 import exercise.transcriptomics.select_gene_sets
-import exercise.proteomics.organization
+import exercise.proteomics.organize_sample_olink
 
 #dir()
 #importlib.reload()
@@ -88,13 +88,11 @@ def define_interface_parsers():
         routine="transcriptomics",
         subparsers=subparsers,
     )
-    if False:
-        parser_proteomics = define_subparser_proteomics(
-            project="exercise",
-            routine="proteomics",
-            subparsers=subparsers,
-        )
-        pass
+    parser_proteomics = define_subparser_proteomics(
+        project="exercise",
+        routine="proteomics",
+        subparsers=subparsers,
+    )
     # Parse arguments.
     return parser.parse_args()
 
@@ -229,6 +227,64 @@ def define_subparser_transcriptomics(
     return parser_routine
 
 
+def define_subparser_proteomics(
+    project=None,
+    routine=None,
+    subparsers=None,
+):
+    """
+    Defines subparser for a specific routine of procedures.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine
+        subparsers (object): reference to subparsers' container
+
+    raises:
+
+    returns:
+        (object): reference to parser
+
+    """
+
+    # Define description.
+    description = define_routine_description()
+    # Define epilog.
+    epilog = define_routine_epilog()
+    # Define parser.
+    parser_routine = subparsers.add_parser(
+        name="proteomics",
+        description=description,
+        epilog=epilog,
+        help="Help for proteomics routine.",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    # Define arguments.
+    parser_routine.add_argument(
+        "-path_directory_dock", "--path_directory_dock",
+        dest="path_directory_dock", type=str, required=True,
+        help=(
+            "Path to dock directory for source and product " +
+            "directories and files."
+        )
+    )
+    parser_routine.add_argument(
+        "-organize_sample_olink",
+        "--organize_sample_olink",
+        dest="organize_sample",
+        action="store_true",
+        help=(
+            "Organize information about samples, including measurements by " +
+            "O-Link technology."
+        )
+    )
+
+    # Define behavior.
+    parser_routine.set_defaults(func=evaluate_parameters_proteomics)
+    # Return parser.
+    return parser_routine
+
+
 def define_routine_description(
     project=None,
     routine=None,
@@ -301,7 +357,7 @@ def define_routine_epilog(
 
 def evaluate_parameters_transcriptomics(arguments):
     """
-    Evaluates parameters for model procedure.
+    Evaluates parameters for routine.
 
     arguments:
         arguments (object): arguments from terminal
@@ -347,6 +403,38 @@ def evaluate_parameters_transcriptomics(arguments):
         )
 
     pass
+
+
+def evaluate_parameters_proteomics(arguments):
+    """
+    Evaluates parameters for routine.
+
+    arguments:
+        arguments (object): arguments from terminal
+
+    raises:
+
+    returns:
+
+    """
+
+    print("--------------------------------------------------")
+    print("... call to transcriptomics routine ...")
+    # Execute procedure.
+    if arguments.organize_sample_olink:
+        # Report status.
+        print(
+           "... executing exercise.proteomics.organize_sample_olink " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        exercise.proteomics.organize_sample_olink.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+
+    pass
+
+
 
 
 ###############################################################################
