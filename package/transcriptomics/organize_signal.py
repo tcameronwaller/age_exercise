@@ -112,7 +112,7 @@ def preinitialize_directories(
     # Define paths to directories.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", str(project), str(routine),
+        paths["dock"], "in_data",
     )
     paths["in_parameters"] = os.path.join(
         paths["dock"], "in_parameters", str(project), str(routine),
@@ -200,7 +200,7 @@ def initialize_directories(
     # Define paths to directories.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", str(project), str(routine),
+        paths["dock"], "in_data",
     )
     paths["in_parameters"] = os.path.join(
         paths["dock"], "in_parameters", str(project), str(routine),
@@ -537,12 +537,14 @@ def read_source(
     )
     if (tissue == "adipose"):
         path_file_table_main = os.path.join(
-            paths["in_data"], "quantification_2024-07-14",
+            paths["in_data"], "study_exercise_age", "transcriptomics",
+            "quantification_2024-07-14",
             "organization", "quantification_rna_reads_gene_adipose.tsv",
         )
     elif (tissue == "muscle"):
         path_file_table_main = os.path.join(
-            paths["in_data"], "quantification_2024-07-14",
+            paths["in_data"], "study_exercise_age", "transcriptomics",
+            "quantification_2024-07-14",
             "organization", "quantification_rna_reads_gene_muscle.tsv",
         )
         pass

@@ -114,13 +114,13 @@ def initialize_directories(
     # Define paths to directories.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", str(project), str(routine),
+        paths["dock"], "in_data",
     )
     paths["in_parameters"] = os.path.join(
         paths["dock"], "in_parameters", str(project), str(routine),
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(routine),
+        paths["dock"], "in_parameters_private", str(project),
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -177,6 +177,113 @@ def initialize_directories(
 # 2. Read source information from file.
 
 
+def define_type_columns_table_sample_organization():
+    """
+    Defines the variable types of columns within table for organization of
+    attributes of samples.
+
+    Review: TCW; 22 August 2024
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): variable types of columns within table
+
+    """
+
+    # Specify variable types of columns within table.
+    types_columns = dict()
+    types_columns["inclusion"] = "int32"
+    types_columns["category"] = "string"
+    types_columns["name_source"] = "string"
+    types_columns["name_intermediate"] = "string"
+    types_columns["name_product"] = "string"
+    types_columns["type"] = "string"
+    # ...
+    # Return information.
+    return types_columns
+
+
+def parse_extract_sample_attribute_organization(
+    table=None,
+    report=None,
+):
+    """
+    Determines the variable types of columns within table for attributes of
+    samples.
+
+    Review: TCW; 22 August 2024
+
+    arguments:
+        table (object): Pandas data-frame table of information about samples
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    # Filter rows in table for selection of relevant samples.
+    table_inclusion = table.loc[
+        (table["inclusion"] == 1), :
+    ].copy(deep=True)
+
+    # Extract information for types of columns.
+    table_types_columns = table_inclusion.filter(
+        items=["name_source", "type",],
+        axis="columns",
+    )
+    series_types_columns = pandas.Series(
+        table_types_columns["type"].to_list(),
+        index=table_types_columns["name_source"],
+    )
+    types_columns = series_types_columns.to_dict()
+
+    # Extract information for translation of names of columns.
+    table_name_product = table_inclusion.loc[
+        (table_inclusion["name_product"].str.len() > 0), :
+    ].copy(deep=True)
+    table_translations = table_name_product.filter(
+        items=["name_intermediate", "name_product",],
+        axis="columns",
+    )
+    series_translations = pandas.Series(
+        table_translations["name_product"].to_list(),
+        index=table_translations["name_intermediate"],
+    )
+    translations_column = series_translations.to_dict()
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: parse_extract_sample_attribute_organization()")
+        putly.print_terminal_partition(level=5)
+        print("types for columns upon read: ")
+        print(types_columns)
+        putly.print_terminal_partition(level=5)
+        print(
+            "translations for columns after initial, intermediate " +
+            "translation:"
+        )
+        print(translations_column)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Collect information.
+    pail = dict()
+    pail["types_columns"] = types_columns
+    pail["translations_column"] = translations_column
+    # Return information.
+    return pail
+
+
 def define_type_columns_table_sample_file():
     """
     Defines the variable types of columns within table for attributes of
@@ -215,40 +322,6 @@ def define_type_columns_table_sample_file():
     return types_columns
 
 
-def define_type_columns_table_sample_attribute():
-    """
-    Defines the variable types of columns within table for attributes of
-    samples.
-
-    Review: TCW; 30 July 2024
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): variable types of columns within table
-
-    """
-
-    # Specify variable types of columns within table.
-    types_columns = dict()
-    types_columns["Name"] = "string"
-    types_columns["Visit"] = "string"
-    types_columns["Date"] = "string"
-    types_columns["Age Group"] = "string"
-    types_columns["Sex"] = "string"
-    types_columns["Intervention"] = "string"
-    types_columns["Age"] = "int32"
-    types_columns["BMI (kg/m2)"] = "float32"
-    types_columns["Total % Fat"] = "float32"
-    types_columns["Total Fat Mass"] = "float32"
-    types_columns["Lean Mass"] = "float32"
-    # ...
-    # Return information.
-    return types_columns
-
-
 def read_source(
     paths=None,
     report=None,
@@ -276,16 +349,52 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
-    path_file_table_sample_file = os.path.join(
-        paths["in_parameters_private"], "table_sample_file_rnaseq.tsv",
+    path_file_table_sample_organization = os.path.join(
+        paths["in_data"], "study_exercise_age", "subject_sample",
+        "table_sample_attribute_organization.tsv",
     )
     path_file_table_sample_attribute = os.path.join(
-        paths["in_parameters_private"], "table_sample_attribute.csv",
+        paths["in_data"], "study_exercise_age", "subject_sample",
+        "table_sample_attribute.csv",
+    )
+    path_file_table_sample_file = os.path.join(
+        paths["in_data"], "study_exercise_age", "subject_sample",
+        "table_sample_file_rnaseq.tsv",
     )
 
     # Collect information.
     pail = dict()
     # Read information from file.
+
+    # Table of parameters for organization of the table of attributes for
+    # subjects and samples.
+    types_columns = define_type_columns_table_sample_organization()
+    pail["table_sample_organization"] = pandas.read_csv(
+        path_file_table_sample_organization,
+        sep="\t",
+        header=0,
+        dtype=types_columns,
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
+        encoding="utf-8",
+    )
+    pail_parse = parse_extract_sample_attribute_organization(
+        table=pail["table_sample_organization"],
+        report=report,
+    )
+
+    # Table of attributes for samples.
+    pail["table_sample_attribute"] = pandas.read_csv(
+        path_file_table_sample_attribute,
+        sep=",",
+        header=0,
+        dtype=pail_parse["types_columns"],
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
+        encoding="utf-8",
+    )
 
     # Table of matches between samples and files.
     types_columns = define_type_columns_table_sample_file()
@@ -300,30 +409,17 @@ def read_source(
         encoding="utf-8",
     )
 
-    # Table of attributes for samples.
-    types_columns = define_type_columns_table_sample_attribute()
-    pail["table_sample_attribute"] = pandas.read_csv(
-        path_file_table_sample_attribute,
-        sep=",",
-        header=0,
-        dtype=types_columns,
-        na_values=[
-            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
-        ],
-        encoding="utf-8",
-    )
-
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_sample.py")
         print("function: read_source()")
         putly.print_terminal_partition(level=5)
+        print("table of attributes for subjects and samples: ")
+        print(pail["table_sample_attribute"].iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
         print("table of matches between samples and files: ")
         print(pail["table_sample_file"].iloc[0:10, 0:])
-        putly.print_terminal_partition(level=5)
-        print("table of attributes for samples: ")
-        print(pail["table_sample_attribute"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -331,315 +427,7 @@ def read_source(
 
 
 ##########
-# 3. Organize table of matches between samples and files.
-
-
-def define_translation_columns_table_sample_file():
-    """
-    Defines translations for the names of columns in a table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): translations for names of columns in a table
-
-    """
-
-
-    # Translate names of columns.
-    translations = dict()
-    translations["identifier"] = "identifier_signal"
-    translations["condition_interpretation"] = "condition_obsolete"
-    # Return information.
-    return translations
-
-
-def define_sequence_columns_table_sample_file():
-    """
-    Defines names of columns in sequence by which to filter and sort columns in
-    a table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): names of columns in sequence by which to filter and sort
-            columns in table
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = [
-        "inclusion",
-        "identifier_signal",
-        "tissue",
-        "sample",
-        "subject",
-        "condition_correction",
-        "study_clinic_visit",
-        "exercise_time_point",
-        "match_sample_file_attribute",
-        #"path_file",
-        #"sample_plate",
-        #"plate",
-        #"condition_code",
-        #"condition_interpretation",
-        #"note_condition",
-    ]
-    # Return information.
-    return columns_sequence
-
-
-def determine_sample_study_clinic_visit(
-    tissue=None,
-    instance=None,
-):
-    """
-    Determines the clinical visit of the study at which collection of a
-    sample occurred.
-
-    arguments:
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        instance (str): designation of study instance in terms of clinical
-            visit for sample collection
-
-    raises:
-
-    returns:
-        (str): indicator of clinical visit in the study at which collection of
-            a sample occurred, either 'first' or 'second'
-
-    """
-
-    # Determine indicator.
-    if (
-        (pandas.notna(tissue)) and
-        (len(str(tissue).strip()) > 0) and
-        (pandas.notna(instance)) and
-        (len(str(instance).strip()) > 0)
-    ):
-        # There is adequate information.
-        if (
-            (str(tissue).strip().lower() == "muscle") and
-            (str(instance).strip() in ["1B", "2B", "3B"])
-        ):
-            indicator = "first"
-        elif (
-            (str(tissue).strip().lower() == "adipose") and
-            (str(instance).strip() == "B")
-        ):
-            indicator = "first"
-        elif (
-            (str(tissue).strip().lower() == "adipose") and
-            (str(instance).strip() == "PI")
-        ):
-            indicator = "second"
-        else:
-            indicator = ""
-    else:
-        indicator = ""
-        pass
-    # Return information.
-    return indicator
-
-
-def determine_muscle_exercise_time_point(
-    tissue=None,
-    instance=None,
-):
-    """
-    Determines the approximate categorical or ordinal duration of time after
-    exercise at which sample collection of muscle tissue occurred.
-
-    arguments:
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        instance (str): designation of study instance in terms of clinical
-            visit for sample collection
-
-    raises:
-
-    returns:
-        (str): approximate categorical or ordinal duration of time after
-            exercise, either '0_hour', '3_hour', or '48_hour'
-
-    """
-
-    # Determine indicator.
-    if (
-        (pandas.notna(tissue)) and
-        (len(str(tissue).strip()) > 0) and
-        (pandas.notna(instance)) and
-        (len(str(instance).strip()) > 0)
-    ):
-        # There is adequate information.
-        if (
-            (str(tissue).strip().lower() == "muscle") and
-            (str(instance).strip() == "1B")
-        ):
-            indicator = "0_hour"
-        elif (
-            (str(tissue).strip().lower() == "muscle") and
-            (str(instance).strip() == "2B")
-        ):
-            indicator = "3_hour"
-        elif (
-            (str(tissue).strip().lower() == "muscle") and
-            (str(instance).strip() == "3B")
-        ):
-            indicator = "48_hour"
-        else:
-            indicator = ""
-    else:
-        indicator = ""
-        pass
-    # Return information.
-    return indicator
-
-
-def determine_match_sample_file_attribute(
-    subject=None,
-    study_clinic_visit=None,
-):
-    """
-    Determines a designator to match samples from their files of signals with
-    their attributes.
-
-    arguments:
-        subject (str): identifier of study participant subject
-        study_clinic_visit (str): indicator of clinical visit in the study at
-            which collection of a sample occurred, either 'first' or 'second'
-
-    raises:
-
-    returns:
-        (str): common designator to match samples from their files of signals
-            to their attributes
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(subject)) and
-        (len(str(subject).strip()) > 0) and
-        (pandas.notna(study_clinic_visit)) and
-        (len(str(study_clinic_visit).strip()) > 0)
-    ):
-        # There is adequate information.
-        subject = str(subject).strip()
-        study_clinic_visit = str(study_clinic_visit).strip()
-        designator = str(subject + "_" + study_clinic_visit)
-    else:
-        designator = ""
-        pass
-    # Return information.
-    return designator
-
-
-def organize_table_sample_file(
-    table=None,
-    translations_column=None,
-    columns_sequence=None,
-    report=None,
-):
-    """
-    Organizes information in table that designates matches between samples and
-    their corresponding files of data.
-
-    This function prepares the table of matches between samples and files for
-    merge with table of attributes for samples.
-
-    arguments:
-        table (object): Pandas data-frame table of information about samples
-        translations_column (dict<str>): translations for names of columns in a
-            table
-        columns_sequence (list<str>): names of columns in sequence by which to
-            filter and sort columns in table
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table
-
-    """
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-    # Copy other information.
-    translations_column = copy.deepcopy(translations_column)
-    columns_sequence = copy.deepcopy(columns_sequence)
-
-    # Translate names of columns.
-    table.rename(
-        columns=translations_column,
-        inplace=True,
-    )
-    # Sort rows within table.
-    table.sort_values(
-        by=[
-            "tissue",
-            "subject",
-            "condition_correction",
-        ],
-        axis="index",
-        ascending=True,
-        inplace=True,
-    )
-    # Determine the clinical visit of the study at which collection of the
-    # sample occurred.
-    table["study_clinic_visit"] = table.apply(
-        lambda row:
-            determine_sample_study_clinic_visit(
-                tissue=row["tissue"],
-                instance=row["condition_correction"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Determine designation to match sample to attribute.
-    table["match_sample_file_attribute"] = table.apply(
-        lambda row:
-            determine_match_sample_file_attribute(
-                subject=row["subject"],
-                study_clinic_visit=row["study_clinic_visit"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Determine designation of time point from the study of exercise in muscle.
-    table["exercise_time_point"] = table.apply(
-        lambda row:
-            determine_muscle_exercise_time_point(
-                tissue=row["tissue"],
-                instance=row["condition_correction"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Filter and sort columns within table.
-    table = porg.filter_sort_table_columns(
-        table=table,
-        columns_sequence=columns_sequence,
-        report=report,
-    )
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
-        print("function: organize_table_sample_file()")
-        putly.print_terminal_partition(level=5)
-        print("table of matches between samples and files: ")
-        print(table.iloc[0:10, 0:])
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return table
-
-
-##########
-# 4. Organize table of attributes for samples.
+# 3. Organize table of attributes for samples.
 
 
 def define_translation_columns_table_sample_attribute():
@@ -1004,6 +792,12 @@ def organize_table_sample_attribute(
     translations_column = copy.deepcopy(translations_column)
     columns_sequence = copy.deepcopy(columns_sequence)
 
+    # Translate names of columns to remove white space.
+    #table.columns = [column.replace("\n", "_") for column in table.columns]
+    table.columns = table.columns.str.strip()
+    table.columns = table.columns.str.replace(" ", "_")
+    table.columns = table.columns.str.replace("\n", "_")
+
     # Translate names of columns.
     table.rename(
         columns=translations_column,
@@ -1103,17 +897,311 @@ def organize_table_sample_attribute(
 
 
 ##########
-# 4. Combine within the same table the matches between samples and files
-# along with their further attributes.
+# 4. Organize table of matches between samples and files.
 
 
-# "match_sample_file_attribute"
-    table_sample = combine_table_sample_file_attribute(
-        table_sample_file=table_sample_file,
-        table_sample_attribute=table_sample_attribute,
-        columns_transfer=columns_transfer,
-        report=True,
+def define_translation_columns_table_sample_file():
+    """
+    Defines translations for the names of columns in a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): translations for names of columns in a table
+
+    """
+
+
+    # Translate names of columns.
+    translations = dict()
+    translations["identifier"] = "identifier_signal"
+    translations["condition_interpretation"] = "condition_obsolete"
+    # Return information.
+    return translations
+
+
+def define_sequence_columns_table_sample_file():
+    """
+    Defines names of columns in sequence by which to filter and sort columns in
+    a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): names of columns in sequence by which to filter and sort
+            columns in table
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = [
+        "inclusion",
+        "identifier_signal",
+        "tissue",
+        "sample",
+        "subject",
+        "condition_correction",
+        "study_clinic_visit",
+        "exercise_time_point",
+        "match_sample_file_attribute",
+        #"path_file",
+        #"sample_plate",
+        #"plate",
+        #"condition_code",
+        #"condition_interpretation",
+        #"note_condition",
+    ]
+    # Return information.
+    return columns_sequence
+
+
+def determine_sample_study_clinic_visit(
+    tissue=None,
+    instance=None,
+):
+    """
+    Determines the clinical visit of the study at which collection of a
+    sample occurred.
+
+    arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        instance (str): designation of study instance in terms of clinical
+            visit for sample collection
+
+    raises:
+
+    returns:
+        (str): indicator of clinical visit in the study at which collection of
+            a sample occurred, either 'first' or 'second'
+
+    """
+
+    # Determine indicator.
+    if (
+        (pandas.notna(tissue)) and
+        (len(str(tissue).strip()) > 0) and
+        (pandas.notna(instance)) and
+        (len(str(instance).strip()) > 0)
+    ):
+        # There is adequate information.
+        if (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() in ["1B", "2B", "3B"])
+        ):
+            indicator = "first"
+        elif (
+            (str(tissue).strip().lower() == "adipose") and
+            (str(instance).strip() == "B")
+        ):
+            indicator = "first"
+        elif (
+            (str(tissue).strip().lower() == "adipose") and
+            (str(instance).strip() == "PI")
+        ):
+            indicator = "second"
+        else:
+            indicator = ""
+    else:
+        indicator = ""
+        pass
+    # Return information.
+    return indicator
+
+
+def determine_muscle_exercise_time_point(
+    tissue=None,
+    instance=None,
+):
+    """
+    Determines the approximate categorical or ordinal duration of time after
+    exercise at which sample collection of muscle tissue occurred.
+
+    arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        instance (str): designation of study instance in terms of clinical
+            visit for sample collection
+
+    raises:
+
+    returns:
+        (str): approximate categorical or ordinal duration of time after
+            exercise, either '0_hour', '3_hour', or '48_hour'
+
+    """
+
+    # Determine indicator.
+    if (
+        (pandas.notna(tissue)) and
+        (len(str(tissue).strip()) > 0) and
+        (pandas.notna(instance)) and
+        (len(str(instance).strip()) > 0)
+    ):
+        # There is adequate information.
+        if (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() == "1B")
+        ):
+            indicator = "0_hour"
+        elif (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() == "2B")
+        ):
+            indicator = "3_hour"
+        elif (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() == "3B")
+        ):
+            indicator = "48_hour"
+        else:
+            indicator = ""
+    else:
+        indicator = ""
+        pass
+    # Return information.
+    return indicator
+
+
+def determine_match_sample_file_attribute(
+    subject=None,
+    study_clinic_visit=None,
+):
+    """
+    Determines a designator to match samples from their files of signals with
+    their attributes.
+
+    arguments:
+        subject (str): identifier of study participant subject
+        study_clinic_visit (str): indicator of clinical visit in the study at
+            which collection of a sample occurred, either 'first' or 'second'
+
+    raises:
+
+    returns:
+        (str): common designator to match samples from their files of signals
+            to their attributes
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(subject)) and
+        (len(str(subject).strip()) > 0) and
+        (pandas.notna(study_clinic_visit)) and
+        (len(str(study_clinic_visit).strip()) > 0)
+    ):
+        # There is adequate information.
+        subject = str(subject).strip()
+        study_clinic_visit = str(study_clinic_visit).strip()
+        designator = str(subject + "_" + study_clinic_visit)
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def organize_table_sample_file(
+    table=None,
+    translations_column=None,
+    columns_sequence=None,
+    report=None,
+):
+    """
+    Organizes information in table that designates matches between samples and
+    their corresponding files of data.
+
+    This function prepares the table of matches between samples and files for
+    merge with table of attributes for samples.
+
+    arguments:
+        table (object): Pandas data-frame table of information about samples
+        translations_column (dict<str>): translations for names of columns in a
+            table
+        columns_sequence (list<str>): names of columns in sequence by which to
+            filter and sort columns in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    translations_column = copy.deepcopy(translations_column)
+    columns_sequence = copy.deepcopy(columns_sequence)
+
+    # Translate names of columns.
+    table.rename(
+        columns=translations_column,
+        inplace=True,
     )
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "tissue",
+            "subject",
+            "condition_correction",
+        ],
+        axis="index",
+        ascending=True,
+        inplace=True,
+    )
+    # Determine the clinical visit of the study at which collection of the
+    # sample occurred.
+    table["study_clinic_visit"] = table.apply(
+        lambda row:
+            determine_sample_study_clinic_visit(
+                tissue=row["tissue"],
+                instance=row["condition_correction"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine designation to match sample to attribute.
+    table["match_sample_file_attribute"] = table.apply(
+        lambda row:
+            determine_match_sample_file_attribute(
+                subject=row["subject"],
+                study_clinic_visit=row["study_clinic_visit"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Determine designation of time point from the study of exercise in muscle.
+    table["exercise_time_point"] = table.apply(
+        lambda row:
+            determine_muscle_exercise_time_point(
+                tissue=row["tissue"],
+                instance=row["condition_correction"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Filter and sort columns within table.
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: organize_table_sample_file()")
+        putly.print_terminal_partition(level=5)
+        print("table of matches between samples and files: ")
+        print(table.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table
 
 
 ##########
@@ -1599,26 +1687,27 @@ def execute_procedure(
     )
 
     ##########
-    # 3. Organize table of matches between samples and files.
+    # 3. Organize table of attributes for samples.
+    pail_parse = parse_extract_sample_attribute_organization(
+        table=pail_source["table_sample_organization"],
+        report=report,
+    )
+    columns_sample_attribute = define_sequence_columns_table_sample_attribute()
+    table_sample_attribute = organize_table_sample_attribute(
+        table=pail_source["table_sample_attribute"],
+        translations_column=pail_parse["translations_column"],
+        columns_sequence=columns_sample_attribute,
+        report=report,
+    )
+
+    ##########
+    # 4. Organize table of matches between samples and files.
     translations_sample_file = define_translation_columns_table_sample_file()
     columns_sample_file = define_sequence_columns_table_sample_file()
     table_sample_file = organize_table_sample_file(
         table=pail_source["table_sample_file"],
         translations_column=translations_sample_file,
         columns_sequence=columns_sample_file,
-        report=report,
-    )
-
-    ##########
-    # 4. Organize table of attributes for samples.
-    translations_sample_attribute = (
-        define_translation_columns_table_sample_attribute()
-    )
-    columns_sample_attribute = define_sequence_columns_table_sample_attribute()
-    table_sample_attribute = organize_table_sample_attribute(
-        table=pail_source["table_sample_attribute"],
-        translations_column=translations_sample_attribute,
-        columns_sequence=columns_sample_attribute,
         report=report,
     )
 
