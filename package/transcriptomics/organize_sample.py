@@ -71,6 +71,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
+import exercise.proteomics.organize_sample_olink as expr_sample
 
 ###############################################################################
 # Functionality
@@ -177,113 +178,6 @@ def initialize_directories(
 # 2. Read source information from file.
 
 
-def define_type_columns_table_sample_organization():
-    """
-    Defines the variable types of columns within table for organization of
-    attributes of samples.
-
-    Review: TCW; 22 August 2024
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): variable types of columns within table
-
-    """
-
-    # Specify variable types of columns within table.
-    types_columns = dict()
-    types_columns["inclusion"] = "int32"
-    types_columns["category"] = "string"
-    types_columns["name_source"] = "string"
-    types_columns["name_intermediate"] = "string"
-    types_columns["name_product"] = "string"
-    types_columns["type"] = "string"
-    # ...
-    # Return information.
-    return types_columns
-
-
-def parse_extract_sample_attribute_organization(
-    table=None,
-    report=None,
-):
-    """
-    Determines the variable types of columns within table for attributes of
-    samples.
-
-    Review: TCW; 22 August 2024
-
-    arguments:
-        table (object): Pandas data-frame table of information about samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-
-    # Filter rows in table for selection of relevant samples.
-    table_inclusion = table.loc[
-        (table["inclusion"] == 1), :
-    ].copy(deep=True)
-
-    # Extract information for types of columns.
-    table_types_columns = table_inclusion.filter(
-        items=["name_source", "type",],
-        axis="columns",
-    )
-    series_types_columns = pandas.Series(
-        table_types_columns["type"].to_list(),
-        index=table_types_columns["name_source"],
-    )
-    types_columns = series_types_columns.to_dict()
-
-    # Extract information for translation of names of columns.
-    table_name_product = table_inclusion.loc[
-        (table_inclusion["name_product"].str.len() > 0), :
-    ].copy(deep=True)
-    table_translations = table_name_product.filter(
-        items=["name_intermediate", "name_product",],
-        axis="columns",
-    )
-    series_translations = pandas.Series(
-        table_translations["name_product"].to_list(),
-        index=table_translations["name_intermediate"],
-    )
-    translations_column = series_translations.to_dict()
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
-        print("function: parse_extract_sample_attribute_organization()")
-        putly.print_terminal_partition(level=5)
-        print("types for columns upon read: ")
-        print(types_columns)
-        putly.print_terminal_partition(level=5)
-        print(
-            "translations for columns after initial, intermediate " +
-            "translation:"
-        )
-        print(translations_column)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Collect information.
-    pail = dict()
-    pail["types_columns"] = types_columns
-    pail["translations_column"] = translations_column
-    # Return information.
-    return pail
-
-
 def define_type_columns_table_sample_file():
     """
     Defines the variable types of columns within table for attributes of
@@ -351,11 +245,11 @@ def read_source(
     # Define paths to child files.
     path_file_table_sample_organization = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_sample_attribute_organization.tsv",
+        "table_sample_organization.tsv",
     )
     path_file_table_sample_attribute = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_sample_attribute.csv",
+        "table_sample_attribute_transcriptomics.csv",
     )
     path_file_table_sample_file = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
@@ -368,7 +262,7 @@ def read_source(
 
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
-    types_columns = define_type_columns_table_sample_organization()
+    types_columns = expr_sample.define_type_columns_table_sample_organization()
     pail["table_sample_organization"] = pandas.read_csv(
         path_file_table_sample_organization,
         sep="\t",
@@ -379,8 +273,9 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = parse_extract_sample_attribute_organization(
+    pail_parse = expr_sample.parse_extract_sample_attribute_organization(
         table=pail["table_sample_organization"],
+        inclusion="inclusion_transcriptomics",
         report=report,
     )
 
@@ -429,471 +324,6 @@ def read_source(
 ##########
 # 3. Organize table of attributes for samples.
 
-
-def define_translation_columns_table_sample_attribute():
-    """
-    Defines translations for the names of columns in a table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): translations for names of columns in a table
-
-    """
-
-    # Translate names of columns.
-    translations = dict()
-    translations["Name"] = "subject_attribute"
-    translations["Visit"] = "study_clinic_visit_relative"
-    translations["Date"] = "date_visit_text_raw"
-    translations["Age Group"] = "cohort_age_letter"
-    translations["Sex"] = "sex_letter"
-    translations["Intervention"] = "intervention_text"
-    translations["Age"] = "age"
-    translations["BMI (kg/m2)"] = "body_mass_index"
-    translations["Total % Fat"] = "body_fat_percent"
-    translations["Total Fat Mass"] = "body_fat_mass"
-    translations["Lean Mass"] = "body_lean_mass"
-    #translations["Weight (cm)"] = "weight_kg"
-    # Return information.
-    return translations
-
-
-def define_sequence_columns_table_sample_attribute():
-    """
-    Defines names of columns in sequence by which to filter and sort columns in
-    a table.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<str>): names of columns in sequence by which to filter and sort
-            columns in table
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = [
-        "match_sample_file_attribute",
-        "cohort_age",
-        "cohort_age_text",
-        "cohort_age_letter",
-        "intervention",
-        "intervention_text",
-        "subject_attribute",
-        "study_clinic_visit_relative",
-        "date_visit_text",
-        "date_visit_text_raw",
-        "sex_y",
-        "sex_letter",
-        "sex_text",
-        "age",
-        "body_mass_index",
-        "body_fat_percent",
-        "body_fat_mass",
-        "body_lean_mass",
-    ]
-    # Return information.
-    return columns_sequence
-
-
-def determine_match_sample_attribute_file(
-    subject=None,
-    study_clinic_visit=None,
-):
-    """
-    Determines a designator to match samples from their files of signals with
-    their attributes.
-
-    arguments:
-        subject (str): identifier of study participant subject
-        study_clinic_visit (str): indicator of clinical visit in the study at
-            which collection of a sample occurred, either 'Pre' or 'Post'
-
-    raises:
-
-    returns:
-        (str): common designator to match samples from their files of signals
-            to their attributes
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(subject)) and
-        (len(str(subject).strip()) > 0) and
-        (pandas.notna(study_clinic_visit)) and
-        (len(str(study_clinic_visit).strip()) > 0)
-    ):
-        # There is adequate information.
-        subject = str(subject).strip()
-        study_clinic_visit = str(study_clinic_visit).strip().lower()
-        if (study_clinic_visit == "pre"):
-            visit = str("first")
-            designator = str(subject + "_" + visit)
-        elif (study_clinic_visit == "post"):
-            visit = str("second")
-            designator = str(subject + "_" + visit)
-        else:
-            designator = ""
-    else:
-        designator = ""
-        pass
-    # Return information.
-    return designator
-
-
-def determine_cohort_age_text(
-    cohort_age_letter=None,
-):
-    """
-    Determines a designator for cohort by age.
-
-    arguments:
-        cohort_age_letter (str): designator of cohort by age
-
-    raises:
-
-    returns:
-        (str): designator of cohort by age
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(cohort_age_letter)) and
-        (len(str(cohort_age_letter).strip()) > 0)
-    ):
-        # There is adequate information.
-        cohort_age_letter = str(cohort_age_letter).strip().upper()
-        if (cohort_age_letter == "E"):
-            designator = str("elder")
-        elif (cohort_age_letter == "Y"):
-            designator = str("younger")
-        else:
-            designator = ""
-    else:
-        designator = ""
-        pass
-    # Return information.
-    return designator
-
-
-def determine_cohort_age(
-    cohort_age_text=None,
-):
-    """
-    Determines a designator for cohort by age.
-
-    arguments:
-        cohort_age_text (str): designator of cohort by age
-
-    raises:
-
-    returns:
-        (float): designator of cohort by age
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(cohort_age_text)) and
-        (len(str(cohort_age_text).strip()) > 0)
-    ):
-        # There is adequate information.
-        cohort_age_text = str(cohort_age_text).strip().lower()
-        if (cohort_age_text == "elder"):
-            designator = 1
-        elif (cohort_age_text == "younger"):
-            designator = 0
-        else:
-            designator = float("nan")
-    else:
-        designator = float("nan")
-        pass
-    # Return information.
-    return designator
-
-
-def determine_intervention(
-    intervention_text=None,
-):
-    """
-    Determines a designator for intervention.
-
-    arguments:
-        intervention_text (str): designator of intervention
-
-    raises:
-
-    returns:
-        (float): designator of intervention
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(intervention_text)) and
-        (len(str(intervention_text).strip()) > 0)
-    ):
-        # There is adequate information.
-        intervention_text = str(intervention_text).strip().lower()
-        if (intervention_text == "active"):
-            designator = 1
-        elif (intervention_text == "placebo"):
-            designator = 0
-        else:
-            designator = float("nan")
-    else:
-        designator = float("nan")
-        pass
-    # Return information.
-    return designator
-
-
-def determine_sex_text(
-    sex_letter=None,
-):
-    """
-    Determines a designator for sex.
-
-    arguments:
-        sex_letter (str): designator of sex
-
-    raises:
-
-    returns:
-        (str): designator of sex
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(sex_letter)) and
-        (len(str(sex_letter).strip()) > 0)
-    ):
-        # There is adequate information.
-        sex_letter = str(sex_letter).strip().upper()
-        if (sex_letter == "F"):
-            designator = str("female")
-        elif (sex_letter == "M"):
-            designator = str("male")
-        else:
-            designator = ""
-    else:
-        designator = ""
-        pass
-    # Return information.
-    return designator
-
-
-def determine_sex_y(
-    sex_text=None,
-):
-    """
-    Determines a designator for sex.
-
-    arguments:
-        sex_text (str): designator of sex
-
-    raises:
-
-    returns:
-        (float): designator of sex
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(sex_text)) and
-        (len(str(sex_text).strip()) > 0)
-    ):
-        # There is adequate information.
-        sex_text = str(sex_text).strip().lower()
-        if (sex_text == "female"):
-            designator = 0
-        elif (sex_text == "male"):
-            designator = 1
-        else:
-            designator = float("nan")
-    else:
-        designator = float("nan")
-        pass
-    # Return information.
-    return designator
-
-
-def determine_date_visit_text(
-    date_visit_text_raw=None,
-):
-    """
-    Determines a designator for date of visit to the clinic for study.
-
-    arguments:
-        date_visit_text (str): designator of date
-
-    raises:
-
-    returns:
-        (object): designator of date
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(date_visit_text_raw)) and
-        (len(str(date_visit_text_raw).strip()) > 0)
-    ):
-        # There is adequate information.
-        date_visit_text_raw = str(date_visit_text_raw).strip()
-        date_visit = datetime.strptime(date_visit_text_raw, '%m/%d/%Y').date()
-        designator = date_visit.strftime('%Y-%m-%d')
-    else:
-        designator = ""
-        pass
-    # Return information.
-    return designator
-
-
-def organize_table_sample_attribute(
-    table=None,
-    translations_column=None,
-    columns_sequence=None,
-    report=None,
-):
-    """
-    Organizes information in table that provides attributes of samples.
-
-    This function prepares the table of sample attributes for merge with the
-    table of matches between samples and files.
-
-    arguments:
-        table (object): Pandas data-frame table of information about samples
-        translations_column (dict<str>): translations for names of columns in a
-            table
-        columns_sequence (list<str>): names of columns in sequence by which to
-            filter and sort columns in table
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table
-
-    """
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-    # Copy other information.
-    translations_column = copy.deepcopy(translations_column)
-    columns_sequence = copy.deepcopy(columns_sequence)
-
-    # Translate names of columns to remove white space.
-    #table.columns = [column.replace("\n", "_") for column in table.columns]
-    table.columns = table.columns.str.strip()
-    table.columns = table.columns.str.replace(" ", "_")
-    table.columns = table.columns.str.replace("\n", "_")
-
-    # Translate names of columns.
-    table.rename(
-        columns=translations_column,
-        inplace=True,
-    )
-    # Determine designation to match sample to attribute.
-    table["match_sample_file_attribute"] = table.apply(
-        lambda row:
-            determine_match_sample_attribute_file(
-                subject=row["subject_attribute"],
-                study_clinic_visit=row["study_clinic_visit_relative"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Determine designations of cohort by age.
-    table["cohort_age_text"] = table.apply(
-        lambda row:
-            determine_cohort_age_text(
-                cohort_age_letter=row["cohort_age_letter"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    table["cohort_age"] = table.apply(
-        lambda row:
-            determine_cohort_age(
-                cohort_age_text=row["cohort_age_text"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Determine designations of intervention.
-    table["intervention_text"] = table.apply(
-        lambda row: str(row["intervention_text"]).strip().lower(),
-        axis="columns", # apply function to each row
-    )
-    table["intervention"] = table.apply(
-        lambda row:
-            determine_intervention(
-                intervention_text=row["intervention_text"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Determine designations of sex.
-    table["sex_text"] = table.apply(
-        lambda row:
-            determine_sex_text(
-                sex_letter=row["sex_letter"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    table["sex_y"] = table.apply(
-        lambda row:
-            determine_sex_y(
-                sex_text=row["sex_text"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Determine date of visit to the clinic for study.
-    table["date_visit_text"] = table.apply(
-        lambda row:
-            determine_date_visit_text(
-                date_visit_text_raw=row["date_visit_text_raw"],
-            ),
-        axis="columns", # apply function to each row
-    )
-
-    # Sort rows within table.
-    table.sort_values(
-        by=[
-            "cohort_age",
-            "intervention",
-            "subject_attribute",
-            "study_clinic_visit_relative",
-        ],
-        axis="index",
-        ascending=True,
-        na_position="last",
-        inplace=True,
-    )
-    # Filter and sort columns within table.
-    table = porg.filter_sort_table_columns(
-        table=table,
-        columns_sequence=columns_sequence,
-        report=report,
-    )
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
-        print("function: organize_table_sample_attribute()")
-        putly.print_terminal_partition(level=5)
-        print("table of attributes for samples: ")
-        print(table.iloc[0:10, 0:])
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return table
 
 
 ##########
@@ -947,7 +377,7 @@ def define_sequence_columns_table_sample_file():
         "condition_correction",
         "study_clinic_visit",
         "exercise_time_point",
-        "match_sample_file_attribute",
+        "match_sample_attribute_file_transcriptomics",
         #"path_file",
         #"sample_plate",
         #"plate",
@@ -1067,7 +497,7 @@ def determine_muscle_exercise_time_point(
     return indicator
 
 
-def determine_match_sample_file_attribute(
+def determine_match_sample_file_reverse(
     subject=None,
     study_clinic_visit=None,
 ):
@@ -1167,9 +597,9 @@ def organize_table_sample_file(
         axis="columns", # apply function to each row
     )
     # Determine designation to match sample to attribute.
-    table["match_sample_file_attribute"] = table.apply(
+    table["match_sample_attribute_file_transcriptomics"] = table.apply(
         lambda row:
-            determine_match_sample_file_attribute(
+            determine_match_sample_file_reverse(
                 subject=row["subject"],
                 study_clinic_visit=row["study_clinic_visit"],
             ),
@@ -1242,9 +672,9 @@ def combine_table_sample_file_attribute(
     # Transfer attributes.
     table = porg.transfer_table_rows_attributes_reference(
         table_main=table_sample_file,
-        column_main_key="match_sample_file_attribute",
+        column_main_key="match_sample_attribute_file_transcriptomics",
         table_reference=table_sample_attribute,
-        column_reference_key="match_sample_file_attribute",
+        column_reference_key="match_sample_attribute_file_transcriptomics",
         columns_reference_transfer=columns_transfer,
         prefix_reference_main="",
         suffix_reference_main="",
@@ -1652,6 +1082,9 @@ def execute_procedure(
 
     ##########
     # Parameters.
+    project="exercise"
+    routine="transcriptomics"
+    procedure="organize_sample"
     report = True
 
     ##########
@@ -1662,18 +1095,18 @@ def execute_procedure(
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
-        print("project: exercise")
-        print("routine: transcriptomics")
-        print("procedure: organize_sample")
+        print("project: " + str(project))
+        print("routine: " + str(routine))
+        print("procedure: " + str(procedure))
         putly.print_terminal_partition(level=5)
         pass
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
     paths = initialize_directories(
-        project="exercise",
-        routine="transcriptomics",
-        procedure="organize_sample",
+        project=project,
+        routine=routine,
+        procedure=procedure,
         path_directory_dock=path_directory_dock,
         restore=True,
         report=report,
@@ -1688,11 +1121,14 @@ def execute_procedure(
 
     ##########
     # 3. Organize table of attributes for samples.
-    pail_parse = parse_extract_sample_attribute_organization(
+    pail_parse = expr_sample.parse_extract_sample_attribute_organization(
         table=pail_source["table_sample_organization"],
+        inclusion="inclusion_transcriptomics",
         report=report,
     )
-    columns_sample_attribute = define_sequence_columns_table_sample_attribute()
+    columns_sample_attribute = (
+        expr_sample.define_sequence_columns_table_sample_attribute()
+    )
     table_sample_attribute = organize_table_sample_attribute(
         table=pail_source["table_sample_attribute"],
         translations_column=pail_parse["translations_column"],
@@ -1715,7 +1151,7 @@ def execute_procedure(
     # 5. Combine within the same table the matches between samples and files
     # along with their further attributes.
     columns_transfer = copy.deepcopy(columns_sample_attribute)
-    columns_transfer.remove("match_sample_file_attribute")
+    columns_transfer.remove("match_sample_attribute_file_transcriptomics")
     table_sample = combine_table_sample_file_attribute(
         table_sample_file=table_sample_file,
         table_sample_attribute=table_sample_attribute,

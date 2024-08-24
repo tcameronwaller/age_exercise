@@ -2043,7 +2043,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: exercise.transcriptomics.organize_signal.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")

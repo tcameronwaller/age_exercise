@@ -271,7 +271,7 @@ def define_subparser_proteomics(
     parser_routine.add_argument(
         "-organize_sample_olink",
         "--organize_sample_olink",
-        dest="organize_sample",
+        dest="organize_sample_olink",
         action="store_true",
         help=(
             "Organize information about samples, including measurements by " +
