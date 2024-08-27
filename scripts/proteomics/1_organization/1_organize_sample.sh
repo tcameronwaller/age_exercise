@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 23 August 2024
-# Date, last execution or modification: 23 August 2024
-# Review: TCW; 23 August 2024
+# Date, first execution: 27 August 2024
+# Date, last execution or modification: 27 August 2024
+# Review: TCW; 27 August 2024
 ###############################################################################
 # Note
 
@@ -110,7 +110,7 @@ fi
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
 proteomics \
---organize_sample_olink \
+--organize_sample \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################

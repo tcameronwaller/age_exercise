@@ -1,7 +1,7 @@
 """
 Supply functionality for process and analysis of data from proteomics.
 
-This module 'organize_sample_olink' is part of the 'proteomics' package within
+This module 'organize_sample' is part of the 'proteomics' package within
 the 'exercise' package.
 
 Author:
@@ -180,7 +180,7 @@ def initialize_directories(
 # 2. Read source information from file.
 
 
-def define_type_columns_table_sample_organization():
+def define_type_columns_table_sample_feature_organization():
     """
     Defines the variable types of columns within table for organization of
     attributes of samples.
@@ -200,17 +200,19 @@ def define_type_columns_table_sample_organization():
     types_columns = dict()
     types_columns["inclusion_transcriptomics"] = "int32"
     types_columns["inclusion_proteomics"] = "int32"
+    types_columns["category_raw"] = "string"
     types_columns["category"] = "string"
     types_columns["name_source"] = "string"
     types_columns["name_intermediate"] = "string"
     types_columns["name_product"] = "string"
     types_columns["type"] = "string"
+    types_columns["description"] = "string"
     # ...
     # Return information.
     return types_columns
 
 
-def parse_extract_sample_attribute_organization(
+def parse_extract_table_sample_feature_organization(
     table=None,
     inclusion=None,
     report=None,
@@ -276,19 +278,19 @@ def parse_extract_sample_attribute_organization(
     # type of tissue.
     columns_olink_plasma = copy.deepcopy(table_inclusion.loc[
         (table_inclusion["category"] == "olink_plasma"), :
-    ].copy(deep=True)["name_intermediate"].to_list())
+    ].copy(deep=True)["name_product"].to_list())
     columns_olink_muscle = copy.deepcopy(table_inclusion.loc[
         (table_inclusion["category"] == "olink_muscle"), :
-    ].copy(deep=True)["name_intermediate"].to_list())
+    ].copy(deep=True)["name_product"].to_list())
     columns_olink_adipose = copy.deepcopy(table_inclusion.loc[
         (table_inclusion["category"] == "olink_adipose"), :
-    ].copy(deep=True)["name_intermediate"].to_list())
+    ].copy(deep=True)["name_product"].to_list())
 
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_sample.py")
-        print("function: parse_extract_sample_attribute_organization()")
+        print("function: parse_extract_table_sample_feature_organization()")
         putly.print_terminal_partition(level=5)
         print("types for columns upon read: ")
         print(types_columns)
@@ -361,11 +363,11 @@ def read_source(
     # Define paths to child files.
     path_file_table_sample_organization = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_sample_organization.tsv",
+        "table_subject_sample_feature_organization.tsv",
     )
     path_file_table_sample_attribute = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_sample_attribute_proteomics_olink.csv",
+        "table_subject_sample_feature_olink_hek_2024-08-26.csv",
     )
 
     # Collect information.
@@ -374,7 +376,7 @@ def read_source(
 
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
-    types_columns = define_type_columns_table_sample_organization()
+    types_columns = define_type_columns_table_sample_feature_organization()
     pail["table_sample_organization"] = pandas.read_csv(
         path_file_table_sample_organization,
         sep="\t",
@@ -385,7 +387,7 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = parse_extract_sample_attribute_organization(
+    pail_parse = parse_extract_table_sample_feature_organization(
         table=pail["table_sample_organization"],
         inclusion="inclusion_proteomics",
         report=report,
@@ -403,7 +405,7 @@ def read_source(
         encoding="utf-8",
     )
     # Fill information about intervention in experimental condition.
-    pail["table_sample_attribute"]["Intervention"] = "Placebo"
+    #pail["table_sample_attribute"]["Intervention"] = "Placebo"
 
     # Report.
     if report:
@@ -423,10 +425,13 @@ def read_source(
 # 3. Organize table of attributes for samples.
 
 
-def define_sequence_columns_table_sample_attribute():
+def define_sequence_columns_novel_sample_feature():
     """
     Defines names of columns in sequence by which to filter and sort columns in
     a table.
+
+    This list represents the columns that are novel derivations of the original
+    columns.
 
     arguments:
 
@@ -443,21 +448,26 @@ def define_sequence_columns_table_sample_attribute():
         "match_sample_attribute_file_transcriptomics",
         "cohort_age",
         "cohort_age_text",
-        "cohort_age_letter",
+        #"cohort_age_letter",
         "intervention",
-        "intervention_text",
-        "subject_attribute",
-        "study_clinic_visit_relative",
+        #"intervention_text",
+        #"subject_attribute",
+        #"study_clinic_visit_relative",
         "date_visit_text",
-        "date_visit_text_raw",
+        #"date_visit_text_raw",
         "sex_y",
-        "sex_letter",
+        #"sex_letter",
         "sex_text",
-        "age",
-        "body_mass_index",
-        "body_fat_percent",
-        "body_fat_mass",
-        "body_lean_mass",
+        #"age",
+        #"body_mass_index",
+        #"body_fat_percent",
+        #"body_fat_mass",
+        #"body_lean_mass",
+        #"tertiles_body_mass_index",
+        #"tertiles_body_skeletal_muscle_index",
+        #"tertiles_body_fat_percent",
+        #"tertiles_insulin_sensitivity",
+        #"tertiles_activity_steps",
     ]
     # Return information.
     return columns_sequence
@@ -724,7 +734,8 @@ def determine_date_visit_text(
 def organize_table_sample_attribute(
     table=None,
     translations_column=None,
-    columns_sequence=None,
+    columns_original=None,
+    columns_novel=None,
     report=None,
 ):
     """
@@ -737,8 +748,10 @@ def organize_table_sample_attribute(
         table (object): Pandas data-frame table of information about samples
         translations_column (dict<str>): translations for names of columns in a
             table
-        columns_sequence (list<str>): names of columns in sequence by which to
-            filter and sort columns in table
+        columns_original (list<str>): names of original columns in sequence by
+            which to filter and sort columns in table
+        columns_novel (list<str>): names of original columns in sequence by
+            which to filter and sort columns in table
         report (bool): whether to print reports
 
     raises:
@@ -752,7 +765,8 @@ def organize_table_sample_attribute(
     table = table.copy(deep=True)
     # Copy other information.
     translations_column = copy.deepcopy(translations_column)
-    columns_sequence = copy.deepcopy(columns_sequence)
+    columns_original = copy.deepcopy(columns_original)
+    columns_novel = copy.deepcopy(columns_novel)
 
     # Translate names of columns to remove white space.
     #table.columns = [column.replace("\n", "_") for column in table.columns]
@@ -851,6 +865,9 @@ def organize_table_sample_attribute(
         inplace=True,
     )
     # Filter and sort columns within table.
+    #columns_sequence.insert(0, column_index)
+    columns_sequence = copy.deepcopy(columns_original)
+    columns_sequence.extend(columns_novel)
     table = porg.filter_sort_table_columns(
         table=table,
         columns_sequence=columns_sequence,
@@ -1146,16 +1163,17 @@ def execute_procedure(
 
     ##########
     # 3. Organize table of attributes for samples.
-    pail_parse = parse_extract_sample_attribute_organization(
+    pail_parse = parse_extract_table_sample_feature_organization(
         table=pail_source["table_sample_organization"],
         inclusion="inclusion_proteomics",
         report=report,
     )
-    #columns_sample_attribute = define_sequence_columns_table_sample_attribute()
+    columns_novel = define_sequence_columns_novel_sample_feature()
     table_sample_attribute = organize_table_sample_attribute(
         table=pail_source["table_sample_attribute"],
         translations_column=pail_parse["translations_column"],
-        columns_sequence=pail_parse["columns_all"],
+        columns_original=pail_parse["columns_all"],
+        columns_novel=columns_novel,
         report=report,
     )
 

@@ -71,7 +71,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.proteomics.organize_sample_olink as expr_sample
+import exercise.proteomics.organize_sample as expr_sample
 
 ###############################################################################
 # Functionality
@@ -245,11 +245,11 @@ def read_source(
     # Define paths to child files.
     path_file_table_sample_organization = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_sample_organization.tsv",
+        "table_subject_sample_feature_organization.tsv",
     )
     path_file_table_sample_attribute = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_sample_attribute_transcriptomics.csv",
+        "table_subject_sample_feature_olink_hek_2024-08-26.csv",
     )
     path_file_table_sample_file = os.path.join(
         paths["in_data"], "study_exercise_age", "subject_sample",
@@ -262,7 +262,9 @@ def read_source(
 
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
-    types_columns = expr_sample.define_type_columns_table_sample_organization()
+    types_columns = (
+        expr_sample.define_type_columns_table_sample_feature_organization()
+    )
     pail["table_sample_organization"] = pandas.read_csv(
         path_file_table_sample_organization,
         sep="\t",
@@ -273,7 +275,7 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = expr_sample.parse_extract_sample_attribute_organization(
+    pail_parse = expr_sample.parse_extract_table_sample_feature_organization(
         table=pail["table_sample_organization"],
         inclusion="inclusion_transcriptomics",
         report=report,
@@ -1121,89 +1123,90 @@ def execute_procedure(
 
     ##########
     # 3. Organize table of attributes for samples.
-    pail_parse = expr_sample.parse_extract_sample_attribute_organization(
+    pail_parse = expr_sample.parse_extract_table_sample_feature_organization(
         table=pail_source["table_sample_organization"],
         inclusion="inclusion_transcriptomics",
         report=report,
     )
-    columns_sample_attribute = (
-        expr_sample.define_sequence_columns_table_sample_attribute()
-    )
-    table_sample_attribute = organize_table_sample_attribute(
+    columns_novel = expr_sample.define_sequence_columns_novel_sample_feature()
+    table_sample_attribute = expr_sample.organize_table_sample_attribute(
         table=pail_source["table_sample_attribute"],
         translations_column=pail_parse["translations_column"],
-        columns_sequence=columns_sample_attribute,
+        columns_original=pail_parse["columns_all"],
+        columns_novel=columns_novel,
         report=report,
     )
 
-    ##########
-    # 4. Organize table of matches between samples and files.
-    translations_sample_file = define_translation_columns_table_sample_file()
-    columns_sample_file = define_sequence_columns_table_sample_file()
-    table_sample_file = organize_table_sample_file(
-        table=pail_source["table_sample_file"],
-        translations_column=translations_sample_file,
-        columns_sequence=columns_sample_file,
-        report=report,
-    )
-
-    ##########
-    # 5. Combine within the same table the matches between samples and files
-    # along with their further attributes.
-    columns_transfer = copy.deepcopy(columns_sample_attribute)
-    columns_transfer.remove("match_sample_attribute_file_transcriptomics")
-    table_sample = combine_table_sample_file_attribute(
-        table_sample_file=table_sample_file,
-        table_sample_attribute=table_sample_attribute,
-        columns_transfer=columns_transfer,
-        report=report,
-    )
-
-    ##########
-    # 6. Describe factors in table of samples.
-    describe_table_sample_factors(
-        table_sample=table_sample,
-        report=report,
-    )
-
-    ##########
-    # 7. Describe sets of samples for specific analyses.
-    selections = define_selections_sample_set()
-    describe_table_sample_sets(
-        table_sample=table_sample,
-        selections=selections,
-        report=report,
-    )
-
-    ##########
-    # Collect information.
-    # Collections of files.
-    pail_write_tables = dict()
-    pail_write_tables[str("table_sample")] = table_sample
-    pail_write_objects = dict()
-    #pail_write_objects[str("samples")]
-
-    ##########
-    # Write product information to file.
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths["out_data"],
-        reset_index=False,
-        write_index=False,
-        type="text",
-    )
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths["out_data"],
-        reset_index=False,
-        write_index=False,
-        type="pickle",
-    )
     if False:
-        putly.write_objects_to_file_pickle(
-            pail_write=pail_write_objects,
-            path_directory=paths["out_data"],
+
+        ##########
+        # 4. Organize table of matches between samples and files.
+        translations_sample_file = define_translation_columns_table_sample_file()
+        columns_sample_file = define_sequence_columns_table_sample_file()
+        table_sample_file = organize_table_sample_file(
+            table=pail_source["table_sample_file"],
+            translations_column=translations_sample_file,
+            columns_sequence=columns_sample_file,
+            report=report,
         )
+
+        ##########
+        # 5. Combine within the same table the matches between samples and files
+        # along with their further attributes.
+        columns_transfer = copy.deepcopy(columns_sample_attribute)
+        columns_transfer.remove("match_sample_attribute_file_transcriptomics")
+        table_sample = combine_table_sample_file_attribute(
+            table_sample_file=table_sample_file,
+            table_sample_attribute=table_sample_attribute,
+            columns_transfer=columns_transfer,
+            report=report,
+        )
+
+        ##########
+        # 6. Describe factors in table of samples.
+        describe_table_sample_factors(
+            table_sample=table_sample,
+            report=report,
+        )
+
+        ##########
+        # 7. Describe sets of samples for specific analyses.
+        selections = define_selections_sample_set()
+        describe_table_sample_sets(
+            table_sample=table_sample,
+            selections=selections,
+            report=report,
+        )
+
+        ##########
+        # Collect information.
+        # Collections of files.
+        pail_write_tables = dict()
+        pail_write_tables[str("table_sample")] = table_sample
+        pail_write_objects = dict()
+        #pail_write_objects[str("samples")]
+
+        ##########
+        # Write product information to file.
+        putly.write_tables_to_file(
+            pail_write=pail_write_tables,
+            path_directory=paths["out_data"],
+            reset_index=False,
+            write_index=False,
+            type="text",
+        )
+        putly.write_tables_to_file(
+            pail_write=pail_write_tables,
+            path_directory=paths["out_data"],
+            reset_index=False,
+            write_index=False,
+            type="pickle",
+        )
+        if False:
+            putly.write_objects_to_file_pickle(
+                pail_write=pail_write_objects,
+                path_directory=paths["out_data"],
+            )
 
     pass
 

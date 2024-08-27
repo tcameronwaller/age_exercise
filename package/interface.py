@@ -49,7 +49,7 @@ import textwrap
 import exercise.transcriptomics.organize_sample
 import exercise.transcriptomics.organize_signal
 import exercise.transcriptomics.select_gene_sets
-import exercise.proteomics.organize_sample_olink
+import exercise.proteomics.organize_sample
 
 #dir()
 #importlib.reload()
@@ -269,9 +269,9 @@ def define_subparser_proteomics(
         )
     )
     parser_routine.add_argument(
-        "-organize_sample_olink",
-        "--organize_sample_olink",
-        dest="organize_sample_olink",
+        "-organize_sample",
+        "--organize_sample",
+        dest="organize_sample",
         action="store_true",
         help=(
             "Organize information about samples, including measurements by " +
@@ -421,14 +421,14 @@ def evaluate_parameters_proteomics(arguments):
     print("--------------------------------------------------")
     print("... call to transcriptomics routine ...")
     # Execute procedure.
-    if arguments.organize_sample_olink:
+    if arguments.organize_sample:
         # Report status.
         print(
-           "... executing exercise.proteomics.organize_sample_olink " +
+           "... executing exercise.proteomics.organize_sample " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.proteomics.organize_sample_olink.execute_procedure(
+        exercise.proteomics.organize_sample.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 
