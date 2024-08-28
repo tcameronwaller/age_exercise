@@ -182,7 +182,8 @@ def initialize_directories(
             process
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for instance of rules for selection
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis by differential expression
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -289,7 +290,7 @@ def define_column_types_table_parameter_instances():
 
     # Specify variable types of columns within table.
     types_columns = dict()
-    types_columns["inclusion"] = "int32"
+    types_columns["inclusion"] = "string" # "int32"
     types_columns["name_set"] = "string"
     types_columns["tissue"] = "string"
     types_columns["cohort_selection_primary"] = "string"
@@ -380,14 +381,19 @@ def read_organize_source_parameter_instances(
                     part_split[1].split(",")
                 )
                 pass
-            pail["cohort_selection_secondary"] = dict()
-            for part in row["cohort_selection_secondary"].strip().split(";"):
-                part_split = part.split(":")
-                pail["cohort_selection_secondary"][part_split[0]] = (
-                    part_split[1].split(",")
-                )
+            if (str(row["cohort_selection_secondary"]) != "none"):
+                pail["cohort_selection_secondary"] = dict()
+                for part in row["cohort_selection_secondary"].strip(
+                ).split(";"):
+                    part_split = part.split(":")
+                    pail["cohort_selection_secondary"][part_split[0]] = (
+                        part_split[1].split(",")
+                    )
+                    pass
                 pass
-
+            else:
+                pail["cohort_selection_secondary"] = "none"
+                pass
             instances.append(pail)
             pass
         pass
@@ -408,44 +414,6 @@ def read_organize_source_parameter_instances(
         pass
     # Return information.
     return instances
-
-
-def define_column_types_table_sample():
-    """
-    Defines the variable types of columns within table for attributes of
-    samples.
-
-    Review: TCW; 24 June 2024
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): variable types of columns within table
-
-    """
-
-    # Specify variable types of columns within table.
-    types_columns = dict()
-    types_columns["inclusion"] = "int32" # "int32"
-    types_columns["identifier"] = "string"
-    types_columns["path_file"] = "string"
-    types_columns["sample_plate"] = "string"
-    types_columns["plate"] = "string"
-    types_columns["sample"] = "string"
-    types_columns["sample_plate"] = "string"
-    types_columns["condition_code"] = "string"
-    types_columns["tissue"] = "string"
-    types_columns["condition"] = "string"
-    types_columns["subject"] = "string"
-    types_columns["note_condition"] = "string"
-    #types_columns["sex"] = "string"
-    #types_columns["age"] = "int32"
-    #types_columns["body_mass"] = "float32"
-    #types_columns["body_mass_index"] = "float32"
-    # Return information.
-    return types_columns
 
 
 def define_column_types_table_main():
@@ -591,7 +559,8 @@ def select_sets_identifier_table_sample(
     arguments:
         table_sample (object): Pandas data-frame table of information about
             samples that correspond to signals within accompanying main table
-        name_set (str): name for instance of rules for selection
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis by differential expression
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         cohort_selection (dict<list<str>>): filters on rows in table for
@@ -613,18 +582,26 @@ def select_sets_identifier_table_sample(
     cohort_selection = copy.deepcopy(cohort_selection)
     factor_availability = copy.deepcopy(factor_availability)
 
+    # Organize indices in table.
+    #table_sample.reset_index(
+    #    level=None,
+    #    inplace=True,
+    #    drop=False, # remove index; do not move to regular columns
+    #)
+
     # Translate names of columns.
-    translations = dict()
-    translations["identifier_signal"] = "identifier"
-    table_sample.rename(
-        columns=translations,
-        inplace=True,
-    )
+    #translations = dict()
+    #translations["identifier_signal"] = "identifier"
+    #table_sample.rename(
+    #    columns=translations,
+    #    inplace=True,
+    #)
 
     # Filter rows in table for selection of relevant samples.
     # Filter by inclusion indicator.
+    table_sample["inclusion"] = table_sample["inclusion"].astype("str")
     table_inclusion = table_sample.loc[
-        (table_sample["inclusion"] == 1), :
+        (table_sample["inclusion"] == "1"), :
     ].copy(deep=True)
     # Separate information about sets of samples for difference experimental
     # conditions or groups.
@@ -641,7 +618,6 @@ def select_sets_identifier_table_sample(
     # Filter rows in table by rules for selection of a specific set.
     # Iterate on features and values for selection of samples in cohort.
     table_cohort = table_inclusion.copy(deep=True)
-    table_cohort["inclusion"] = table_cohort["inclusion"].astype("str")
     for feature in cohort_selection.keys():
         table_cohort = table_cohort.loc[(
             table_cohort[feature].isin(cohort_selection[feature])
@@ -664,33 +640,35 @@ def select_sets_identifier_table_sample(
 
     # Extract identifiers of samples in separate groups.
     samples_inclusion = copy.deepcopy(
-        table_inclusion["identifier"].to_list()
+        table_inclusion["identifier_signal"].to_list()
     )
     samples_tissue = copy.deepcopy(
-        table_tissue["identifier"].to_list()
+        table_tissue["identifier_signal"].to_list()
     )
     samples_selection = copy.deepcopy(
-        table_selection["identifier"].to_list()
+        table_selection["identifier_signal"].to_list()
     )
 
     # Organize indices in tables.
-    tables = [
-        table_inclusion,
-        table_tissue,
-        table_selection,
-    ]
-    for table in tables:
-        table.reset_index(
-            level=None,
-            inplace=True,
-            drop=True, # remove index; do not move to regular columns
-        )
-        table.set_index(
-            ["identifier"],
-            append=False,
-            drop=True,
-            inplace=True,
-        )
+    if False:
+        tables = [
+            table_inclusion,
+            table_tissue,
+            table_selection,
+        ]
+        for table in tables:
+            table.reset_index(
+                level=None,
+                inplace=True,
+                drop=True, # remove index; do not move to regular columns
+            )
+            table.set_index(
+                ["identifier_signal"],
+                append=False,
+                drop=True,
+                inplace=True,
+            )
+            pass
         pass
 
     # Collect information.
@@ -797,7 +775,7 @@ def organize_table_sample_tertiles(
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.proteomics.organize_sample_olink.py")
-        print("function: organize_table_sample_attribute()")
+        print("function: organize_table_sample_tertiles()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
         print(table.iloc[0:10, 0:])
@@ -1038,6 +1016,12 @@ def determine_keep_series_by_identity(
     # Return information.
     return indicator
 
+
+# TODO: TCW; 27 August 2024
+# for some instance, there aren't any valid values that go to "count_raw"
+#partner/organization.py", line 789, in determine_series_signal_validity_threshold
+# proportion_actual = float(count_valid / count_raw)
+# A probably explanation is that the new parameters are attempting to pass an empty table
 
 def filter_table_main_rows_signal(
     table_main=None,
@@ -1428,12 +1412,12 @@ def separate_table_main_columns(
         :, table_split.columns.isin(columns_signal)
     ].copy(deep=True)
     # Translate names of columns.
-    translations = dict()
-    translations["identifier_gene"] = "identifier"
-    table_gene.rename(
-        columns=translations,
-        inplace=True,
-    )
+    #translations = dict()
+    #translations["identifier_gene"] = "identifier"
+    #table_gene.rename(
+    #    columns=translations,
+    #    inplace=True,
+    #)
     # Organize indices in table.
     table_gene.reset_index(
         level=None,
@@ -1446,7 +1430,7 @@ def separate_table_main_columns(
         drop=True, # remove index; do not move to regular columns
     )
     table_gene.set_index(
-        ["identifier"],
+        ["identifier_gene"],
         append=False,
         drop=True,
         inplace=True,
@@ -1463,7 +1447,7 @@ def separate_table_main_columns(
         inplace=True,
     ) # single-dimensional index
     table_signal.columns.rename(
-        "sample",
+        "identifier_signal",
         inplace=True,
     ) # single-dimensional index
 
@@ -1517,6 +1501,7 @@ def check_coherence_table_sample_table_signal(
     table_sample=None,
     table_signal=None,
     tissue=None,
+    name_set=None,
     report=None,
 ):
     """
@@ -1532,6 +1517,8 @@ def check_coherence_table_sample_table_signal(
             features across rows
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
             distinguishes study design and sets of samples
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis by differential expression
         report (bool): whether to print reports
 
     raises:
@@ -1546,14 +1533,14 @@ def check_coherence_table_sample_table_signal(
     table_sample_extract = table_sample.copy(deep=True)
     table_signal = table_signal.copy(deep=True)
     # Organize indices in table.
-    table_sample_extract.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
+    #table_sample_extract.reset_index(
+    #    level=None,
+    #    inplace=True,
+    #    drop=False, # remove index; do not move to regular columns
+    #)
     # Extract identifiers of samples from each separate table.
     samples_sample = copy.deepcopy(
-        table_sample_extract["identifier"].to_list()
+        table_sample_extract["identifier_signal"].to_list()
     )
     samples_signal = copy.deepcopy(
         table_signal.columns.to_list()
@@ -1588,28 +1575,29 @@ def check_coherence_table_sample_table_signal(
         print("module: exercise.transcriptomics.organize_signal.py")
         print("function: check_coherence_table_sample_table_signal()")
         print("tissue: " + tissue)
+        print("name_set: " + name_set)
         putly.print_terminal_partition(level=5)
         count_rows = (table_sample.shape[0])
         count_columns = (table_sample.shape[1])
         print("table of information about samples:")
-        print(table_sample)
+        print(table_sample.iloc[0:10, 0:])
         print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
+        print("count of columns in table: " + str(count_columns))
         putly.print_terminal_partition(level=5)
         count_rows = (table_signal.shape[0])
         count_columns = (table_signal.shape[1])
-        print("table of information about signals:")
+        print("table of information about signals between genes and samples:")
         print(table_signal)
         print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
+        print("count of columns in table: " + str(count_columns))
         putly.print_terminal_partition(level=5)
-        print("sample identifiers from rows of sample table:")
+        print("sample-signal identifiers from rows of sample table:")
         print(samples_sample)
         putly.print_terminal_partition(level=5)
-        print("sample identifiers from columns of signal table:")
+        print("sample-signal identifiers from columns of signal table:")
         print(samples_signal)
         putly.print_terminal_partition(level=5)
-        print("real comparisons of sample identifiers:")
+        print("real comparisons of sample-signal identifiers:")
         print("inclusion: " + str(inclusion))
         print("identity: " + str(identity))
         print("equality: " + str(equality))
@@ -1673,7 +1661,8 @@ def control_branch_procedure(
     Control branch of procedure.
 
     arguments:
-        name_set (str): name for instance of rules for selection
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis by differential expression
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         cohort_selection_primary (dict<list<str>>): filters on rows in table
@@ -1730,9 +1719,9 @@ def control_branch_procedure(
     )
     #print(pail_sample["samples_selection"])
     columns_tertile = [
-        "body_mass_index",
-        "body_skeletal_muscle_index",
-        "body_fat_percent",
+        #"body_mass_index",
+        #"body_skeletal_muscle_index",
+        #"body_fat_percent",
         "insulin_sensitivity",
         "activity_steps",
     ]
@@ -1806,6 +1795,7 @@ def control_branch_procedure(
         table_sample=pail_sample_secondary["table_selection"],
         table_signal=table_signal,
         tissue=tissue,
+        name_set=name_set,
         report=report,
     )
 
@@ -1825,7 +1815,7 @@ def control_branch_procedure(
     # Collections of files.
     pail_write_data = dict()
     pail_write_data[str("table_sample")] = (
-        pail_sample["table_selection"]
+        pail_sample_secondary["table_selection"]
     )
     pail_write_data[str("table_gene")] = (
         pail_separate["table_gene"]
@@ -1867,7 +1857,8 @@ def control_parallel_instance(
 
     arguments:
         instance (dict): parameters specific to current instance
-            name_set (str): name for instance of rules for selection
+            name_set (str): name for instance set of parameters for selection of
+                samples in cohort and defining analysis by differential expression
             tissue (str): name of tissue, either 'adipose' or 'muscle', which
                 distinguishes study design and sets of samples
             cohort_selection_primary (dict<list<str>>): filters on rows in
@@ -2057,7 +2048,7 @@ def control_parallel_instances(
     parameters["report"] = report
 
     # Execute procedure iteratively with parallelization across instances.
-    if True:
+    if False:
         prall.drive_procedure_parallel(
             function_control=(
                 control_parallel_instance

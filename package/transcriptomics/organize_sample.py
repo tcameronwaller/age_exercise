@@ -197,12 +197,12 @@ def define_type_columns_table_sample_file():
     # Specify variable types of columns within table.
     types_columns = dict()
     types_columns["inclusion"] = "int32"
-    types_columns["identifier"] = "string"
+    types_columns["identifier_signal"] = "string"
     types_columns["path_file"] = "string"
     types_columns["sample_plate"] = "string"
     types_columns["plate"] = "string"
-    types_columns["sample"] = "string"
-    types_columns["subject"] = "string"
+    types_columns["identifier_sample"] = "string"
+    types_columns["identifier_subject"] = "string"
     types_columns["tissue"] = "string"
     types_columns["condition_code"] = "string"
     types_columns["condition_correction"] = "string"
@@ -348,7 +348,7 @@ def define_translation_columns_table_sample_file():
 
     # Translate names of columns.
     translations = dict()
-    translations["identifier"] = "identifier_signal"
+    #translations["identifier"] = "identifier_signal"
     translations["condition_interpretation"] = "condition_obsolete"
     # Return information.
     return translations
@@ -372,10 +372,10 @@ def define_sequence_columns_table_sample_file():
     # Specify sequence of columns within table.
     columns_sequence = [
         "inclusion",
+        "identifier_subject",
+        "identifier_sample",
         "identifier_signal",
         "tissue",
-        "sample",
-        "subject",
         "condition_correction",
         "study_clinic_visit",
         "exercise_time_point",
@@ -581,7 +581,7 @@ def organize_table_sample_file(
     table.sort_values(
         by=[
             "tissue",
-            "subject",
+            "identifier_subject",
             "condition_correction",
         ],
         axis="index",
@@ -602,7 +602,7 @@ def organize_table_sample_file(
     table["match_sample_attribute_file_transcriptomics"] = table.apply(
         lambda row:
             determine_match_sample_file_reverse(
-                subject=row["subject"],
+                subject=row["identifier_subject"],
                 study_clinic_visit=row["study_clinic_visit"],
             ),
         axis="columns", # apply function to each row
@@ -692,7 +692,7 @@ def combine_table_sample_file_attribute(
             "cohort_age",
             "intervention",
             "sex_y",
-            "subject",
+            "identifier_subject",
             "study_clinic_visit",
             "exercise_time_point",
         ],

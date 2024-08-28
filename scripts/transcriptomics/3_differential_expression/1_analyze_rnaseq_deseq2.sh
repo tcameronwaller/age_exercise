@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 15 August 2024
-# Review: TCW; 15 August 2024
+# Date, last execution or modification: 28 August 2024
+# Review: TCW; 28 August 2024
 ###############################################################################
 # Note
 
@@ -35,6 +35,7 @@ path_directory_parameters_private="$path_directory_dock/in_parameters_private/ex
 
 # Files.
 path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
+#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_test_muscle_exercise.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
@@ -71,18 +72,19 @@ do
   raw_inclusion="${array[0]}"
   raw_name_set="${array[1]}"
   raw_tissue="${array[2]}"
-  raw_cohort_selection="${array[3]}"
+  raw_cohort_selection_primary="${array[3]}"
   raw_factor_availability="${array[4]}"
-  raw_formula_text="${array[5]}"
-  raw_condition="${array[6]}"
-  raw_levels_condition="${array[7]}"
-  raw_supplement_1="${array[8]}"
-  raw_levels_supplement_1="${array[9]}"
-  raw_supplement_2="${array[10]}"
-  raw_levels_supplement_2="${array[11]}"
-  raw_subject="${array[12]}"
-  raw_threshold_significance="${array[13]}"
-  raw_note="${array[14]}"
+  raw_cohort_selection_secondary="${array[5]}"
+  raw_formula_text="${array[6]}"
+  raw_condition="${array[7]}"
+  raw_levels_condition="${array[8]}"
+  raw_supplement_1="${array[9]}"
+  raw_levels_supplement_1="${array[10]}"
+  raw_supplement_2="${array[11]}"
+  raw_levels_supplement_2="${array[12]}"
+  raw_subject="${array[13]}"
+  raw_threshold_significance="${array[14]}"
+  raw_note="${array[15]}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
@@ -90,18 +92,19 @@ do
     echo "field 0, inclusion: ${raw_inclusion}"
     echo "field 1, name_set: ${raw_name_set}"
     echo "field 2, tissue: ${raw_tissue}"
-    echo "field 3, cohort_selection: ${raw_cohort_selection}"
+    echo "field 3, cohort_selection_primary: ${raw_cohort_selection_primary}"
     echo "field 4, factor_availability: ${raw_factor_availability}"
-    echo "field 5, formula_text: ${raw_formula_text}"
-    echo "field 6, condition: ${raw_condition}"
-    echo "field 7, levels_condition: ${raw_levels_condition}"
-    echo "field 8, supplement_1: ${raw_supplement_1}"
-    echo "field 9, levels_supplement_1: ${raw_levels_supplement_1}"
-    echo "field 10, supplement_2: ${raw_supplement_2}"
-    echo "field 11, levels_supplement_2: ${raw_levels_supplement_2}"
-    echo "field 12, subject: ${raw_subject}"
-    echo "field 13, threshold_significance: ${raw_threshold_significance}"
-    echo "field 14, note: ${raw_note}"
+    echo "field 5, cohort_selection_secondary: ${raw_cohort_selection_secondary}"
+    echo "field 6, formula_text: ${raw_formula_text}"
+    echo "field 7, condition: ${raw_condition}"
+    echo "field 8, levels_condition: ${raw_levels_condition}"
+    echo "field 9, supplement_1: ${raw_supplement_1}"
+    echo "field 10, levels_supplement_1: ${raw_levels_supplement_1}"
+    echo "field 11, supplement_2: ${raw_supplement_2}"
+    echo "field 12, levels_supplement_2: ${raw_levels_supplement_2}"
+    echo "field 13, subject: ${raw_subject}"
+    echo "field 14, threshold_significance: ${raw_threshold_significance}"
+    echo "field 15, note: ${raw_note}"
     echo "----------"
   fi
   # Execute procedure for current record's parameters.

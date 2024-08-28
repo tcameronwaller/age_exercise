@@ -451,7 +451,7 @@ def define_sequence_columns_novel_sample_feature():
         #"cohort_age_letter",
         "intervention",
         #"intervention_text",
-        #"subject_attribute",
+        #"identifier_subject_attribute",
         #"study_clinic_visit_relative",
         "date_visit_text",
         #"date_visit_text_raw",
@@ -784,7 +784,7 @@ def organize_table_sample_attribute(
     # Filter rows in table.
     table = table.loc[
         (
-            (table["subject_attribute"].str.len() > 0)
+            (table["identifier_subject_attribute"].str.len() > 0)
         ), :
     ].copy(deep=True)
     table.dropna(
@@ -796,7 +796,7 @@ def organize_table_sample_attribute(
     table["match_sample_attribute_file_transcriptomics"] = table.apply(
         lambda row:
             determine_match_sample_file_forward(
-                subject=row["subject_attribute"],
+                subject=row["identifier_subject_attribute"],
                 study_clinic_visit=row["study_clinic_visit_relative"],
             ),
         axis="columns", # apply function to each row
@@ -854,9 +854,9 @@ def organize_table_sample_attribute(
 
     # Determine tertiles for stratification of sample cohorts.
     columns_source = [
-        "body_mass_index",
-        "body_skeletal_muscle_index",
-        "body_fat_percent",
+        #"body_mass_index",
+        #"body_skeletal_muscle_index",
+        #"body_fat_percent",
         "insulin_sensitivity",
         "activity_steps",
     ]
@@ -884,7 +884,7 @@ def organize_table_sample_attribute(
         by=[
             "cohort_age",
             "intervention",
-            "subject_attribute",
+            "identifier_subject_attribute",
             "study_clinic_visit_relative",
         ],
         axis="index",
@@ -1215,7 +1215,7 @@ def execute_procedure(
     table_sample_olink_components = (
         organize_olink_principal_components_tissues(
             table=table_sample_attribute,
-            column_index="subject_attribute",
+            column_index="identifier_subject_attribute",
             columns_olink_plasma=pail_parse["columns_olink_plasma"],
             columns_olink_muscle=pail_parse["columns_olink_muscle"],
             columns_olink_adipose=pail_parse["columns_olink_adipose"],
