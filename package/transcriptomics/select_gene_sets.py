@@ -547,12 +547,12 @@ def organize_table_change_deseq2(
     ]
     table_change["p_value_threshold"] = table_change.apply(
         lambda row:
-            1E-290 if (float(row["p_value"]) < 1E-290) else row["p_value"],
+            2.23E-308 if (float(row["p_value"]) < 2.23E-308) else row["p_value"],
         axis="columns", # apply function to each row
     )
     table_change["q_value_threshold"] = table_change.apply(
         lambda row:
-            1E-290 if (float(row["q_value"]) < 1E-290) else row["q_value"],
+            2.23E-308 if (float(row["q_value"]) < 2.23E-308) else row["q_value"],
         axis="columns", # apply function to each row
     )
     # Filter rows in table for selection of non-missing values for fold change.
