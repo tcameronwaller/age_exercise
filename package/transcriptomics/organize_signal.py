@@ -2048,7 +2048,7 @@ def control_parallel_instances(
     parameters["report"] = report
 
     # Execute procedure iteratively with parallelization across instances.
-    if False:
+    if True:
         prall.drive_procedure_parallel(
             function_control=(
                 control_parallel_instance
