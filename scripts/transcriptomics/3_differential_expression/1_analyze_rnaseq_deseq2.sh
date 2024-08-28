@@ -120,7 +120,7 @@ do
     path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
     path_file_source_table_gene="${path_directory_source}/table_gene.tsv"
     path_file_source_table_signal="${path_directory_source}/table_signal.tsv"
-    path_file_product_table="${path_directory_product}/table_result_deseq2.tsv"
+    path_file_product_table="${path_directory_product}/table_result_deseq2_${raw_name_set}.tsv"
     # Initialize directory.
     rm -r $path_directory_product # caution
     mkdir -p $path_directory_product
