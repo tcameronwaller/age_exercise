@@ -745,7 +745,8 @@ def organize_table_sample_attribute(
     table of matches between samples and files.
 
     arguments:
-        table (object): Pandas data-frame table of information about samples
+        table (object): Pandas data-frame table of subjects, samples, and their
+            attribute features
         translations_column (dict<str>): translations for names of columns in a
             table
         columns_original (list<str>): names of original columns in sequence by
@@ -851,6 +852,33 @@ def organize_table_sample_attribute(
         axis="columns", # apply function to each row
     )
 
+    # Determine tertiles for stratification of sample cohorts.
+    columns_source = [
+        "body_mass_index",
+        "body_skeletal_muscle_index",
+        "body_fat_percent",
+        "insulin_sensitivity",
+        "activity_steps",
+    ]
+    for column_source in columns_source:
+        column_product = str("tertiles_" + column_source)
+        table = pdesc.determine_describe_quantiles_ordinal(
+            table=table,
+            column_source=column_source,
+            column_product=column_product,
+            count=3,
+            text_string=True,
+            report=True,
+        )
+        pdesc.describe_quantiles_ordinal(
+            table=table,
+            column_source=column_source,
+            column_product=column_product,
+            columns_category=["sex_text",],
+            report=True,
+        )
+        pass
+
     # Sort rows within table.
     table.sort_values(
         by=[
@@ -886,6 +914,11 @@ def organize_table_sample_attribute(
         pass
     # Return information.
     return table
+
+
+# TODO: TCW; 2024-08-27
+# Ideally, the calculation of the PCs should happen AFTER stratifying the
+# samples for the cohort that's relevant to the analysis.
 
 
 ##########
