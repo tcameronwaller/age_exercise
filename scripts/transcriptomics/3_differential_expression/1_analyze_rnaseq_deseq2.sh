@@ -35,7 +35,7 @@ path_directory_parameters_private="$path_directory_dock/in_parameters_private/ex
 
 # Files.
 path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
-#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_test_muscle_exercise.tsv"
+#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_test.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
