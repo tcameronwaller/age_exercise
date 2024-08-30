@@ -1718,18 +1718,26 @@ def control_branch_procedure(
         report=report,
     )
     #print(pail_sample["samples_selection"])
-    columns_tertile = [
-        #"body_mass_index",
-        #"body_skeletal_muscle_index",
-        #"body_fat_percent",
-        "insulin_sensitivity",
-        "activity_steps",
-    ]
-    table_tertile = organize_table_sample_tertiles(
-        table=pail_sample_primary["table_selection"],
-        columns_source=columns_tertile,
-        report=report,
-    )
+    # Determine whether to calculate tertiles.
+    if (
+        any("tertiles_" in item for item in list(
+            cohort_selection_secondary.keys()
+        ))
+    ):
+        columns_tertile = [
+            #"body_mass_index",
+            #"body_skeletal_muscle_index",
+            #"body_fat_percent",
+            "insulin_sensitivity",
+            "activity_steps",
+        ]
+        table_tertile = organize_table_sample_tertiles(
+            table=pail_sample_primary["table_selection"],
+            columns_source=columns_tertile,
+            report=report,
+        )
+    else:
+        table_tertile = pail_sample_primary["table_selection"]
     pail_sample_secondary = select_sets_identifier_table_sample(
         table_sample=table_tertile,
         name_set=name_set,
@@ -2061,7 +2069,7 @@ def control_parallel_instances(
     else:
         # Execute procedure directly for testing.
         control_parallel_instance(
-            instance=instances[0],
+            instance=instances[13],
             parameters=parameters,
         )
     pass

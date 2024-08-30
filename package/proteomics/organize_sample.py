@@ -450,7 +450,7 @@ def define_sequence_columns_novel_sample_feature():
         "cohort_age_text",
         #"cohort_age_letter",
         "intervention",
-        #"intervention_text",
+        "intervention_text",
         #"identifier_subject_attribute",
         #"study_clinic_visit_relative",
         "date_visit_text",
@@ -818,7 +818,7 @@ def organize_table_sample_attribute(
     )
     # Determine designations of intervention.
     table["intervention_text"] = table.apply(
-        lambda row: str(row["intervention_text"]).strip().lower(),
+        lambda row: str(row["intervention_text_raw"]).strip().lower(),
         axis="columns", # apply function to each row
     )
     table["intervention"] = table.apply(

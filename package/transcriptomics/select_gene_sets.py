@@ -334,6 +334,9 @@ def define_column_types_table_gene_emphasis():
     types_columns["resistance_acute"] = "float32"
     types_columns["resistance_chronic"] = "float32"
     types_columns["inactivity"] = "float32"
+    types_columns["WP_INSULIN_SIGNALING_IN_ADIPOCYTES_NORMAL_CONDITION"] = (
+        "float32"
+    )
     # Return information.
     return types_columns
 
@@ -373,11 +376,11 @@ def read_source(
     # Define paths to child files.
     path_file_table_deseq2 = os.path.join(
         paths["out_routine"], "deseq2", tissue, name_set,
-        "table_result_deseq2.tsv",
+        str("table_result_deseq2_" + name_set + ".tsv"),
     )
     path_file_table_gene_emphasis = os.path.join(
         paths["in_parameters_private"],
-        "table_gene_emphasis_exercise.tsv",
+        "table_gene_sets_emphasis.tsv",
     )
 
     # Collect information.
@@ -409,15 +412,23 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail["table_gene_emphasis"] = table_gene_emphasis.loc[
-        (
-            (table_gene_emphasis["aerobic_acute"] == 1) |
-            (table_gene_emphasis["aerobic_chronic"] == 1) |
-            (table_gene_emphasis["resistance_acute"] == 1) |
-            (table_gene_emphasis["resistance_chronic"] == 1) |
-            (table_gene_emphasis["inactivity"] == 1)
-        ), :
-    ]
+    if False:
+        pail["table_gene_emphasis"] = table_gene_emphasis.loc[
+            (
+                (table_gene_emphasis["aerobic_acute"] == 1) |
+                (table_gene_emphasis["aerobic_chronic"] == 1) |
+                (table_gene_emphasis["resistance_acute"] == 1) |
+                (table_gene_emphasis["resistance_chronic"] == 1) |
+                (table_gene_emphasis["inactivity"] == 1)
+            ), :
+        ]
+    if True:
+        set = "pubmed_37058410_figures1g"
+        pail["table_gene_emphasis"] = table_gene_emphasis.loc[
+            (
+                (table_gene_emphasis[set] == 1)
+            ), :
+        ]
 
     # Report.
     if report:
