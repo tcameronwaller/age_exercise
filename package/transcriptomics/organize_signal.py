@@ -725,7 +725,7 @@ def select_sets_identifier_table_sample(
 
 def organize_table_sample_tertiles(
     table=None,
-    columns_source=None,
+    cohort_selection=None,
     report=None,
 ):
     """
@@ -735,8 +735,8 @@ def organize_table_sample_tertiles(
     arguments:
         table (object): Pandas data-frame table of subjects, samples, and their
             attribute features
-        columns_source (list<str>): names of source columns in table for
-            tertiles
+        cohort_selection (dict<list<str>>): filters on rows in table for
+            selection of samples relevant to cohort for analysis
         report (bool): whether to print reports
 
     raises:
@@ -749,28 +749,47 @@ def organize_table_sample_tertiles(
     # Copy information in table.
     table = table.copy(deep=True)
     # Copy other information.
-    columns_source = copy.deepcopy(columns_source)
+    cohort_selection = copy.deepcopy(cohort_selection)
 
-    # Determine tertiles for stratification of sample cohorts.
-    for column_source in columns_source:
-        column_product = str("tertiles_" + column_source)
-        table = pdesc.determine_describe_quantiles_ordinal(
-            table=table,
-            column_source=column_source,
-            column_product=column_product,
-            count=3,
-            text_string=True,
-            report=True,
-        )
-        pdesc.describe_quantiles_ordinal(
-            table=table,
-            column_source=column_source,
-            column_product=column_product,
-            columns_category=["sex_text",],
-            report=True,
-        )
-        pass
-
+    # Determine whether to calculate tertiles for any feature variables with
+    # continuous values.
+    if (
+        any("tertiles_" in item for item in list(
+            cohort_selection.keys()
+        ))
+    ):
+        # Extract names feature variables for which to calculate tertiles.
+        features_tertile = list()
+        for feature in cohort_selection.keys():
+            if ("tertiles_" in str(feature)):
+                features_tertile.append(feature)
+        # Extract names of columns.
+        columns_tertile = list()
+        columns_tertile = list(map(
+            lambda feature: feature.replace("tertiles_", ""),
+            features_tertile
+        ))
+        # Determine tertiles for stratification of sample cohorts.
+        for column_source in columns_tertile:
+            column_product = str("tertiles_" + column_source)
+            table_tertile = pdesc.determine_describe_quantiles_ordinal(
+                table=table,
+                column_source=column_source,
+                column_product=column_product,
+                count=3,
+                text_string=True,
+                report=True,
+            )
+            pdesc.describe_quantiles_ordinal(
+                table=table_tertile,
+                column_source=column_source,
+                column_product=column_product,
+                columns_category=["sex_text",],
+                report=True,
+            )
+            pass
+    else:
+        table_tertile = pail_sample_primary["table_selection"]
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -778,12 +797,12 @@ def organize_table_sample_tertiles(
         print("function: organize_table_sample_tertiles()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
-        print(table.iloc[0:10, 0:])
-        print(table)
+        print(table_tertile.iloc[0:10, 0:])
+        print(table_tertile)
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
-    return table
+    return table_tertile
 
 
 ##########
@@ -1717,27 +1736,38 @@ def control_branch_procedure(
         factor_availability=factor_availability,
         report=report,
     )
-    #print(pail_sample["samples_selection"])
-    # Determine whether to calculate tertiles.
-    if (
-        any("tertiles_" in item for item in list(
-            cohort_selection_secondary.keys()
-        ))
-    ):
-        columns_tertile = [
-            #"body_mass_index",
-            #"body_skeletal_muscle_index",
-            #"body_fat_percent",
-            "insulin_sensitivity",
-            "activity_steps",
-        ]
-        table_tertile = organize_table_sample_tertiles(
-            table=pail_sample_primary["table_selection"],
-            columns_source=columns_tertile,
-            report=report,
-        )
-    else:
-        table_tertile = pail_sample_primary["table_selection"]
+    # Organize tertiles for feature variables with continuous values that the
+    # parameters specify.
+    table_tertile = organize_table_sample_tertiles(
+        table=pail_sample_primary["table_selection"],
+        cohort_selection=cohort_selection_secondary,
+        report=report,
+    )
+    # OBSOLETE SCRAP (TCW; 5 September 2024)
+    if False:
+        # Determine whether to calculate tertiles.
+        if (
+            any("tertiles_" in item for item in list(
+                cohort_selection_secondary.keys()
+            ))
+        ):
+            columns_tertile = [
+                #"body_mass_index",
+                #"body_skeletal_muscle_index",
+                #"body_fat_percent",
+                #"insulin_sensitivity",
+                #"activity_steps",
+                "p16_adipocyte_percent",
+            ]
+            table_tertile = organize_table_sample_tertiles(
+                table=pail_sample_primary["table_selection"],
+                columns_source=columns_tertile,
+                cohort_selection=cohort_selection_secondary,
+                report=report,
+            )
+        else:
+            table_tertile = pail_sample_primary["table_selection"]
+    # Select sets of samples on the basis of tertiles.
     pail_sample_secondary = select_sets_identifier_table_sample(
         table_sample=table_tertile,
         name_set=name_set,

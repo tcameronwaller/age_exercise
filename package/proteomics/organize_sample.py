@@ -851,34 +851,6 @@ def organize_table_sample_attribute(
             ),
         axis="columns", # apply function to each row
     )
-
-    # Determine tertiles for stratification of sample cohorts.
-    columns_source = [
-        #"body_mass_index",
-        #"body_skeletal_muscle_index",
-        #"body_fat_percent",
-        "insulin_sensitivity",
-        "activity_steps",
-    ]
-    for column_source in columns_source:
-        column_product = str("tertiles_" + column_source)
-        table = pdesc.determine_describe_quantiles_ordinal(
-            table=table,
-            column_source=column_source,
-            column_product=column_product,
-            count=3,
-            text_string=True,
-            report=True,
-        )
-        pdesc.describe_quantiles_ordinal(
-            table=table,
-            column_source=column_source,
-            column_product=column_product,
-            columns_category=["sex_text",],
-            report=True,
-        )
-        pass
-
     # Sort rows within table.
     table.sort_values(
         by=[
@@ -1031,6 +1003,7 @@ def organize_olink_principal_components_tissue(
         identifier_second=column_index,
         table_first=table_main,
         table_second=table_component_scores,
+        preserve_index=True,
         report=report,
     )
 
