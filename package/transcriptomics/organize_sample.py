@@ -778,6 +778,8 @@ def describe_table_sample_factors(
 # 7. Describe sets of samples for specific analyses.
 
 
+# TODO: TCW; 9 September 2024
+# TODO: obsolete
 def define_selections_sample_set():
     """
     Defines selection criteria for sets of samples in specific analyses.
@@ -975,6 +977,8 @@ def define_selections_sample_set():
     return instances
 
 
+# TODO: TCW; 9 September 2024
+# TODO: obsolete
 def describe_table_sample_sets(
     table_sample=None,
     selections=None,

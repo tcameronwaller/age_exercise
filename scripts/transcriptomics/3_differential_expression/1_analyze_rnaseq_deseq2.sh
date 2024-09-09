@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 28 August 2024
-# Review: TCW; 28 August 2024
+# Date, last execution or modification: 9 September 2024
+# Review: TCW; 9 September 2024
 ###############################################################################
 # Note
 
@@ -70,41 +70,43 @@ while IFS=$' \t\n' read -r -a array
 do
   # Extract values from individual columns within table's current row.
   raw_inclusion="${array[0]}"
-  raw_name_set="${array[1]}"
-  raw_tissue="${array[2]}"
-  raw_cohort_selection_primary="${array[3]}"
-  raw_factor_availability="${array[4]}"
-  raw_cohort_selection_secondary="${array[5]}"
-  raw_formula_text="${array[6]}"
-  raw_condition="${array[7]}"
-  raw_levels_condition="${array[8]}"
-  raw_supplement_1="${array[9]}"
-  raw_levels_supplement_1="${array[10]}"
-  raw_supplement_2="${array[11]}"
-  raw_levels_supplement_2="${array[12]}"
-  raw_subject="${array[13]}"
-  raw_threshold_significance="${array[14]}"
-  raw_note="${array[15]}"
+  raw_group="${array[1]}"
+  raw_name_set="${array[2]}"
+  raw_tissue="${array[3]}"
+  raw_cohort_selection_primary="${array[4]}"
+  raw_factor_availability="${array[5]}"
+  raw_cohort_selection_secondary="${array[6]}"
+  raw_formula_text="${array[7]}"
+  raw_condition="${array[8]}"
+  raw_levels_condition="${array[9]}"
+  raw_supplement_1="${array[10]}"
+  raw_levels_supplement_1="${array[11]}"
+  raw_supplement_2="${array[12]}"
+  raw_levels_supplement_2="${array[13]}"
+  raw_subject="${array[14]}"
+  raw_threshold_significance="${array[15]}"
+  raw_note="${array[16]}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
     echo "--------------------------------------------------"
     echo "field 0, inclusion: ${raw_inclusion}"
-    echo "field 1, name_set: ${raw_name_set}"
-    echo "field 2, tissue: ${raw_tissue}"
-    echo "field 3, cohort_selection_primary: ${raw_cohort_selection_primary}"
-    echo "field 4, factor_availability: ${raw_factor_availability}"
-    echo "field 5, cohort_selection_secondary: ${raw_cohort_selection_secondary}"
-    echo "field 6, formula_text: ${raw_formula_text}"
-    echo "field 7, condition: ${raw_condition}"
-    echo "field 8, levels_condition: ${raw_levels_condition}"
-    echo "field 9, supplement_1: ${raw_supplement_1}"
-    echo "field 10, levels_supplement_1: ${raw_levels_supplement_1}"
-    echo "field 11, supplement_2: ${raw_supplement_2}"
-    echo "field 12, levels_supplement_2: ${raw_levels_supplement_2}"
-    echo "field 13, subject: ${raw_subject}"
-    echo "field 14, threshold_significance: ${raw_threshold_significance}"
-    echo "field 15, note: ${raw_note}"
+    echo "field 1, group: ${raw_group}"
+    echo "field 2, name_set: ${raw_name_set}"
+    echo "field 3, tissue: ${raw_tissue}"
+    echo "field 4, cohort_selection_primary: ${raw_cohort_selection_primary}"
+    echo "field 5, factor_availability: ${raw_factor_availability}"
+    echo "field 6, cohort_selection_secondary: ${raw_cohort_selection_secondary}"
+    echo "field 7, formula_text: ${raw_formula_text}"
+    echo "field 8, condition: ${raw_condition}"
+    echo "field 9, levels_condition: ${raw_levels_condition}"
+    echo "field 10, supplement_1: ${raw_supplement_1}"
+    echo "field 11, levels_supplement_1: ${raw_levels_supplement_1}"
+    echo "field 12, supplement_2: ${raw_supplement_2}"
+    echo "field 13, levels_supplement_2: ${raw_levels_supplement_2}"
+    echo "field 14, subject: ${raw_subject}"
+    echo "field 15, threshold_significance: ${raw_threshold_significance}"
+    echo "field 16, note: ${raw_note}"
     echo "----------"
   fi
   # Execute procedure for current record's parameters.
@@ -115,7 +117,7 @@ do
     # Organize paths for current instance.
     # Directories.
     path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/${raw_tissue}/${raw_name_set}/data"
-    path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2/${raw_tissue}/${raw_name_set}"
+    path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2/${raw_tissue}/${raw_group}"
     # Files.
     path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
     path_file_source_table_gene="${path_directory_source}/table_gene.tsv"
