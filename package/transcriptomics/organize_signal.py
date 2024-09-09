@@ -789,7 +789,7 @@ def organize_table_sample_tertiles(
             )
             pass
     else:
-        table_tertile = pail_sample_primary["table_selection"]
+        table_tertile = table
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -827,6 +827,7 @@ def define_column_sequence_table_main_gene():
     columns_sequence = [
         "identifier_gene",
         "gene_identifier",
+        "gene_identifier_base",
         "gene_name",
         #"gene_exon_number",
         "gene_type",
@@ -881,6 +882,12 @@ def organize_table_main(
     table_main.rename(
         columns=translations,
         inplace=True,
+    )
+    # Determine base Ensembl identifier for genes.
+    # reference: https://useast.ensembl.org/Help/Faq?id=488
+    table_main["gene_identifier_base"] = table_main.apply(
+        lambda row: str(row["gene_identifier"]).strip().split(".")[0],
+        axis="columns", # apply function to each row
     )
     # Replace values of zero for signal intensity with missing values.
     # Only replace values within table's columns for samples.

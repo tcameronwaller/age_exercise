@@ -741,6 +741,9 @@ def select_sets_differential_expression_gene(
 ##########
 # 6. Create chart to represent fold changes and write to file.
 
+# TODO: TCW; 9 September 2024
+# Use "gene_identifier_base"
+
 
 def create_write_chart_fold_change(
     table=None,
