@@ -847,12 +847,12 @@ def create_write_chart_fold_change(
             (numpy.nanmax(table[column_p].to_numpy())) + 1
         ),
         title_abscissa="log2(fold change)",
-        title_ordinate="-1*log10(p-value)",
+        title_ordinate="-1*log10(p-value)", # "-1*log10(B.-H. FDR q-value)"
         size_title_abscissa="eight", # ten
         size_title_ordinate="eight", # ten
         size_label_abscissa="twelve", # multi-panel: ten; individual: twelve
         size_label_ordinate="twelve", # multi-panel: ten; individual: twelve
-        size_label_emphasis="twelve",
+        size_label_emphasis="seventeen",
         size_label_count="ten",
         aspect="landscape", # square, portrait, landscape, ...
         fonts=fonts,
@@ -978,9 +978,9 @@ def control_branch_procedure(
         column_identifier="gene_identifier",
         column_name="gene_name",
         column_fold="fold_change_log2",
-        column_p="p_value_negative_log10",
+        column_p="q_value_negative_log10",
         threshold_fold=math.log(float(1.0), 2), # base two logarithm
-        threshold_p=float(2.0), # negative base ten logarithm
+        threshold_p=(-1 * math.log(float(0.05), 10)), # negative base ten logarithm
         tissue=tissue,
         name_set=name_set,
         report=report,
@@ -1012,7 +1012,7 @@ def control_branch_procedure(
         column_fold="fold_change_log2",
         column_p="p_value_negative_log10",
         threshold_fold=math.log(float(1.1), 2), # base two logarithm
-        threshold_p=float(2.0), # negative base ten logarithm
+        threshold_p=(-1 * math.log(float(0.001), 10)), # negative base ten logarithm
         identifiers_emphasis=identifiers_emphasis,
         tissue=tissue,
         name_set=name_set,
