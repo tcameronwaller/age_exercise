@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 9 September 2024
-# Review: TCW; 9 September 2024
+# Date, last execution or modification: 11 September 2024
+# Review: TCW; 11 September 2024
 ###############################################################################
 # Note
 
@@ -34,8 +34,8 @@ path_directory_dock="$path_directory_process/dock"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private/exercise/transcriptomics"
 
 # Files.
-path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
-#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_test.tsv"
+#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
+path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_temp_test_2024-09-11.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
