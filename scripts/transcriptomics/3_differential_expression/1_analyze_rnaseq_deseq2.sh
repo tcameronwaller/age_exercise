@@ -32,6 +32,7 @@ path_directory_repository_partner=$(<"$path_directory_paths/path_directory_repos
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
 path_directory_dock="$path_directory_process/dock"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private/exercise/transcriptomics"
+path_directory_product_parent="$path_directory_dock/out_exercise/transcriptomics/deseq2"
 
 # Files.
 path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
@@ -44,6 +45,9 @@ path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnase
 path_execution_r="${path_directory_tool}/r/r-4.4.1/bin/Rscript"
 
 # Initialize directory.
+rm -r $path_directory_product_parent # caution
+mkdir -p $path_directory_product_parent
+
 
 # Initialize file.
 
@@ -119,16 +123,14 @@ do
     # Organize paths for current instance.
     # Directories.
     path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/${raw_tissue}/${raw_name_set}/data"
-    path_directory_product="$path_directory_dock/out_exercise/transcriptomics/deseq2/${raw_tissue}/${raw_group}"
+    path_directory_product="$path_directory_product_parent/${raw_tissue}/${raw_group}"
     # Files.
     path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
     path_file_source_table_gene="${path_directory_source}/table_gene.tsv"
     path_file_source_table_signal="${path_directory_source}/table_signal.tsv"
     path_file_product_table="${path_directory_product}/table_result_deseq2_${raw_name_set}.tsv"
     # Initialize directory.
-    rm -r $path_directory_product # caution
     mkdir -p $path_directory_product
-
     # Report.
     if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
       echo "----------"

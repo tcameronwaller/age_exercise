@@ -169,6 +169,7 @@ def initialize_directories(
     routine=None,
     procedure=None,
     tissue=None,
+    group=None,
     name_set=None,
     path_directory_dock=None,
     restore=None,
@@ -183,10 +184,11 @@ def initialize_directories(
             'proteomics'
         procedure (str): name of procedure, a set or step in the routine
             process
-        tissue (list<str>): name of tissue that distinguishes study design and
+        tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for set of samples and parameters in the
-            analysis of differential expression
+        group (str): name of a group of analyses
+        name_set (str): name for instance set of parameters for selection
+            of samples in cohort and defining analysis
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -224,8 +226,11 @@ def initialize_directories(
     paths["out_tissue"] = os.path.join(
         paths["out_procedure"], str(tissue),
     )
+    paths["out_group"] = os.path.join(
+        paths["out_tissue"], str(group),
+    )
     paths["out_set"] = os.path.join(
-        paths["out_tissue"], str(name_set),
+        paths["out_group"], str(name_set),
     )
     #paths["out_test"] = os.path.join(
     #    paths["out_set"], "test",
@@ -300,6 +305,7 @@ def define_column_types_table_deseq2():
     types_columns["pvalue"] = "float64"
     types_columns["padj"] = "float64"
     types_columns["gene_identifier"] = "string"
+    types_columns["gene_identifier_base"] = "string"
     types_columns["gene_name"] = "string"
     types_columns["gene_type"] = "string"
     types_columns["gene_chromosome"] = "string"
@@ -343,6 +349,7 @@ def define_column_types_table_gene_emphasis():
 
 def read_source(
     tissue=None,
+    group=None,
     name_set=None,
     paths=None,
     report=None,
@@ -354,10 +361,11 @@ def read_source(
     integer variable types.
 
     arguments:
-        tissue (list<str>): name of tissue that distinguishes study design and
+        tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for set of samples and parameters in the
-            analysis of differential expression
+        group (str): name of a group of analyses
+        name_set (str): name for instance set of parameters for selection
+            of samples in cohort and defining analysis
         paths : (dict<str>): collection of paths to directories for procedure's
             files
         report (bool): whether to print reports
@@ -375,11 +383,11 @@ def read_source(
 
     # Define paths to child files.
     path_file_table_deseq2 = os.path.join(
-        paths["out_routine"], "deseq2", tissue, name_set,
+        paths["out_routine"], "deseq2", tissue, group,
         str("table_result_deseq2_" + name_set + ".tsv"),
     )
     path_file_table_gene_emphasis = os.path.join(
-        paths["in_parameters_private"],
+        paths["in_parameters_private"], "gene_sets_emphasis",
         "table_gene_sets_emphasis.tsv",
     )
 
@@ -887,8 +895,9 @@ def create_write_chart_fold_change(
 
 
 def control_branch_procedure(
-    name_set=None,
     tissue=None,
+    group=None,
+    name_set=None,
     project=None,
     routine=None,
     procedure=None,
@@ -899,10 +908,11 @@ def control_branch_procedure(
     Control branch of procedure.
 
     arguments:
-        name_set (str): name for set of samples and parameters in the
-            analysis of differential expression
-        tissue (list<str>): name of tissue that distinguishes study design and
+        tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
+        group (str): name of a group of analyses
+        name_set (str): name for instance set of parameters for selection
+            of samples in cohort and defining analysis
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -925,6 +935,7 @@ def control_branch_procedure(
         routine=routine,
         procedure=procedure,
         tissue=tissue,
+        group=group,
         name_set=name_set,
         path_directory_dock=path_directory_dock,
         restore=True,
@@ -935,6 +946,7 @@ def control_branch_procedure(
     # 2. Read source information from file.
     pail_source = read_source(
         tissue=tissue,
+        group=group,
         name_set=name_set,
         paths=paths,
         report=report,
@@ -1051,10 +1063,11 @@ def control_parallel_instance(
 
     arguments:
         instance (dict): parameters specific to current instance
-            name_set (str): name for set of samples and parameters in the
-                analysis of differential expression
-            tissue (str): name of tissue, either 'adipose' or 'muscle', which
-                distinguishes study design and sets of samples
+            tissue (str): name of tissue that distinguishes study design and
+                set of relevant samples, either 'adipose' or 'muscle'
+            group (str): name of a group of analyses
+            name_set (str): name for instance set of parameters for selection
+                of samples in cohort and defining analysis
         parameters (dict): parameters common to all instances
             project (str): name of project
             routine (str): name of routine, either 'transcriptomics' or
@@ -1074,8 +1087,9 @@ def control_parallel_instance(
     ##########
     # Extract parameters.
     # Extract parameters specific to each instance.
-    name_set = instance["name_set"]
     tissue = instance["tissue"]
+    group = instance["group"]
+    name_set = instance["name_set"]
     # Extract parameters common across all instances.
     project = parameters["project"]
     routine = parameters["routine"]
@@ -1086,6 +1100,8 @@ def control_parallel_instance(
     ##########
     # Control procedure with split for parallelization.
     control_branch_procedure(
+        tissue=tissue,
+        group=group,
         name_set=name_set,
         tissue=tissue, # adipose, muscle
         project=project,
