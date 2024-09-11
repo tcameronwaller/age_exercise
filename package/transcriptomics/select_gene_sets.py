@@ -241,6 +241,9 @@ def initialize_directories(
     paths["out_plot"] = os.path.join(
         paths["out_set"], "plot",
     )
+    paths["out_plot_overall"] = os.path.join(
+        paths["out_procedure"], "plot",
+    )
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
@@ -249,6 +252,7 @@ def initialize_directories(
         paths["out_set"],
         paths["out_data"],
         paths["out_plot"],
+        paths["out_plot_overall"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
@@ -810,7 +814,8 @@ def create_write_chart_fold_change(
 
     # Organize parameters.
     name_figure = name_set
-    path_directory = paths["out_plot"]
+    #path_directory = paths["out_plot"]
+    path_directory = paths["out_plot_overall"]
 
     # Define fonts.
     fonts = pplot.define_font_properties()
