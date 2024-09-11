@@ -132,6 +132,9 @@ def preinitialize_directories(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
+    paths["out_data_overall"] = os.path.join(
+        paths["out_procedure"], "data",
+    )
     paths["out_plot_overall"] = os.path.join(
         paths["out_procedure"], "plot",
     )
@@ -140,6 +143,7 @@ def preinitialize_directories(
         #paths["out_project"],
         #paths["out_routine"],
         paths["out_procedure"],
+        paths["out_data_overall"],
         paths["out_plot_overall"],
     ]
     # Remove previous directories and files to avoid version or batch
@@ -244,6 +248,9 @@ def initialize_directories(
     )
     paths["out_plot"] = os.path.join(
         paths["out_set"], "plot",
+    )
+    paths["out_data_overall"] = os.path.join(
+        paths["out_procedure"], "data",
     )
     paths["out_plot_overall"] = os.path.join(
         paths["out_procedure"], "plot",
@@ -496,9 +503,10 @@ def define_column_sequence_table_change_deseq2():
         "q_value",
         "q_value_threshold",
         "q_value_negative_log10",
+        "gene_identifier_base",
         "rank_fold_p",
         "gene_identifier",
-        "gene_identifier_base",
+        #"gene_identifier_base",
         "gene_name",
         "gene_type",
         "gene_chromosome",
@@ -619,6 +627,16 @@ def organize_table_change_deseq2(
         axis="columns", # apply function to each row
     )
 
+    # Sort rows within table.
+    table_change.sort_values(
+        by=[
+            "rank_fold_p",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
     # Filter and sort columns within table.
     table_change = porg.filter_sort_table_columns(
         table=table_change,
@@ -749,9 +767,6 @@ def select_sets_differential_expression_gene(
         pass
     # Return information.
     return pail
-
-
-
 
 
 ##########
@@ -975,7 +990,7 @@ def control_branch_procedure(
     # 4. Select sets of genes with differential expression.
     pail_selection = select_sets_differential_expression_gene(
         table=pail_organization["table_change"],
-        column_identifier="gene_identifier",
+        column_identifier="gene_identifier_base",
         column_name="gene_name",
         column_fold="fold_change_log2",
         column_p="q_value_negative_log10",
@@ -1035,9 +1050,9 @@ def control_branch_procedure(
         pail_selection["genes_down"]
     )
     pail_write_tables = dict()
-    #pail_write_tables[str("table_rank_gene")] = (
-    #    pail_rank["table_rank"]
-    #)
+    pail_write_tables[str("table_" + name_set)] = (
+        pail_organization["table_change"]
+    )
 
     ##########
     # Write product information to file.
@@ -1045,13 +1060,13 @@ def control_branch_procedure(
         pail_write=pail_write_lists,
         path_directory=paths["out_data"],
     )
-    #putly.write_tables_to_file(
-    #    pail_write=pail_write_tables,
-    #    path_directory=paths["out_data"],
-    #    reset_index=False,
-    #    write_index=True,
-    #    type="text",
-    #)
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_data_overall"],
+        reset_index=False,
+        write_index=False,
+        type="text",
+    )
     pass
 
 
