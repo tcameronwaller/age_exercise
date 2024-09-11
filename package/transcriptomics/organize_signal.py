@@ -619,6 +619,16 @@ def read_organize_write_summary_instances(
         pass
     # Create pandas data-frame table.
     table = pandas.DataFrame(data=records)
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "name_set",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
