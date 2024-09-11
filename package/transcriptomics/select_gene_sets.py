@@ -643,10 +643,17 @@ def organize_table_change_deseq2(
         columns_sequence=columns_sequence,
         report=report,
     )
+    # Filter rows within table.
+    table_significance = table_change.loc[
+        (
+            (table_change["q_value_threshold"] < 0.05)
+        ), :
+    ].copy(deep=True)
 
     # Collect information.
     pail = dict()
-    pail["table_change"] = table_change
+    pail["table"] = table_change
+    pail["table_significance"] = table_significance
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -656,12 +663,12 @@ def organize_table_change_deseq2(
         print("tissue: " + tissue)
         print("name_set: " + name_set)
         putly.print_terminal_partition(level=4)
-        count_rows = (pail["table_change"].shape[0])
-        count_columns = (pail["table_change"].shape[1])
-        print("table of genes with differential expression: ")
+        count_rows = (pail["table_significance"].shape[0])
+        count_columns = (pail["table_significance"].shape[1])
+        print("table of genes with significant differential expression: ")
         print("count of rows in table: " + str(count_rows))
         print("Count of columns in table: " + str(count_columns))
-        print(pail["table_change"].iloc[0:10, 0:])
+        print(pail["table_significance"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -989,7 +996,7 @@ def control_branch_procedure(
     ##########
     # 4. Select sets of genes with differential expression.
     pail_selection = select_sets_differential_expression_gene(
-        table=pail_organization["table_change"],
+        table=pail_organization["table"],
         column_identifier="gene_identifier_base",
         column_name="gene_name",
         column_fold="fold_change_log2",
@@ -1006,7 +1013,7 @@ def control_branch_procedure(
     #    analysis.
     if False:
         pail_rank = rank_list_gene(
-            table=pail_organization["table_change"],
+            table=pail_organization["table"],
             column_identifier="gene_identifier",
             column_name="gene_name",
             column_rank="rank_fold_p",
@@ -1021,7 +1028,7 @@ def control_branch_procedure(
         pail_source["table_gene_emphasis"]["gene_identifier_base"].to_list()
     )
     create_write_chart_fold_change(
-        table=pail_organization["table_change"],
+        table=pail_organization["table"],
         column_identifier="gene_identifier_base",
         column_name="gene_name",
         column_fold="fold_change_log2",
@@ -1051,7 +1058,7 @@ def control_branch_procedure(
     )
     pail_write_tables = dict()
     pail_write_tables[str("table_" + name_set)] = (
-        pail_organization["table_change"]
+        pail_organization["table_significance"]
     )
 
     ##########
