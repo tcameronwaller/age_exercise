@@ -2197,7 +2197,7 @@ def control_branch_procedure(
     # Collections of files.
     pail_write_data = dict()
     pail_write_data[str("table_sample")] = (
-        pail_sample_secondary["table_selection"]
+        pail_sample["table_selection"]
     )
     pail_write_data[str("table_gene")] = (
         pail_separate["table_gene"]
