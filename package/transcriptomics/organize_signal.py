@@ -622,6 +622,11 @@ def read_organize_write_summary_instances(
     # Create pandas data-frame table.
     table = pandas.DataFrame(data=records)
     # Sort rows within table.
+    table["sort"] = pandas.to_numeric(
+        table["sort"],
+        errors="coerce", # force any parse error values to missing "NaN"
+        downcast="float", # cast type to smallest float type
+    )
     table.sort_values(
         by=[
             "sort",
