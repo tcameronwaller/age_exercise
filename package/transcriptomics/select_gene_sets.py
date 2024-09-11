@@ -1003,7 +1003,7 @@ def control_branch_procedure(
         column_name="gene_name",
         column_fold="fold_change_log2",
         column_p="p_value_negative_log10",
-        threshold_fold=math.log(float(1.0), 2), # base two logarithm
+        threshold_fold=math.log(float(1.1), 2), # base two logarithm
         threshold_p=float(2.0), # negative base ten logarithm
         identifiers_emphasis=identifiers_emphasis,
         tissue=tissue,
