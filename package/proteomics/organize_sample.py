@@ -463,6 +463,7 @@ def define_sequence_columns_novel_sample_feature():
         #"body_fat_percent",
         #"body_fat_mass",
         #"body_lean_mass",
+        "oxygen_consumption",
         #"tertiles_body_mass_index",
         #"tertiles_body_skeletal_muscle_index",
         #"tertiles_body_fat_percent",
@@ -851,6 +852,13 @@ def organize_table_sample_attribute(
             ),
         axis="columns", # apply function to each row
     )
+    # Replace values of zero for oxygen consumption with missing values.
+    # Use the values of maximal oxygen consumption adjusted to lean body mass.
+    table["oxygen_consumption"] = table["VO2/Lean_Mass"].replace(
+        to_replace=0,
+        value=pandas.NA,
+    )
+
     # Sort rows within table.
     table.sort_values(
         by=[
