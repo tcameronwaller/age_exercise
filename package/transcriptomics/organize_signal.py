@@ -976,7 +976,8 @@ def organize_describe_summarize_table_sample_tertiles(
                 )
             pass
     else:
-        table_tertile = table
+        pail_tertile = dict()
+        pail_tertile["table"] = table
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -1109,7 +1110,7 @@ def report_write_count_samples(
     record = dict()
     record["group"] = group
     record["name_set"] = name_set
-    record["tissue"] = "tissue"
+    record["tissue"] = tissue
     record["count_samples"] = int(len(samples))
     # Write product information to file.
     putly.write_object_to_file_pickle(
