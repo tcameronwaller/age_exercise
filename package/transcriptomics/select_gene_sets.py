@@ -1058,7 +1058,7 @@ def control_branch_procedure(
     )
     pail_write_tables = dict()
     pail_write_tables[str("table_" + name_set)] = (
-        pail_organization["table_significance"]
+        pail_organization["table"]
     )
 
     ##########
