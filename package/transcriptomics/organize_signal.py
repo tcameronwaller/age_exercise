@@ -1280,7 +1280,7 @@ def organize_table_main(
 # 5. Filter columns and rows in main table.
 
 
-def define_keep_types_gene():
+def define_keep_types_gene_broad():
     """
     Defines the categorical types of genes for which to keep rows in the main
     table.
@@ -1338,6 +1338,40 @@ def define_keep_types_gene():
         #"translated_processed_pseudogene",
         "scRNA",
         #"IG_pseudogene",
+    ]
+    # Return information.
+    return types_gene
+
+
+def define_keep_types_gene_narrow():
+    """
+    Defines the categorical types of genes for which to keep rows in the main
+    table.
+
+    Reference:
+    https://www.gencodegenes.org/pages/biotypes.html
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): types of gene to keep
+
+    """
+
+    # Specify categorical types.
+    types_gene = [
+        "protein_coding",
+        "IG_C_gene",
+        "IG_D_gene",
+        "IG_J_gene",
+        "IG_LV_gene",
+        "IG_V_gene",
+        "TR_C_gene",
+        "TR_J_gene",
+        "TR_V_gene",
+        "TR_D_gene",
     ]
     # Return information.
     return types_gene
@@ -1631,7 +1665,7 @@ def filter_table_main(
     ##########
     # Filter rows within table on basis of gene feature identity.
     if filter_rows_identity:
-        types_gene = define_keep_types_gene()
+        types_gene = define_keep_types_gene_narrow()
         table_filter["match_keep_identity"] = table_filter.apply(
             lambda row:
                 determine_keep_series_by_identity(
