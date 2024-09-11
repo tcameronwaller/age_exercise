@@ -132,11 +132,15 @@ def preinitialize_directories(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
+    paths["out_plot_overall"] = os.path.join(
+        paths["out_procedure"], "plot",
+    )
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
         #paths["out_routine"],
         paths["out_procedure"],
+        paths["out_plot_overall"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
@@ -252,7 +256,6 @@ def initialize_directories(
         paths["out_set"],
         paths["out_data"],
         paths["out_plot"],
-        paths["out_plot_overall"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
