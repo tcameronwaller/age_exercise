@@ -307,6 +307,7 @@ def define_column_types_table_parameter_instances():
     # Specify variable types of columns within table.
     types_columns = dict()
     types_columns["inclusion"] = "string" # "int32"
+    types_columns["sort"] = "int32" # "int32"
     types_columns["group"] = "string"
     types_columns["name_set"] = "string"
     types_columns["tissue"] = "string"
@@ -383,6 +384,7 @@ def read_organize_source_parameter_instances(
     for index, row in table.iterrows():
         if (int(row["inclusion"]) == 1):
             pail = dict()
+            pail["sort"] = str(row["sort"])
             pail["group"] = str(row["group"])
             pail["name_set"] = str(row["name_set"])
             pail["tissue"] = str(row["tissue"])
@@ -622,7 +624,7 @@ def read_organize_write_summary_instances(
     # Sort rows within table.
     table.sort_values(
         by=[
-            "name_set",
+            "sort",
         ],
         axis="index",
         ascending=True,
@@ -1085,6 +1087,7 @@ def select_sets_final_identifier_table_sample(
 
 def report_write_count_samples(
     samples=None,
+    sort=None,
     group=None,
     name_set=None,
     tissue=None,
@@ -1097,6 +1100,7 @@ def report_write_count_samples(
     arguments:
         samples (list<str>): identifiers of samples corresponding to names of
             columns for measurement values of signal intensity across features
+        sort (int): sequential index for sort order
         group (str): name of a group of analyses
         name_set (str): name for instance set of parameters for selection of
             samples in cohort and defining analysis
@@ -1118,6 +1122,7 @@ def report_write_count_samples(
 
     # Collect information.
     record = dict()
+    record["sort"] = sort
     record["group"] = group
     record["name_set"] = name_set
     record["tissue"] = tissue
@@ -1993,6 +1998,7 @@ def check_coherence_table_sample_table_signal(
 
 
 def control_branch_procedure(
+    sort=None,
     group=None,
     name_set=None,
     tissue=None,
@@ -2010,6 +2016,7 @@ def control_branch_procedure(
     Control branch of procedure.
 
     arguments:
+        sort (int): sequential index for sort order
         group (str): name of a group of analyses
         name_set (str): name for instance set of parameters for selection of
             samples in cohort and defining analysis
@@ -2100,6 +2107,7 @@ def control_branch_procedure(
     # Summarize the counts of samples corresponding to each set of parameters.
     report_write_count_samples(
         samples=pail_sample["samples_selection"],
+        sort=sort,
         group=group,
         name_set=name_set,
         tissue=tissue,
@@ -2225,6 +2233,7 @@ def control_parallel_instance(
 
     arguments:
         instance (dict): parameters specific to current instance
+            sort (int): sequential index for sort order
             group (str): name of a group of analyses
             name_set (str): name for instance set of parameters for selection
                 of samples in cohort and defining analysis
@@ -2257,6 +2266,7 @@ def control_parallel_instance(
     ##########
     # Extract parameters.
     # Extract parameters specific to each instance.
+    sort = instance["sort"]
     group = instance["group"]
     name_set = instance["name_set"]
     tissue = instance["tissue"]
@@ -2274,6 +2284,7 @@ def control_parallel_instance(
     ##########
     # Control procedure with split for parallelization.
     control_branch_procedure(
+        sort=sort,
         group=group,
         name_set=name_set,
         tissue=tissue, # adipose, muscle
