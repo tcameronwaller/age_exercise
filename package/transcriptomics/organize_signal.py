@@ -60,6 +60,8 @@ import scipy.stats
 import pandas
 pandas.options.mode.chained_assignment = None # default = "warn"
 pandas.set_option('future.no_silent_downcasting', True) # set option to suppress warnings
+from warnings import simplefilter
+simplefilter(action="ignore", category=pandas.errors.PerformanceWarning)
 
 # Custom
 import partner.utility as putly
@@ -1935,7 +1937,106 @@ def separate_table_main_columns(
 
 
 ##########
-# 7. Combine signals across samples and genes with supplemental information
+# 7. Fill missing values of signal intensity.
+# Functionality for this operation is in the "partner" package.
+
+
+##########
+# 8. Scale and normalize values of signal intensity across genes within each
+# sample.
+
+
+def scale_normalize_values_intensity_signal_table(
+    table=None,
+    method=None,
+    report=None,
+):
+    """
+    Adjust the scale and normalize the distribution of values of signal
+    intensity across genes within each sample.
+
+    Table's format and orientation
+
+    Table has values of signal intensity for each gene oriented across rows
+    with their samples oriented across columns.
+
+    The table must have a single-level index (potentially with name
+    "observations") across columns and a single-level index (potentially with
+    name "features") across rows.
+
+    identifier_signal   sample_1 sample_2 sample_3 sample_4 sample_5
+    identifier_gene
+    gene_1              ...      ...      ...      ...      ...
+    gene_2              ...      ...      ...      ...      ...
+    gene_3              ...      ...      ...      ...      ...
+    gene_4              ...      ...      ...      ...      ...
+    gene_5              ...      ...      ...      ...      ...
+
+    arguments:
+        table (object): Pandas data-frame table of values of intensity for
+            samples across columns and for proteins across rows
+        method (str): name of method to use for scaling values, currently only
+            'deseq'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table of values of intensity across
+            samples in columns and proteins in rows
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Organize indices in table.
+    table = porg.change_names_table_indices_columns_rows(
+        table=table,
+        name_columns_novel="observations",
+        name_rows_original="identifier_gene",
+        name_rows_novel="features",
+        report=False,
+    )
+    # Determine method for scaling.
+    if (method == "deseq"):
+        table_scale = (
+            pscl.scale_feature_values_between_observations_by_deseq(
+                table=table,
+                name_columns="observations",
+                name_rows="features",
+                report=report,
+        ))
+    # Organize indices in table.
+    table_scale = porg.change_names_table_indices_columns_rows(
+        table=table_scale,
+        name_columns_novel="identifier_signal",
+        name_rows_original="features",
+        name_rows_novel="identifier_gene",
+        report=False,
+    )
+    # Calculate the natural logarithm of
+    table_normal = table_scale.apply(
+        lambda row: (numpy.log(row.to_numpy(
+            dtype="float64",
+            na_value=numpy.nan,
+            copy=True,
+        ))),
+        axis="index", # apply function to each column
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: scale_values_intensity_signal_table()")
+        putly.print_terminal_partition(level=4)
+        print(table_normal)
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return table_normal
+
+
+##########
+# 9. Combine signals across samples and genes with supplemental information
 # about genes.
 
 
@@ -2110,12 +2211,7 @@ def combine_organize_table_signal_genes_samples(
 
 
 ##########
-# 8. Fill missing values of signal intensity.
-# Functionality for this operation is in the "partner" package.
-
-
-##########
-# 9. Check the coherence of separate tables for analysis.
+# 10. Check the coherence of separate tables for analysis.
 
 
 def check_coherence_table_sample_table_signal(
@@ -2371,9 +2467,15 @@ def control_procedure_part_branch_sample(
     return pail_sample
 
 
+# TODO: TCW; 12 September 2024
+# I need to apply the scale normalization on the "table_signal" before recombining
+# with the "table_gene".
+
+
 def control_procedure_part_branch_signal(
     samples=None,
     tissue=None,
+    scale_combination=None,
     paths=None,
     report=None,
 ):
@@ -2385,6 +2487,8 @@ def control_procedure_part_branch_signal(
             measurement values of signal intensity that are relevant
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
+        scale_combination (bool): whether to adjust the scale of signals and
+            combine with supplemental information about genes
         paths (dict<str>): collection of paths to directories for procedure's
             files
         report (bool): whether to print reports
@@ -2429,9 +2533,9 @@ def control_procedure_part_branch_signal(
         filter_rows_signal_by_condition=False,
         threshold_signal_low=10, # DESeq2 recommendation for bulk RNAseq
         threshold_signal_high=None,
-        proportion_signal_all=0.10, # proportion smaller condition to total
-        proportion_signal_control=0.5,
-        proportion_signal_intervention=0.5,
+        proportion_signal_all=0.5, # proportion of smaller condition to total
+        proportion_signal_control=0.5, # inactive
+        proportion_signal_intervention=0.5, # inactive
         tissue=tissue,
         report=report,
     )
@@ -2453,17 +2557,35 @@ def control_procedure_part_branch_signal(
         report=report,
     )
 
-    # Combine and organize signals across samples and genes with supplemental
-    # information about genes.
-    table_combination = combine_organize_table_signal_genes_samples(
-        table_signal=table_signal,
-        table_gene=pail_separate["table_gene"],
-        table_sample=pail_source_sample["table_sample_file"],
-        columns_signal=samples,
-        columns_gene=columns_gene,
-        tissue=tissue,
-        report=report,
-    )
+    # Determine whether to adjust the scale of signals and combine with
+    # supplemental information about genes.
+    if scale_combination:
+        # Scale values of signal intensity across genes within each sample.
+        # The goal of this scaling is to make the individual samples more
+        # comparable to each other.
+        # This scaling can decrease the variance or noise in measurements between
+        # samples.
+        # Normalize distribution values of signal intensity by taking the
+        # natural logarithm.
+        table_signal_scale = scale_normalize_values_intensity_signal_table(
+            table=table_signal,
+            method="deseq",
+            report=report,
+        )
+        # Combine and organize signals across samples and genes with supplemental
+        # information about genes.
+        table_combination = combine_organize_table_signal_genes_samples(
+            table_signal=table_signal_scale,
+            table_gene=pail_separate["table_gene"],
+            table_sample=pail_source_sample["table_sample_file"],
+            columns_signal=samples,
+            columns_gene=columns_gene,
+            tissue=tissue,
+            report=report,
+        )
+    else:
+        table_combination = pandas.DataFrame()
+        pass
 
     ##########
     # Collect information.
@@ -2562,6 +2684,7 @@ def control_procedure_part_branch(
     pail_signal = control_procedure_part_branch_signal(
         samples=pail_sample["samples_selection"],
         tissue=tissue, # adipose, muscle
+        scale_combination=False,
         paths=paths,
         report=report,
     )
@@ -2919,6 +3042,7 @@ def control_procedure_whole_trunk(
     pail_signal = control_procedure_part_branch_signal(
         samples=samples,
         tissue=tissue, # adipose, muscle
+        scale_combination=True,
         paths=paths,
         report=report,
     )
@@ -2984,45 +3108,44 @@ def execute_procedure(
         putly.print_terminal_partition(level=5)
         pass
 
-    ##########
-    # Initialize directories for trunk procedure.
-    paths = initialize_directories_trunk(
-        project=project,
-        routine=routine,
-        procedure=procedure,
-        path_directory_dock=path_directory_dock,
-        restore=True,
-        report=report,
-    )
+    if True:
+        ##########
+        # Initialize directories for trunk procedure.
+        paths = initialize_directories_trunk(
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            restore=True,
+            report=report,
+        )
 
-    ##########
-    # Control procedure for organization of signal data as a whole.
-    control_procedure_whole_trunk(
-        tissue="muscle",
-        project=project,
-        routine=routine,
-        procedure=procedure,
-        path_directory_dock=path_directory_dock,
-        report=report,
-    )
-    control_procedure_whole_trunk(
-        tissue="adipose",
-        project=project,
-        routine=routine,
-        procedure=procedure,
-        path_directory_dock=path_directory_dock,
-        report=report,
-    )
+        ##########
+        # Control procedure for organization of signal data as a whole.
+        control_procedure_whole_trunk(
+            tissue="muscle",
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            report=report,
+        )
+        control_procedure_whole_trunk(
+            tissue="adipose",
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            report=report,
+        )
 
     if False:
-
         ##########
         # Read and organize parameters for parallel instances.
         instances = read_organize_source_parameter_instances(
             paths=paths,
             report=report,
         )
-
         ##########
         # Control procedure for parallel instances.
         control_parallel_instances(
@@ -3033,7 +3156,6 @@ def execute_procedure(
             path_directory_dock=path_directory_dock,
             report=report,
         )
-
         ##########
         # Organize summary information about all instances overall.
         read_organize_write_summary_instances(

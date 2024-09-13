@@ -802,6 +802,10 @@ def split_table_main_columns(
 # 9. Scale intensity by sample.
 
 
+# TODO: TCW; 13 September 2024
+# TODO: I think this function "shift_values_greater_zero_row" is obsolete.
+# TODO: The problem with this pseudo-count shift approach is that it actually
+# TODO: does distort the data, I think.
 def shift_values_greater_zero_row(
     row=None,
 ):
@@ -870,7 +874,7 @@ def scale_values_intensity_table(
         table (object): Pandas data-frame table of values of intensity for
             samples across columns and for proteins across rows
         method (str): name of method to use for scaling values, currently only
-            'median_ratio'
+            'deseq'
         report (bool): whether to print reports
 
     raises:
@@ -892,9 +896,9 @@ def scale_values_intensity_table(
         report=False,
     )
     # Determine method for scaling.
-    if (method == "median_ratio"):
+    if (method == "deseq"):
         table_scale = (
-            pscl.scale_feature_values_between_observations_by_median_ratio(
+            pscl.scale_feature_values_between_observations_by_deseq(
                 table=table,
                 name_columns="observations",
                 name_rows="features",
@@ -1594,7 +1598,7 @@ def execute_procedure(
     putly.print_terminal_partition(level=3)
     table_scale = scale_values_intensity_table(
         table=table_intensity,
-        method="median_ratio",
+        method="deseq",
         report=True,
     )
     if True:
