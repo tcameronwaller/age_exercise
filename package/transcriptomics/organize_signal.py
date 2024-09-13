@@ -153,6 +153,8 @@ def initialize_directories_trunk(
         #paths["out_project"],
         #paths["out_routine"],
         paths["out_procedure"],
+        paths["out_whole"],
+        paths["out_parts"],
         paths["out_summary"],
         paths["out_summary_instances"],
     ]
