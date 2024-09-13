@@ -2469,11 +2469,6 @@ def control_procedure_part_branch_sample(
     return pail_sample
 
 
-# TODO: TCW; 12 September 2024
-# I need to apply the scale normalization on the "table_signal" before recombining
-# with the "table_gene".
-
-
 def control_procedure_part_branch_signal(
     samples=None,
     tissue=None,
