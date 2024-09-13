@@ -2531,7 +2531,7 @@ def control_procedure_part_branch_signal(
         filter_rows_identity=True,
         filter_rows_signal=True,
         filter_rows_signal_by_condition=False,
-        threshold_signal_low=10, # DESeq2 recommendation for bulk RNAseq
+        threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
         threshold_signal_high=None,
         proportion_signal_all=0.5, # proportion of smaller condition to total
         proportion_signal_control=0.5, # inactive
