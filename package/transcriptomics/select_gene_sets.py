@@ -922,7 +922,7 @@ def create_write_chart_fold_change(
 # Control procedure within branch for parallelization.
 
 
-def control_branch_procedure(
+def control_procedure_part_branch(
     tissue=None,
     group=None,
     name_set=None,
@@ -1127,7 +1127,7 @@ def control_parallel_instance(
 
     ##########
     # Control procedure with split for parallelization.
-    control_branch_procedure(
+    control_procedure_part_branch(
         tissue=tissue,
         group=group,
         name_set=name_set,

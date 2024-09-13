@@ -70,6 +70,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
+import exercise.transcriptomics.organize_sample as extr_sample
 
 ###############################################################################
 # Functionality
@@ -79,7 +80,7 @@ import partner.parallelization as prall
 # 1. Initialize directories for read of source and write of product files.
 
 
-def preinitialize_directories(
+def initialize_directories_trunk(
     project=None,
     routine=None,
     procedure=None,
@@ -130,8 +131,17 @@ def preinitialize_directories(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
+    paths["out_procedure"] = os.path.join(
+        paths["out_routine"], str(procedure),
+    )
+    paths["out_whole"] = os.path.join(
+        paths["out_procedure"], "whole",
+    )
+    paths["out_parts"] = os.path.join(
+        paths["out_procedure"], "parts",
+    )
     paths["out_summary"] = os.path.join(
-        paths["out_procedure"], "summary",
+        paths["out_parts"], "summary",
     )
     paths["out_summary_instances"] = os.path.join(
         paths["out_summary"], "instances",
@@ -160,7 +170,7 @@ def preinitialize_directories(
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_signal.py")
-        print("function: preinitialize_directories()")
+        print("function: initialize_directories_trunk()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
         print(path_directory_dock)
@@ -170,7 +180,7 @@ def preinitialize_directories(
     return paths
 
 
-def initialize_directories(
+def initialize_directories_branch(
     project=None,
     routine=None,
     procedure=None,
@@ -205,36 +215,22 @@ def initialize_directories(
 
     """
 
-    # Collect paths.
-    paths = dict()
+    ##########
+    # Initialize directories for trunk procedure.
+    paths = initialize_directories_trunk(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=False,
+        report=report,
+    )
+
+    ##########
+    # Initialize directories for instance-specific parallel branch procedure.
     # Define paths to directories.
-    paths["dock"] = path_directory_dock
-    paths["in_data"] = os.path.join(
-        paths["dock"], "in_data",
-    )
-    paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(routine),
-    )
-    paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(routine),
-    )
-    paths["out_project"] = os.path.join(
-        paths["dock"], str("out_" + project),
-    )
-    paths["out_routine"] = os.path.join(
-        paths["out_project"], str(routine),
-    )
-    paths["out_procedure"] = os.path.join(
-        paths["out_routine"], str(procedure),
-    )
-    paths["out_summary"] = os.path.join(
-        paths["out_procedure"], "summary",
-    )
-    paths["out_summary_instances"] = os.path.join(
-        paths["out_summary"], "instances",
-    )
     paths["out_tissue"] = os.path.join(
-        paths["out_procedure"], str(tissue),
+        paths["out_parts"], str(tissue),
     )
     paths["out_set"] = os.path.join(
         paths["out_tissue"], str(name_set),
@@ -250,10 +246,6 @@ def initialize_directories(
     #)
     # Initialize directories in main branch.
     paths_initialization = [
-        #paths["out_project"],
-        #paths["out_routine"],
-        #paths["out_procedure"], # omit to avoid conflict in parallel branches
-        #paths["out_summary"], # omit to avoid conflict in parallel branches
         #paths["out_tissue"], # omit to avoid conflict in parallel branches
         paths["out_set"],
         paths["out_data"],
@@ -274,7 +266,7 @@ def initialize_directories(
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_signal.py")
-        print("function: initialize_directories()")
+        print("function: initialize_directories_branch()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
         print(path_directory_dock)
@@ -485,7 +477,82 @@ def define_column_types_table_main():
     return types_columns
 
 
-def read_source(
+def read_source_sample(
+    paths=None,
+    report=None,
+):
+    """
+    Reads and organizes source information from file.
+
+    Notice that Pandas does not accommodate missing values within series of
+    integer variable types.
+
+    arguments:
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of source information read from file
+
+    """
+
+    # Define paths to parent directories.
+    #paths["in_data"]
+    #paths["in_parameters"]
+
+    # Define paths to child files.
+    path_file_table_sample_file = os.path.join(
+        paths["in_data"], "study_exercise_age", "subject_sample",
+        "table_sample_file_rnaseq.tsv",
+    )
+    path_file_table_sample = os.path.join(
+        paths["out_routine"], "organize_sample", "data",
+        "table_sample.pickle",
+    )
+
+    # Collect information.
+    pail = dict()
+    # Read information from file.
+
+    # Table of matches between samples and files.
+    types_columns = extr_sample.define_type_columns_table_sample_file()
+    pail["table_sample_file"] = pandas.read_csv(
+        path_file_table_sample_file,
+        sep="\t",
+        header=0,
+        dtype=types_columns,
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
+        encoding="utf-8",
+    )
+    # Table of samples and their attributes.
+    pail["table_sample"] = pandas.read_pickle(
+        path_file_table_sample,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: read_source_sample()")
+        putly.print_terminal_partition(level=5)
+        count_rows = (pail["table_sample"].shape[0])
+        count_columns = (pail["table_sample"].shape[1])
+        print("sample table: ")
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        print(pail["table_sample"])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
+
+
+def read_source_main(
     tissue=None,
     paths=None,
     report=None,
@@ -515,10 +582,6 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
-    path_file_table_sample = os.path.join(
-        paths["out_routine"], "organize_sample", "data",
-        "table_sample.pickle",
-    )
     if (tissue == "adipose"):
         path_file_table_main = os.path.join(
             paths["in_data"], "study_exercise_age", "transcriptomics",
@@ -536,11 +599,6 @@ def read_source(
     # Collect information.
     pail = dict()
     # Read information from file.
-
-    # Table of samples and their attributes.
-    pail["table_sample"] = pandas.read_pickle(
-        path_file_table_sample,
-    )
 
     # Table of values of intensity across samples and proteins.
     types_columns = define_column_types_table_main()
@@ -560,9 +618,6 @@ def read_source(
         print("module: exercise.transcriptomics.organize_signal.py")
         print("function: read_source()")
         print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        print("sample table: ")
-        print(pail["table_sample"])
         putly.print_terminal_partition(level=5)
         count_rows = (pail["table_main"].shape[0])
         count_columns = (pail["table_main"].shape[1])
@@ -1363,15 +1418,15 @@ def define_keep_types_gene_narrow():
     # Specify categorical types.
     types_gene = [
         "protein_coding",
-        "IG_C_gene",
-        "IG_D_gene",
-        "IG_J_gene",
-        "IG_LV_gene",
-        "IG_V_gene",
-        "TR_C_gene",
-        "TR_J_gene",
-        "TR_V_gene",
-        "TR_D_gene",
+        #"IG_C_gene",
+        #"IG_D_gene",
+        #"IG_J_gene",
+        #"IG_LV_gene",
+        #"IG_V_gene",
+        #"TR_C_gene",
+        #"TR_J_gene",
+        #"TR_V_gene",
+        #"TR_D_gene",
     ]
     # Return information.
     return types_gene
@@ -1647,8 +1702,7 @@ def filter_table_main(
     raises:
 
     returns:
-        (object): Pandas data-frame table of values of intensity across
-            samples in columns and proteins in rows
+        (object): Pandas data-frame table
 
     """
 
@@ -1881,12 +1935,187 @@ def separate_table_main_columns(
 
 
 ##########
-# 7. Fill missing values of signal intensity.
+# 7. Combine signals across samples and genes with supplemental information
+# about genes.
+
+
+def combine_organize_table_signal_genes_samples(
+    table_signal=None,
+    table_gene=None,
+    table_sample=None,
+    columns_signal=None,
+    columns_gene=None,
+    tissue=None,
+    report=None,
+):
+    """
+    Splits or separates information in table by columns.
+
+    arguments:
+        table_signal (object): Pandas data-frame table of values of signal
+            intensity for sample observations across columns and for gene
+            features across rows
+        table_gene (object): Pandas data-frame table of supplemental or
+            contextual information about genes
+        table_sample (object): Pandas data-frame table of information about
+            samples
+        columns_signal (list<str>): names of columns corresponding to
+            identifiers of samples in both control and intervention
+            experimental conditions for measurement values of signal intensity
+            across features
+        columns_gene (list<str>): names of columns corresponding to
+            information about genes
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table_signal = table_signal.copy(deep=True)
+    table_gene = table_gene.copy(deep=True)
+    table_sample = table_sample.copy(deep=True)
+    # Copy other information.
+    columns_signal = copy.deepcopy(columns_signal)
+    columns_gene = copy.deepcopy(columns_gene)
+
+    # Merge tables.
+    table_merge = porg.merge_columns_two_tables(
+        identifier_first="identifier_gene",
+        identifier_second="identifier_gene",
+        table_first=table_signal,
+        table_second=table_gene,
+        preserve_index=True,
+        report=report,
+    )
+
+    # Filter rows in table for non-missing values across relevant columns.
+    table_merge.dropna(
+        axis="index",
+        how="all",
+        subset=columns_signal,
+        inplace=True,
+    )
+    # Extract identifiers of relevant samples.
+    table_sample = table_sample.loc[(
+        table_sample["identifier_signal"].isin(columns_signal)
+    ), :].copy(deep=True)
+    columns_sample = copy.deepcopy(
+        table_sample["identifier_sample"].to_list()
+    )
+    # Translate names of columns corresponding to samples.
+    table_sample = table_sample.filter(
+        items=["identifier_signal", "identifier_sample",],
+        axis="columns",
+    )
+    series_translations = pandas.Series(
+        table_sample["identifier_sample"].to_list(),
+        index=table_sample["identifier_signal"],
+    )
+    translations_column = series_translations.to_dict()
+    table_merge.rename(
+        columns=translations_column,
+        inplace=True,
+    )
+
+    # Organize indices in table.
+    table_merge.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_merge.set_index(
+        ["identifier_gene"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    # Organize indices in table.
+    table_merge.columns.rename(
+        "features",
+        inplace=True,
+    ) # single-dimensional index
+
+    # Determine sort order from designations of chromosomes.
+    table_merge["gene_chromosome_sort"] = table_merge.apply(
+        lambda row: (
+            "chr23" if ("X" in str(row["gene_chromosome"]))
+            else row["gene_chromosome"]
+        ),
+        axis="columns", # apply function to each row
+    )
+    table_merge["gene_chromosome_sort"] = table_merge.apply(
+        lambda row: (
+            "chr24" if ("Y" in str(row["gene_chromosome_sort"]))
+            else row["gene_chromosome_sort"]
+        ),
+        axis="columns", # apply function to each row
+    )
+    table_merge["gene_chromosome_sort"] = table_merge.apply(
+        lambda row: (
+            "chr25" if ("M" in str(row["gene_chromosome_sort"]))
+            else row["gene_chromosome_sort"]
+        ),
+        axis="columns", # apply function to each row
+    )
+    table_merge["gene_chromosome_sort"] = table_merge.apply(
+        lambda row: int(
+            str(row["gene_chromosome_sort"]).strip().replace("chr", "")
+        ),
+        axis="columns", # apply function to each row
+    )
+
+    # Sort rows within table.
+    table_merge.sort_values(
+        by=[
+            "gene_chromosome_sort",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
+    # Filter and sort columns within table.
+    columns_gene.insert(len(columns_gene), "gene_chromosome_sort")
+    columns_sequence = copy.deepcopy(columns_gene)
+    columns_sequence.extend(columns_sample)
+    columns_sequence.remove("identifier_gene")
+    table_merge = porg.filter_sort_table_columns(
+        table=table_merge,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: combine_organize_table_signal_genes_samples()")
+        print("tissue: " + tissue)
+        putly.print_terminal_partition(level=5)
+        count_rows = (table_merge.shape[0])
+        count_columns = (table_merge.shape[1])
+        print("table of information about signals across genes and samples:")
+        print(table_merge.iloc[0:10, 0:])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table_merge
+
+
+##########
+# 8. Fill missing values of signal intensity.
 # Functionality for this operation is in the "partner" package.
 
 
 ##########
-# 8. Check the coherence of separate tables for analysis.
+# 9. Check the coherence of separate tables for analysis.
 
 
 def check_coherence_table_sample_table_signal(
@@ -2037,7 +2266,216 @@ def check_coherence_table_sample_table_signal(
 # Control procedure within branch for parallelization.
 
 
-def control_branch_procedure(
+def control_procedure_part_branch_sample(
+    sort=None,
+    group=None,
+    name_set=None,
+    tissue=None,
+    cohort_selection_primary=None,
+    factor_availability=None,
+    cohort_selection_secondary=None,
+    columns_set=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    paths=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        sort (int): sequential index for sort order
+        group (str): name of a group of analyses
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        cohort_selection_primary (dict<list<str>>): filters on rows in table
+            for selection of samples relevant to cohort for analysis
+        factor_availability (dict<list<str>>): features and their values
+            corresponding to factors of interest in the analysis
+        cohort_selection_secondary (dict<list<str>>): filters on rows in table
+            for selection of samples relevant to cohort for analysis
+        columns_set (list<str>): names of columns for feature variables that
+            are relevant to the current set or instance of parameters
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Read source information from file.
+    pail_source_sample = read_source_sample(
+        paths=paths,
+        report=report,
+    )
+    # Select set of samples relevant for analysis.
+    pail_sample_primary = select_sets_identifier_table_sample(
+        table_sample=pail_source_sample["table_sample"],
+        name_set=name_set,
+        tissue=tissue,
+        cohort_selection=cohort_selection_primary,
+        factor_availability=factor_availability,
+        report=report,
+    )
+    # Organize tertiles for feature variables with continuous values that the
+    # parameters specify.
+    table_tertile = organize_describe_summarize_table_sample_tertiles(
+        table=pail_sample_primary["table_selection"],
+        cohort_selection=cohort_selection_secondary,
+        group=group,
+        name_set=name_set,
+        tissue=tissue,
+        paths=paths,
+        report=report,
+    )
+    # Select sets of samples on the basis of tertiles.
+    pail_sample_secondary = select_sets_identifier_table_sample(
+        table_sample=table_tertile,
+        name_set=name_set,
+        tissue=tissue,
+        cohort_selection=cohort_selection_secondary,
+        factor_availability=factor_availability,
+        report=report,
+    )
+    # Filter rows in table for non-missing values across relevant columns.
+    pail_sample = select_sets_final_identifier_table_sample(
+        table_sample=pail_sample_secondary["table_selection"],
+        name_set=name_set,
+        tissue=tissue,
+        columns_set=columns_set,
+        report=report,
+    )
+    # Summarize the counts of samples corresponding to each set of parameters.
+    report_write_count_samples(
+        samples=pail_sample["samples_selection"],
+        sort=sort,
+        group=group,
+        name_set=name_set,
+        tissue=tissue,
+        paths=paths,
+        report=report,
+    )
+    # Return information.
+    return pail_sample
+
+
+def control_procedure_part_branch_signal(
+    samples=None,
+    tissue=None,
+    paths=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        samples (list<str>): identifiers of samples corresponding to
+            measurement values of signal intensity that are relevant
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Read source information from file.
+    pail_source_sample = read_source_sample(
+        paths=paths,
+        report=report,
+    )
+    pail_source_main = read_source_main(
+        tissue=tissue,
+        paths=paths,
+        report=report,
+    )
+
+    # Organize from source the information about signals.
+    columns_gene = define_column_sequence_table_main_gene()
+    pail_organization_main = organize_table_main(
+        table_main=pail_source_main["table_main"],
+        columns_gene=columns_gene,
+        samples=samples,
+        tissue=tissue,
+        report=report,
+    )
+
+    # Filter columns and rows in main table.
+    table_filter = filter_table_main(
+        table_main=pail_organization_main["table_main"],
+        columns_gene=columns_gene,
+        samples_all=samples,
+        samples_control=[],
+        samples_intervention=[],
+        filter_rows_identity=True,
+        filter_rows_signal=True,
+        filter_rows_signal_by_condition=False,
+        threshold_signal_low=10, # DESeq2 recommendation for bulk RNAseq
+        threshold_signal_high=None,
+        proportion_signal_all=0.10, # proportion smaller condition to total
+        proportion_signal_control=0.5,
+        proportion_signal_intervention=0.5,
+        tissue=tissue,
+        report=report,
+    )
+
+    # Separate tables for information of distinct types.
+    pail_separate = separate_table_main_columns(
+        table_main=table_filter,
+        columns_gene=columns_gene,
+        columns_signal=samples,
+        tissue=tissue,
+        report=report,
+    )
+
+    # Fill missing values of signal intensity.
+    table_signal = porg.fill_missing_values_table_by_row(
+        table=pail_separate["table_signal"],
+        columns=samples,
+        method="zero",
+        report=report,
+    )
+
+    # Combine and organize signals across samples and genes with supplemental
+    # information about genes.
+    table_combination = combine_organize_table_signal_genes_samples(
+        table_signal=table_signal,
+        table_gene=pail_separate["table_gene"],
+        table_sample=pail_source_sample["table_sample_file"],
+        columns_signal=samples,
+        columns_gene=columns_gene,
+        tissue=tissue,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    pail = dict()
+    pail["table_combination"] = table_combination
+    pail["table_gene"] = pail_separate["table_gene"]
+    pail["table_signal"] = table_signal
+    # Return information.
+    return pail
+
+
+def control_procedure_part_branch(
     sort=None,
     group=None,
     name_set=None,
@@ -2087,7 +2525,8 @@ def control_branch_procedure(
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
-    paths = initialize_directories(
+    # Initialize directories for instance-specific parallel branch procedure.
+    paths = initialize_directories_branch(
         project=project,
         routine=routine,
         procedure=procedure,
@@ -2099,117 +2538,39 @@ def control_branch_procedure(
     )
 
     ##########
-    # 2. Read source information from file.
-    pail_source = read_source(
-        tissue=tissue,
-        paths=paths,
-        report=report,
-    )
-
-    ##########
-    # 3. Select set of samples relevant for analysis.
-    pail_sample_primary = select_sets_identifier_table_sample(
-        table_sample=pail_source["table_sample"],
-        name_set=name_set,
-        tissue=tissue,
-        cohort_selection=cohort_selection_primary,
-        factor_availability=factor_availability,
-        report=report,
-    )
-    # Organize tertiles for feature variables with continuous values that the
-    # parameters specify.
-    table_tertile = organize_describe_summarize_table_sample_tertiles(
-        table=pail_sample_primary["table_selection"],
-        cohort_selection=cohort_selection_secondary,
-        group=group,
-        name_set=name_set,
-        tissue=tissue,
-        paths=paths,
-        report=report,
-    )
-    # Select sets of samples on the basis of tertiles.
-    pail_sample_secondary = select_sets_identifier_table_sample(
-        table_sample=table_tertile,
-        name_set=name_set,
-        tissue=tissue,
-        cohort_selection=cohort_selection_secondary,
-        factor_availability=factor_availability,
-        report=report,
-    )
-    # Filter rows in table for non-missing values across relevant columns.
-    pail_sample = select_sets_final_identifier_table_sample(
-        table_sample=pail_sample_secondary["table_selection"],
-        name_set=name_set,
-        tissue=tissue,
-        columns_set=columns_set,
-        report=report,
-    )
-    # Summarize the counts of samples corresponding to each set of parameters.
-    report_write_count_samples(
-        samples=pail_sample["samples_selection"],
+    # 2. Prepare data for subjects and samples with stratification for a
+    # specific instance of analysis.
+    pail_sample = control_procedure_part_branch_sample(
         sort=sort,
         group=group,
         name_set=name_set,
-        tissue=tissue,
+        tissue=tissue, # adipose, muscle
+        cohort_selection_primary=cohort_selection_primary,
+        factor_availability=factor_availability,
+        cohort_selection_secondary=cohort_selection_secondary,
+        columns_set=columns_set,
+        project=project,
+        routine=routine,
+        procedure=procedure,
         paths=paths,
         report=report,
     )
 
     ##########
-    # 4. Organize from source the information about signals.
-    columns_gene = define_column_sequence_table_main_gene()
-    pail_organization_main = organize_table_main(
-        table_main=pail_source["table_main"],
-        columns_gene=columns_gene,
+    # 3. Prepare data for signals across genes and samples with stratification
+    # for a specific instance of analysis.
+    pail_signal = control_procedure_part_branch_signal(
         samples=pail_sample["samples_selection"],
-        tissue=tissue,
+        tissue=tissue, # adipose, muscle
+        paths=paths,
         report=report,
     )
 
     ##########
-    # 5. Filter columns and rows in main table.
-    table_filter = filter_table_main(
-        table_main=pail_organization_main["table_main"],
-        columns_gene=columns_gene,
-        samples_all=pail_sample["samples_selection"],
-        samples_control=[],
-        samples_intervention=[],
-        filter_rows_identity=True,
-        filter_rows_signal=True,
-        filter_rows_signal_by_condition=False,
-        threshold_signal_low=10, # DESeq2 recommendation for bulk RNAseq
-        threshold_signal_high=None,
-        proportion_signal_all=0.10, # proportion smaller condition to total
-        proportion_signal_control=0.5,
-        proportion_signal_intervention=0.5,
-        tissue=tissue,
-        report=report,
-    )
-
-    ##########
-    # 6. Separate tables for information of distinct types.
-    pail_separate = separate_table_main_columns(
-        table_main=table_filter,
-        columns_gene=columns_gene,
-        columns_signal=pail_sample["samples_selection"],
-        tissue=tissue,
-        report=report,
-    )
-
-    ##########
-    # 7. Fill missing values of signal intensity.
-    table_signal = porg.fill_missing_values_table_by_row(
-        table=pail_separate["table_signal"],
-        columns=pail_sample["samples_selection"],
-        method="zero",
-        report=report,
-    )
-
-    ##########
-    # 8. Check the coherence of separate tables for analysis.
+    # 4. Check the coherence of separate tables for analysis.
     check_coherence_table_sample_table_signal(
         table_sample=pail_sample["table_selection"],
-        table_signal=table_signal,
+        table_signal=pail_signal["table_signal"],
         tissue=tissue,
         name_set=name_set,
         report=report,
@@ -2234,10 +2595,10 @@ def control_branch_procedure(
         pail_sample["table_selection"]
     )
     pail_write_data[str("table_gene")] = (
-        pail_separate["table_gene"]
+        pail_signal["table_gene"]
     )
     pail_write_data[str("table_signal")] = (
-        pail_separate["table_signal"]
+        pail_signal["table_signal"]
     )
 
     ##########
@@ -2323,7 +2684,7 @@ def control_parallel_instance(
 
     ##########
     # Control procedure with split for parallelization.
-    control_branch_procedure(
+    control_procedure_part_branch(
         sort=sort,
         group=group,
         name_set=name_set,
@@ -2494,6 +2855,95 @@ def control_parallel_instances(
 
 
 ##########
+# Control procedure for whole signal data for each tissue type.
+
+
+def control_procedure_whole_trunk(
+    tissue=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # 1. Initialize directories for read of source and write of product files.
+    # Initialize directories for trunk procedure.
+    paths = initialize_directories_trunk(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=False,
+        report=report,
+    )
+
+    ##########
+    # 2. Read source information from file.
+    pail_source_sample = read_source_sample(
+        paths=paths,
+        report=report,
+    )
+    # Extract identifiers of relevant samples.
+    table_sample = pail_source_sample["table_sample"].loc[(
+        pail_source_sample["table_sample"]["tissue"] == tissue
+    ), :].copy(deep=True)
+    samples = copy.deepcopy(
+        table_sample["identifier_signal"].to_list()
+    )
+
+    ##########
+    # 3. Prepare data for signals across genes and samples with stratification
+    # for a specific instance of analysis.
+    pail_signal = control_procedure_part_branch_signal(
+        samples=samples,
+        tissue=tissue, # adipose, muscle
+        paths=paths,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_data = dict()
+    pail_write_data[str("table_signal_gene_sample_" + tissue)] = (
+        pail_signal["table_combination"]
+    )
+
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=paths["out_whole"],
+        reset_index=False,
+        write_index=True,
+        type="text",
+    )
+    pass
+
+
+##########
 # Call main procedure.
 
 
@@ -2535,8 +2985,8 @@ def execute_procedure(
         pass
 
     ##########
-    # Preinitialize directories before parallel branches.
-    paths = preinitialize_directories(
+    # Initialize directories for trunk procedure.
+    paths = initialize_directories_trunk(
         project=project,
         routine=routine,
         procedure=procedure,
@@ -2546,16 +2996,17 @@ def execute_procedure(
     )
 
     ##########
-    # Read and organize parameters for parallel instances.
-    instances = read_organize_source_parameter_instances(
-        paths=paths,
+    # Control procedure for organization of signal data as a whole.
+    control_procedure_whole_trunk(
+        tissue="muscle",
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
         report=report,
     )
-
-    ##########
-    # Control procedure for parallel instances.
-    control_parallel_instances(
-        instances=instances,
+    control_procedure_whole_trunk(
+        tissue="adipose",
         project=project,
         routine=routine,
         procedure=procedure,
@@ -2563,12 +3014,32 @@ def execute_procedure(
         report=report,
     )
 
-    ##########
-    # Organize summary information about all instances overall.
-    read_organize_write_summary_instances(
-        paths=paths,
-        report=report,
-    )
+    if False:
+
+        ##########
+        # Read and organize parameters for parallel instances.
+        instances = read_organize_source_parameter_instances(
+            paths=paths,
+            report=report,
+        )
+
+        ##########
+        # Control procedure for parallel instances.
+        control_parallel_instances(
+            instances=instances,
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            report=report,
+        )
+
+        ##########
+        # Organize summary information about all instances overall.
+        read_organize_write_summary_instances(
+            paths=paths,
+            report=report,
+        )
 
     pass
 

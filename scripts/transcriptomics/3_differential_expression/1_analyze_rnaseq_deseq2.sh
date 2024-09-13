@@ -122,7 +122,7 @@ do
     ##########
     # Organize paths for current instance.
     # Directories.
-    path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/${raw_tissue}/${raw_name_set}/data"
+    path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/parts/${raw_tissue}/${raw_name_set}/data"
     path_directory_product="$path_directory_product_parent/${raw_tissue}/${raw_group}"
     # Files.
     path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
