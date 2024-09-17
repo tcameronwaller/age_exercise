@@ -139,6 +139,15 @@ def initialize_directories_trunk(
     paths["out_whole"] = os.path.join(
         paths["out_procedure"], "whole",
     )
+    paths["out_whole_preparation"] = os.path.join(
+        paths["out_whole"], "preparation",
+    )
+    paths["out_whole_description"] = os.path.join(
+        paths["out_whole"], "description",
+    )
+    paths["out_whole_plot"] = os.path.join(
+        paths["out_whole"], "plot",
+    )
     paths["out_parts"] = os.path.join(
         paths["out_procedure"], "parts",
     )
@@ -154,6 +163,9 @@ def initialize_directories_trunk(
         #paths["out_routine"],
         paths["out_procedure"],
         paths["out_whole"],
+        paths["out_whole_preparation"],
+        paths["out_whole_description"],
+        paths["out_whole_plot"],
         paths["out_parts"],
         paths["out_summary"],
         paths["out_summary_instances"],
@@ -629,6 +641,81 @@ def read_source_main(
         print("count of rows in table: " + str(count_rows))
         print("Count of columns in table: " + str(count_columns))
         print(pail["table_main"])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
+
+
+def read_source_signal_for_description(
+    tissue=None,
+    paths=None,
+    report=None,
+):
+    """
+    Reads and organizes source information from file.
+
+    Notice that Pandas does not accommodate missing values within series of
+    integer variable types.
+
+    arguments:
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of source information read from file
+
+    """
+
+    # Define paths to parent directories.
+    # paths["out_whole_preparation"]
+
+    # Define paths to child files.
+    path_file_table_gene = os.path.join(
+        paths["out_whole_preparation"], str(
+            "table_gene_" + str(tissue) + ".pickle"
+        ),
+    )
+    path_file_table_signal = os.path.join(
+        paths["out_whole_preparation"], str(
+            "table_signal_" + str(tissue) + ".pickle"
+        ),
+    )
+    path_file_table_signal_scale = os.path.join(
+        paths["out_whole_preparation"], str(
+            "table_signal_scale_" + str(tissue) + ".pickle"
+        ),
+    )
+    # Collect information.
+    pail = dict()
+    # Read information from file.
+    pail["table_gene"] = pandas.read_pickle(
+        path_file_table_gene,
+    )
+    pail["table_signal"] = pandas.read_pickle(
+        path_file_table_signal,
+    )
+    pail["table_signal_scale"] = pandas.read_pickle(
+        path_file_table_signal_scale,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: read_source_signal_for_description()")
+        print("tissue: " + tissue)
+        putly.print_terminal_partition(level=5)
+        count_rows = (pail["table_signal_scale"].shape[0])
+        count_columns = (pail["table_signal_scale"].shape[1])
+        print("signal scale table: ")
+        print("count of rows in table: " + str(count_rows))
+        print("Count of columns in table: " + str(count_columns))
+        print(pail["table_signal_scale"])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -2212,6 +2299,91 @@ def combine_organize_table_signal_genes_samples(
     return table_merge
 
 
+def rank_genes_by_mean_signal(
+    identifiers_gene=None,
+    table_signal=None,
+    report=None,
+):
+    """
+    Ranks a list of genes by the magnitude of their mean signals.
+
+    arguments:
+        identifiers_gene (list<str): identifiers of genes
+        table_signal (object): Pandas data-frame table of values of signal
+            intensity for sample observations across columns and for gene
+            features across rows
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table_signal = table_signal.copy(deep=True)
+    # Organize indices in table.
+    table_signal.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    # Filter rows by identifiers of stable genes.
+    table_signal = table_signal.loc[(
+        table_signal["identifier_gene"].isin(identifiers_gene)
+    ), :].copy(deep=True)
+    # Organize indices in table.
+    table_signal.set_index(
+        ["identifier_gene"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    # Calculate geometric mean.
+    table_signal["mean"] = table_signal.apply(
+        lambda row:
+            numpy.nanmean(
+                row.to_numpy(
+                    dtype="float64",
+                    na_value=numpy.nan,
+                    copy=True,
+                )
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Sort rows within table.
+    table_signal.sort_values(
+        by=[
+            "mean",
+        ],
+        axis="index",
+        ascending=True,
+        inplace=True,
+    )
+    # Organize indices in table.
+    table_signal.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    # Extract identifiers of genes.
+    identifiers_gene_rank = copy.deepcopy(
+        table_signal["identifier_gene"].to_list()
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: rank_genes_by_mean_signal()")
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return identifiers_gene_rank
+
+
+
 ##########
 # 10. Check the coherence of separate tables for analysis.
 
@@ -2329,6 +2501,133 @@ def check_coherence_table_sample_table_signal(
         pass
     # Return information.
     pass
+
+
+##########
+# 11. Create charts to represent distribution of signal values for individual
+# gene features across sample observations both with and without adjustment
+# of scale and normalization between sample observations.
+
+
+def create_write_chart_feature_signal_observations_distribution(
+    identifiers_gene=None,
+    colors_names_groups=None,
+    tissue=None,
+    table_gene=None,
+    table_raw=None,
+    table_scale=None,
+    column_identifier=None,
+    column_name=None,
+    paths=None,
+    report=None,
+):
+    """
+    Create chart representation of distribution of signal values.
+
+    arguments:
+        identifiers_gene (list<str>): identifier of single gene feature
+        colors_names_groups (list<str>): names of colors for groups
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        table_gene (object): Pandas data-frame table of information about genes
+        table_raw (object): Pandas data-frame table of signals without
+            adjustment of scale or normalization
+        table_scale (object): Pandas data-frame table of signals with
+            adjustment of scale or normalization
+        column_identifier (str): name of column in table for the unique
+            identifier corresponding to the fold change
+        column_name (str): name of column in table for the name corresponding
+            to the fold change
+        paths : (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    # Organize parameters.
+    name_figure = "box_plot_gene_signal_scale_normal"
+    #path_directory = paths["out_plot"]
+    path_directory = paths["out_whole_plot"]
+
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+
+    # Copy information in table.
+    table_gene = table_gene.copy(deep=True)
+    table_raw = table_raw.copy(deep=True)
+    table_scale = table_scale.copy(deep=True)
+
+    # Extract parameters for colors.
+    colors_groups = list(map(
+        lambda color_name: copy.deepcopy(colors[color_name]),
+        colors_names_groups
+    ))
+    # Collect information.
+    names_groups = list()
+    values_groups = list()
+    # Iterate on features.
+    for identifier_gene in identifiers_gene:
+        # Extract name of gene.
+        name_gene = str(table_gene.at[identifier_gene, "gene_name"])
+        # Iterate on tables of signal values.
+        types = ["raw", "scale",]
+        for type in types:
+            # Prepare name for group.
+            name_group = str(name_gene + "_" + type)
+            # Extract values.
+            if (type == "raw"):
+                series = table_raw.loc[identifier_gene]
+                values = numpy.log(series.dropna().to_numpy(
+                    dtype="float64",
+                    na_value=numpy.nan,
+                    copy=True,
+                ))
+            elif (type == "scale"):
+                series = table_scale.loc[identifier_gene]
+                values = series.dropna().to_numpy(
+                    dtype="float64",
+                    na_value=numpy.nan,
+                    copy=True,
+                )
+            # Collect information.
+            names_groups.append(name_group)
+            values_groups.append(values)
+        pass
+    # Create figure.
+    figure = pplot.plot_boxes_groups(
+        values_groups=values_groups,
+        title_ordinate="log(gene signal)",
+        title_abscissa="",
+        titles_abscissa_groups=names_groups,
+        colors_groups=colors_groups,
+        label_top_center="",
+        label_top_left="",
+        label_top_right="",
+        aspect="landscape",
+        orientation_box="vertical",
+        axis_linear_minimum=0.0,
+        fonts=fonts,
+        colors=colors,
+    )
+    # Write figure to file.
+    pplot.write_product_plot_figure(
+        figure=figure,
+        format="jpg", # jpg, png, svg
+        resolution=150,
+        name_file=name_figure,
+        path_directory=path_directory,
+    )
+    # Return information.
+    return figure
+
+
 
 
 ##########
@@ -2581,15 +2880,17 @@ def control_procedure_part_branch_signal(
             report=report,
         )
     else:
+        table_signal_scale = pandas.DataFrame()
         table_combination = pandas.DataFrame()
         pass
 
     ##########
     # Collect information.
     pail = dict()
-    pail["table_combination"] = table_combination
     pail["table_gene"] = pail_separate["table_gene"]
     pail["table_signal"] = table_signal
+    pail["table_signal_scale"] = table_signal_scale
+    pail["table_combination"] = table_combination
     # Return information.
     return pail
 
@@ -2978,7 +3279,109 @@ def control_parallel_instances(
 # Control procedure for whole signal data for each tissue type.
 
 
-def control_procedure_whole_trunk(
+def control_procedure_whole_trunk_preparation(
+    tissue=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # 1. Initialize directories for read of source and write of product files.
+    # Initialize directories for trunk procedure.
+    paths = initialize_directories_trunk(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=True,
+        report=report,
+    )
+
+    ##########
+    # 2. Read source information from file.
+    pail_source_sample = read_source_sample(
+        paths=paths,
+        report=report,
+    )
+    # Extract identifiers of relevant samples.
+    table_sample = pail_source_sample["table_sample"].loc[(
+        pail_source_sample["table_sample"]["tissue"] == tissue
+    ), :].copy(deep=True)
+    samples = copy.deepcopy(
+        table_sample["identifier_signal"].to_list()
+    )
+
+    ##########
+    # 3. Prepare data for signals across genes and samples with stratification
+    # for a specific instance of analysis.
+    pail_signal = control_procedure_part_branch_signal(
+        samples=samples,
+        tissue=tissue, # adipose, muscle
+        scale_combination=True,
+        paths=paths,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_table = dict()
+    pail_write_table[str("table_gene_" + tissue)] = (
+        pail_signal["table_gene"]
+    )
+    pail_write_table[str("table_signal_" + tissue)] = (
+        pail_signal["table_signal"]
+    )
+    pail_write_table[str("table_signal_scale_" + tissue)] = (
+        pail_signal["table_signal_scale"]
+    )
+    pail_write_table[str("table_signal_gene_sample_" + tissue)] = (
+        pail_signal["table_combination"]
+    )
+
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_table,
+        path_directory=paths["out_whole_preparation"],
+        reset_index=False,
+        write_index=True,
+        type="text",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_table,
+        path_directory=paths["out_whole_preparation"],
+        reset_index=False,
+        write_index=True,
+        type="pickle",
+    )
+    pass
+
+
+def control_procedure_whole_trunk_description(
     tissue=None,
     project=None,
     routine=None,
@@ -3021,45 +3424,65 @@ def control_procedure_whole_trunk(
 
     ##########
     # 2. Read source information from file.
-    pail_source_sample = read_source_sample(
-        paths=paths,
-        report=report,
-    )
-    # Extract identifiers of relevant samples.
-    table_sample = pail_source_sample["table_sample"].loc[(
-        pail_source_sample["table_sample"]["tissue"] == tissue
-    ), :].copy(deep=True)
-    samples = copy.deepcopy(
-        table_sample["identifier_signal"].to_list()
-    )
-
-    ##########
-    # 3. Prepare data for signals across genes and samples with stratification
-    # for a specific instance of analysis.
-    pail_signal = control_procedure_part_branch_signal(
-        samples=samples,
-        tissue=tissue, # adipose, muscle
-        scale_combination=True,
+    pail_source = read_source_signal_for_description(
+        tissue=tissue,
         paths=paths,
         report=report,
     )
 
     ##########
-    # Collect information.
-    # Collections of files.
-    pail_write_data = dict()
-    pail_write_data[str("table_signal_gene_sample_" + tissue)] = (
-        pail_signal["table_combination"]
+    # 3. Extract identifiers of common gene features that have the most stable
+    # signal values across all sample observations both with and without
+    # adjustment of scale and normalization between sample observations.
+    pail_stable = (
+        pscl.compare_middle_quantile_feature_sets_by_ratio_to_geometric_mean(
+            table_first=pail_source["table_signal"],
+            table_second=pail_source["table_signal_scale"],
+            name_columns="identifier_signal",
+            name_rows="identifier_gene",
+            count_quantile=21,
+            report=report,
+    ))
+    #identifiers_genes_stable = list(pail_stable["union_middle"])
+    identifiers_gene_stable_rank = rank_genes_by_mean_signal(
+        identifiers_gene=list(pail_stable["union_middle"]),
+        table_signal=pail_source["table_signal_scale"],
+        report=report,
     )
+    count_half = int(len(identifiers_gene_stable_rank) // 2)
+    genes_selection = identifiers_gene_stable_rank[count_half:(count_half+5)]
+    print(genes_selection)
 
     ##########
-    # Write product information to file.
-    putly.write_tables_to_file(
-        pail_write=pail_write_data,
-        path_directory=paths["out_whole"],
-        reset_index=False,
-        write_index=True,
-        type="text",
+    # 4. For a selection of gene features, describe their distribution of
+    # signal values across sample observations both with and without adjustment
+    # of scale and normalization between sample observations.
+    identifiers_gene = genes_selection
+    colors_names_groups = [
+        "red_burgundy",
+        "red_crimson",
+        "yellow_sunshine",
+        "yellow_sunflower",
+        "green_forest",
+        "green_kelly",
+        "blue_navy",
+        "blue_sky",
+        "purple",
+        "purple_lavender",
+    ]
+    # Create and write to file charts to represent distribution of
+    # signals.
+    create_write_chart_feature_signal_observations_distribution(
+        identifiers_gene=identifiers_gene,
+        colors_names_groups=colors_names_groups,
+        tissue=tissue,
+        table_gene=pail_source["table_gene"],
+        table_raw=pail_source["table_signal"],
+        table_scale=pail_source["table_signal_scale"],
+        column_identifier="identifier_gene",
+        column_name="gene_name",
+        paths=paths,
+        report=report,
     )
     pass
 
@@ -3105,21 +3528,12 @@ def execute_procedure(
         putly.print_terminal_partition(level=5)
         pass
 
-    if True:
-        ##########
-        # Initialize directories for trunk procedure.
-        paths = initialize_directories_trunk(
-            project=project,
-            routine=routine,
-            procedure=procedure,
-            path_directory_dock=path_directory_dock,
-            restore=True,
-            report=report,
-        )
-
-        ##########
-        # Control procedure for organization of signal data as a whole.
-        control_procedure_whole_trunk(
+    ##########
+    # Trunk procedure to prepare tables of signals with adjustment of scale
+    # and normalization.
+    if False:
+        # Control procedure for preparation of signal data as a whole.
+        control_procedure_whole_trunk_preparation(
             tissue="muscle",
             project=project,
             routine=routine,
@@ -3127,7 +3541,7 @@ def execute_procedure(
             path_directory_dock=path_directory_dock,
             report=report,
         )
-        control_procedure_whole_trunk(
+        control_procedure_whole_trunk_preparation(
             tissue="adipose",
             project=project,
             routine=routine,
@@ -3136,7 +3550,40 @@ def execute_procedure(
             report=report,
         )
 
+    ##########
+    # Trunk procedure to describe tables of signals with adjustment of scale
+    # and normalization.
+    if True:
+        # Control procedure for description of signal data as a whole.
+        control_procedure_whole_trunk_description(
+            tissue="muscle",
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            report=report,
+        )
     if False:
+        control_procedure_whole_trunk_description(
+            tissue="adipose",
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            report=report,
+        )
+        pass
+
+    if False:
+        # Initialize directories for trunk procedure.
+        paths = initialize_directories_trunk(
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            restore=False,
+            report=report,
+        )
         ##########
         # Read and organize parameters for parallel instances.
         instances = read_organize_source_parameter_instances(
