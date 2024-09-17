@@ -2340,7 +2340,7 @@ def rank_genes_by_mean_signal(
         drop=True,
         inplace=True,
     )
-    # Calculate geometric mean.
+    # Calculate mean of values for each feature across all observations.
     table_signal["mean"] = table_signal.apply(
         lambda row:
             numpy.nanmean(
@@ -2352,10 +2352,24 @@ def rank_genes_by_mean_signal(
             ),
         axis="columns", # apply function to each row
     )
+    # Calculate geometric mean of values for each feature across all
+    # observations.
+    table_signal["mean_geometric"] = table_signal.apply(
+        lambda row:
+            scipy.stats.mstats.gmean(
+                row.to_numpy(
+                    dtype="float64",
+                    na_value=numpy.nan,
+                    copy=True,
+                ),
+                nan_policy="omit",
+            ),
+        axis="columns", # apply function to each row
+    )
     # Sort rows within table.
     table_signal.sort_values(
         by=[
-            "mean",
+            "mean_geometric",
         ],
         axis="index",
         ascending=True,
@@ -2377,6 +2391,9 @@ def rank_genes_by_mean_signal(
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_signal.py")
         print("function: rank_genes_by_mean_signal()")
+        putly.print_terminal_partition(level=5)
+        print("table in rank order")
+        print(table_signal)
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -2550,7 +2567,7 @@ def create_write_chart_feature_signal_observations_distribution(
     """
 
     # Organize parameters.
-    name_figure = "box_plot_gene_signal_scale_normal"
+    name_figure = str("chart_gene_signal_scale_normal_" + tissue)
     #path_directory = paths["out_plot"]
     path_directory = paths["out_whole_plot"]
 
@@ -3316,7 +3333,7 @@ def control_procedure_whole_trunk_preparation(
         routine=routine,
         procedure=procedure,
         path_directory_dock=path_directory_dock,
-        restore=True,
+        restore=False,
         report=report,
     )
 
@@ -3434,23 +3451,23 @@ def control_procedure_whole_trunk_description(
     # 3. Extract identifiers of common gene features that have the most stable
     # signal values across all sample observations both with and without
     # adjustment of scale and normalization between sample observations.
-    pail_stable = (
-        pscl.compare_middle_quantile_feature_sets_by_ratio_to_geometric_mean(
-            table_first=pail_source["table_signal"],
-            table_second=pail_source["table_signal_scale"],
-            name_columns="identifier_signal",
-            name_rows="identifier_gene",
-            count_quantile=21,
-            report=report,
-    ))
+    pail_stable = porg.compare_stable_feature_sets_before_after_scale(
+        table_raw=pail_source["table_signal"],
+        table_scale=pail_source["table_signal_scale"],
+        name_columns="identifier_signal",
+        name_rows="identifier_gene",
+        count_quantile=21,
+        report=report,
+    )
     #identifiers_genes_stable = list(pail_stable["union_middle"])
     identifiers_gene_stable_rank = rank_genes_by_mean_signal(
-        identifiers_gene=list(pail_stable["union_middle"]),
+        identifiers_gene=list(pail_stable["union_stable"]),
         table_signal=pail_source["table_signal_scale"],
         report=report,
     )
-    count_half = int(len(identifiers_gene_stable_rank) // 2)
-    genes_selection = identifiers_gene_stable_rank[count_half:(count_half+5)]
+    #count_half = int(len(identifiers_gene_stable_rank) // 2)
+    #genes_selection = identifiers_gene_stable_rank[count_half:(count_half+5)]
+    genes_selection = identifiers_gene_stable_rank[3:8]
     print(genes_selection)
 
     ##########
@@ -3532,6 +3549,15 @@ def execute_procedure(
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
     if False:
+        # Initialize directories.
+        paths = initialize_directories_trunk(
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            restore=True,
+            report=report,
+        )
         # Control procedure for preparation of signal data as a whole.
         control_procedure_whole_trunk_preparation(
             tissue="muscle",
@@ -3563,7 +3589,6 @@ def execute_procedure(
             path_directory_dock=path_directory_dock,
             report=report,
         )
-    if False:
         control_procedure_whole_trunk_description(
             tissue="adipose",
             project=project,
