@@ -390,6 +390,13 @@ def read_organize_source_parameter_instances(
         encoding="utf-8",
     )
 
+    # TODO: TCW; 24 September 2024
+    # write a generic function for parsing information from each of the
+    # columns:
+    # cohort_selection_primary
+    # factor_availability
+    # cohort_selection_secondary
+
     # Collect information.
     instances = list()
     for index, row in table.iterrows():
@@ -399,38 +406,50 @@ def read_organize_source_parameter_instances(
             pail["group"] = str(row["group"])
             pail["name_set"] = str(row["name_set"])
             pail["tissue"] = str(row["tissue"])
-            pail["cohort_selection_primary"] = dict()
-            for part in row["cohort_selection_primary"].strip().split(";"):
-                part_split = part.split(":")
-                pail["cohort_selection_primary"][part_split[0]] = (
-                    part_split[1].split(",")
-                )
+            if (str(row["cohort_selection_primary"]).strip() != "none"):
+                for part in row["cohort_selection_primary"].strip().split(";"):
+                    part_split = part.split(":")
+                    pail["cohort_selection_primary"] = dict()
+                    pail["cohort_selection_primary"][part_split[0]] = (
+                        part_split[1].split(",")
+                    )
+                    pass
                 pass
-            pail["factor_availability"] = dict()
-            for part in row["factor_availability"].strip().split(";"):
-                part_split = part.split(":")
-                pail["factor_availability"][part_split[0]] = (
-                    part_split[1].split(",")
-                )
+            else:
+                pail["cohort_selection_primary"] = None
                 pass
-            pail["cohort_selection_secondary"] = dict()
+            if (str(row["factor_availability"]).strip() != "none"):
+                for part in row["factor_availability"].strip().split(";"):
+                    part_split = part.split(":")
+                    pail["factor_availability"] = dict()
+                    pail["factor_availability"][part_split[0]] = (
+                        part_split[1].split(",")
+                    )
+                    pass
+                pass
+            else:
+                pail["factor_availability"] = None
+                pass
             if (str(row["cohort_selection_secondary"]).strip() != "none"):
                 for part in row["cohort_selection_secondary"].strip(
                 ).split(";"):
                     part_split = part.split(":")
+                    pail["cohort_selection_secondary"] = dict()
                     pail["cohort_selection_secondary"][part_split[0]] = (
                         part_split[1].split(",")
                     )
                     pass
                 pass
             else:
-                pail["cohort_selection_secondary"] = "none"
+                pail["cohort_selection_secondary"] = None
                 pass
-            pail["continuity_scale"] = list()
             if (str(row["continuity_scale"]) != "none"):
                 pail["continuity_scale"] = (
                     row["continuity_scale"].strip().split(",")
                 )
+            else:
+                pail["continuity_scale"] = None
+                pass
             # Collect names of unique columns relevant to current instance.
             columns = list()
             #columns.append("identifier_signal")
@@ -899,20 +918,25 @@ def select_sets_identifier_table_sample(
     # Filter rows in table by rules for selection of a specific set.
     # Iterate on features and values for selection of samples in cohort.
     table_cohort = table_inclusion.copy(deep=True)
-    for feature in cohort_selection.keys():
-        table_cohort = table_cohort.loc[(
-            table_cohort[feature].isin(cohort_selection[feature])
-        ), :].copy(deep=True)
+    if (cohort_selection is not None):
+        for feature in cohort_selection.keys():
+            table_cohort = table_cohort.loc[(
+                table_cohort[feature].isin(cohort_selection[feature])
+            ), :].copy(deep=True)
+            pass
         pass
 
     # Iterate on factors and values for selection of samples on the basis
     # of availability.
     table_factor = table_cohort.copy(deep=True)
-    for factor in factor_availability.keys():
-        table_factor = table_factor.loc[(
-            table_factor[factor].isin(factor_availability[factor])
-        ), :].copy(deep=True)
-        pass
+    if (factor_availability is not None):
+        for factor in factor_availability.keys():
+            table_factor = table_factor.loc[(
+                table_factor[factor].isin(factor_availability[factor])
+            ), :].copy(deep=True)
+            pass
+
+    # Copy information in table.
     table_selection = table_factor.copy(deep=True)
 
     # Separate samples for unique values of factor.
@@ -1033,9 +1057,8 @@ def extract_source_columns_for_tertiles(
     # continuous values.
     columns_tertile = list()
     if (
-        any("tertiles_" in item for item in list(
-            cohort_selection.keys()
-        ))
+        (cohort_selection is not None) and
+        any("tertiles_" in item for item in list(cohort_selection.keys()))
     ):
         # Extract names of columns corresponding to feature variables for which
         # to calculate tertiles.
@@ -1105,9 +1128,8 @@ def organize_describe_summarize_table_sample_tertiles(
     # Determine whether to calculate tertiles for any feature variables with
     # continuous values.
     if (
-        any("tertiles_" in item for item in list(
-            cohort_selection.keys()
-        ))
+        (cohort_selection is not None) and
+        any("tertiles_" in item for item in list(cohort_selection.keys()))
     ):
         # Extract names of columns corresponding to feature variables for which
         # to calculate tertiles.
@@ -1207,17 +1229,21 @@ def select_sets_final_identifier_table_sample(
 
     # Copy information in table.
     table_selection = table_sample.copy(deep=True)
+
     # Copy other information.
+    continuity_scale = copy.deepcopy(continuity_scale)
     columns_set = copy.deepcopy(columns_set)
 
     # Adjust the scale of specific variables by transformation to z score.
-
-    # TODO: TCW; 23 September 2024
-    # "continuity_scale"
-    # z-score variables with the same names
-    # be sure to update column coordinates in the subsequent driver script...
-
-
+    if (continuity_scale is not None):
+        # Calculate standard z scores.
+        table_selection = (
+            pscl.drive_transform_variables_distribution_scale_z_score(
+                table=table_selection,
+                columns=continuity_scale,
+                report=report,
+        ))
+        pass
 
     # Filter rows in table for non-missing values across relevant columns.
     table_selection.dropna(
