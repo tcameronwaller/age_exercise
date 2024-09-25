@@ -1151,10 +1151,10 @@ def select_sets_identifier_table_sample(
         print("function: select_sets_identifier_table_sample_primary()")
         print("name_instance: " + str(name_instance))
         print("tissue: " + tissue)
-        print("features for cohort selection:")
-        print(str(cohort_selection.keys()))
-        print("factors for availability of specific values:")
-        print(str(factor_availability.keys()))
+        #print("features for cohort selection:")
+        #print(str(cohort_selection.keys()))
+        #print("factors for availability of specific values:")
+        #print(str(factor_availability.keys()))
         putly.print_terminal_partition(level=5)
         print("sample table, filtered by inclusion and tissue:")
         print(table_tissue.iloc[0:10, 0:])
@@ -1168,20 +1168,20 @@ def select_sets_identifier_table_sample(
         #    include=["category",]
         #)
         putly.print_terminal_partition(level=4)
-        print(
-            "counts of samples with each unique categorical value of each " +
-            "factor:"
-        )
-        for factor in factor_availability.keys():
-            print("factor: " + factor)
-            print(
-                table_selection[factor].value_counts(
-                    dropna=False,
-                )
-            )
-            putly.print_terminal_partition(level=4)
-            pass
-        putly.print_terminal_partition(level=5)
+        #print(
+        #    "counts of samples with each unique categorical value of each " +
+        #    "factor:"
+        #)
+        #for factor in factor_availability.keys():
+        #    print("factor: " + factor)
+        #    print(
+        #        table_selection[factor].value_counts(
+        #            dropna=False,
+        #        )
+        #    )
+        #    putly.print_terminal_partition(level=4)
+        #    pass
+        #putly.print_terminal_partition(level=5)
         pass
     # Return information.
     return pail
