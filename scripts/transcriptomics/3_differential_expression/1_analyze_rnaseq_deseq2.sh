@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 24 September 2024
-# Review: TCW; 24 September 2024
+# Date, last execution or modification: 25 September 2024
+# Review: TCW; 25 September 2024
 ###############################################################################
 # Note
 
@@ -76,7 +76,7 @@ do
   raw_inclusion="${array[0]}"
   raw_sort="${array[1]}"
   raw_group="${array[2]}"
-  raw_name_instance="${array[3]}"
+  raw_instance="${array[3]}"
   raw_tissue="${array[4]}"
   raw_cohort_selection_primary="${array[5]}"
   raw_factor_availability="${array[6]}"
@@ -94,14 +94,17 @@ do
   raw_subject="${array[18]}"
   raw_threshold_significance="${array[19]}"
   raw_note="${array[20]}"
+  name_instance="${raw_tissue}_${sort}_${raw_instance}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
     echo "--------------------------------------------------"
+    echo "raw fields"
+    echo "--------------------------------------------------"
     echo "field 0, inclusion: ${raw_inclusion}"
     echo "field 1, sort: ${raw_sort}"
     echo "field 2, group: ${raw_group}"
-    echo "field 3, name_instance: ${raw_name_instance}"
+    echo "field 3, instance: ${raw_instance}"
     echo "field 4, tissue: ${raw_tissue}"
     echo "field 5, cohort_selection_primary: ${raw_cohort_selection_primary}"
     echo "field 6, factor_availability: ${raw_factor_availability}"
@@ -120,6 +123,10 @@ do
     echo "field 19, threshold_significance: ${raw_threshold_significance}"
     echo "field 20, note: ${raw_note}"
     echo "----------"
+    echo "derivation fields"
+    echo "----------"
+    echo "name_instance: ${name_instance}"
+    echo "----------"
   fi
   # Execute procedure for current record's parameters.
   #  && [ "$raw_name_instance" == "muscle_exercise-0hr_sex" ]
@@ -128,13 +135,13 @@ do
     ##########
     # Organize paths for current instance.
     # Directories.
-    path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/parts/${raw_tissue}/${raw_name_instance}/data"
+    path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/parts/${raw_tissue}/${name_instance}/data"
     path_directory_product="$path_directory_product_parent/${raw_tissue}/${raw_group}"
     # Files.
     path_file_source_table_sample="${path_directory_source}/table_sample.tsv"
     path_file_source_table_gene="${path_directory_source}/table_gene.tsv"
     path_file_source_table_signal="${path_directory_source}/table_signal.tsv"
-    path_file_product_table="${path_directory_product}/table_result_deseq2_${raw_name_instance}.tsv"
+    path_file_product_table="${path_directory_product}/table_result_deseq2_${name_instance}.tsv"
     # Initialize directory.
     mkdir -p $path_directory_product
     # Report.

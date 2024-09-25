@@ -468,7 +468,7 @@ def define_column_types_table_parameter_instances():
     types_columns["inclusion"] = "string" # "int32"
     types_columns["sort"] = "int32" # "int32"
     types_columns["group"] = "string"
-    types_columns["name_instance"] = "string"
+    types_columns["instance"] = "string"
     types_columns["tissue"] = "string"
     types_columns["cohort_selection_primary"] = "string"
     types_columns["factor_availability"] = "string"
@@ -558,8 +558,12 @@ def read_organize_source_parameter_instances(
             columns = list()
             pail["sort"] = str(row["sort"])
             pail["group"] = str(row["group"])
-            pail["name_instance"] = str(row["name_instance"])
             pail["tissue"] = str(row["tissue"])
+            pail["name_instance"] = "_".join([
+                str(row["tissue"]),
+                str(row["sort"]),
+                str(row["instance"])
+            ])
             if (str(row["cohort_selection_primary"]).strip() != "none"):
                 pail["cohort_selection_primary"] = dict()
                 for part in row["cohort_selection_primary"].strip().split(";"):
