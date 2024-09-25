@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 11 September 2024
-# Review: TCW; 11 September 2024
+# Date, last execution or modification: 24 September 2024
+# Review: TCW; 24 September 2024
 ###############################################################################
 # Note
 
@@ -81,16 +81,19 @@ do
   raw_cohort_selection_primary="${array[5]}"
   raw_factor_availability="${array[6]}"
   raw_cohort_selection_secondary="${array[7]}"
-  raw_formula_text="${array[8]}"
-  raw_condition="${array[9]}"
-  raw_levels_condition="${array[10]}"
-  raw_supplement_1="${array[11]}"
-  raw_levels_supplement_1="${array[12]}"
-  raw_supplement_2="${array[13]}"
-  raw_levels_supplement_2="${array[14]}"
-  raw_subject="${array[15]}"
-  raw_threshold_significance="${array[16]}"
-  raw_note="${array[17]}"
+  raw_continuity_scale="${array[8]}"
+  raw_formula_text="${array[9]}"
+  raw_condition="${array[10]}"
+  raw_levels_condition="${array[11]}"
+  raw_supplement_1="${array[12]}"
+  raw_levels_supplement_1="${array[13]}"
+  raw_supplement_2="${array[14]}"
+  raw_levels_supplement_2="${array[15]}"
+  raw_supplement_3="${array[16]}"
+  raw_levels_supplement_3="${array[17]}"
+  raw_subject="${array[18]}"
+  raw_threshold_significance="${array[19]}"
+  raw_note="${array[20]}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
@@ -103,16 +106,19 @@ do
     echo "field 5, cohort_selection_primary: ${raw_cohort_selection_primary}"
     echo "field 6, factor_availability: ${raw_factor_availability}"
     echo "field 7, cohort_selection_secondary: ${raw_cohort_selection_secondary}"
-    echo "field 8, formula_text: ${raw_formula_text}"
-    echo "field 9, condition: ${raw_condition}"
-    echo "field 10, levels_condition: ${raw_levels_condition}"
-    echo "field 11, supplement_1: ${raw_supplement_1}"
-    echo "field 12, levels_supplement_1: ${raw_levels_supplement_1}"
-    echo "field 13, supplement_2: ${raw_supplement_2}"
-    echo "field 14, levels_supplement_2: ${raw_levels_supplement_2}"
-    echo "field 15, subject: ${raw_subject}"
-    echo "field 16, threshold_significance: ${raw_threshold_significance}"
-    echo "field 17, note: ${raw_note}"
+    echo "field 8, continuity_scale: ${raw_continuity_scale}"
+    echo "field 9, formula_text: ${raw_formula_text}"
+    echo "field 10, condition: ${raw_condition}"
+    echo "field 11, levels_condition: ${raw_levels_condition}"
+    echo "field 12, supplement_1: ${raw_supplement_1}"
+    echo "field 13, levels_supplement_1: ${raw_levels_supplement_1}"
+    echo "field 14, supplement_2: ${raw_supplement_2}"
+    echo "field 15, levels_supplement_2: ${raw_levels_supplement_2}"
+    echo "field 16, supplement_3: ${raw_supplement_3}"
+    echo "field 17, levels_supplement_3: ${raw_levels_supplement_3}"
+    echo "field 18, subject: ${raw_subject}"
+    echo "field 19, threshold_significance: ${raw_threshold_significance}"
+    echo "field 20, note: ${raw_note}"
     echo "----------"
   fi
   # Execute procedure for current record's parameters.
@@ -156,6 +162,8 @@ do
       $raw_levels_supplement_1 \
       $raw_supplement_2 \
       $raw_levels_supplement_2 \
+      $raw_supplement_3 \
+      $raw_levels_supplement_3 \
       $raw_subject \
       $raw_threshold_significance \
       $threads \

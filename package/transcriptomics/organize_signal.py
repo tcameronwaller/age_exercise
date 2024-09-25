@@ -322,6 +322,7 @@ def define_column_types_table_parameter_instances():
     types_columns["cohort_selection_primary"] = "string"
     types_columns["factor_availability"] = "string"
     types_columns["cohort_selection_secondary"] = "string"
+    types_columns["continuity_scale"] = "string"
     types_columns["formula_text"] = "string"
     types_columns["condition"] = "string"
     types_columns["levels_condition"] = "string"
@@ -329,6 +330,8 @@ def define_column_types_table_parameter_instances():
     types_columns["levels_supplement_1"] = "string"
     types_columns["supplement_2"] = "string"
     types_columns["levels_supplement_2"] = "string"
+    types_columns["supplement_3"] = "string"
+    types_columns["levels_supplement_3"] = "string"
     types_columns["subject"] = "string"
     types_columns["threshold_significance"] = "string"
     types_columns["note"] = "string"
@@ -410,8 +413,8 @@ def read_organize_source_parameter_instances(
                     part_split[1].split(",")
                 )
                 pass
-            if (str(row["cohort_selection_secondary"]) != "none"):
-                pail["cohort_selection_secondary"] = dict()
+            pail["cohort_selection_secondary"] = dict()
+            if (str(row["cohort_selection_secondary"]).strip() != "none"):
                 for part in row["cohort_selection_secondary"].strip(
                 ).split(";"):
                     part_split = part.split(":")
@@ -423,6 +426,11 @@ def read_organize_source_parameter_instances(
             else:
                 pail["cohort_selection_secondary"] = "none"
                 pass
+            pail["continuity_scale"] = list()
+            if (str(row["continuity_scale"]) != "none"):
+                pail["continuity_scale"] = (
+                    row["continuity_scale"].strip().split(",")
+                )
             # Collect names of unique columns relevant to current instance.
             columns = list()
             #columns.append("identifier_signal")
@@ -438,6 +446,8 @@ def read_organize_source_parameter_instances(
                 report=report,
             )
             columns.extend(columns_tertile)
+            # Extract and include names of other columns.
+            columns.extend(pail["continuity_scale"])
             columns_formula = row["formula_text"].strip().split(",")
             columns.extend(columns_formula)
             columns = putly.collect_unique_elements(
@@ -1161,6 +1171,7 @@ def select_sets_final_identifier_table_sample(
     table_sample=None,
     name_set=None,
     tissue=None,
+    continuity_scale=None,
     columns_set=None,
     report=None,
 ):
@@ -1180,6 +1191,9 @@ def select_sets_final_identifier_table_sample(
             samples in cohort and defining analysis by differential expression
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
+        continuity_scale (list<str>): names of columns for covariates with
+            values on continuous scale of measurement, interval or ratio,
+            for which to standardize the scale by z score
         columns_set (list<str>): names of columns for feature variables that
             are relevant to the current set or instance of parameters
         report (bool): whether to print reports
@@ -1195,6 +1209,16 @@ def select_sets_final_identifier_table_sample(
     table_selection = table_sample.copy(deep=True)
     # Copy other information.
     columns_set = copy.deepcopy(columns_set)
+
+    # Adjust the scale of specific variables by transformation to z score.
+
+    # TODO: TCW; 23 September 2024
+    # "continuity_scale"
+    # z-score variables with the same names
+    # be sure to update column coordinates in the subsequent driver script...
+
+
+
     # Filter rows in table for non-missing values across relevant columns.
     table_selection.dropna(
         axis="index",
@@ -2675,621 +2699,11 @@ def create_write_chart_feature_signal_observations_distribution(
 ###############################################################################
 # Procedure
 
-
-##########
-# Control procedure within branch for parallelization.
-
-
-def control_procedure_part_branch_sample(
-    sort=None,
-    group=None,
-    name_set=None,
-    tissue=None,
-    cohort_selection_primary=None,
-    factor_availability=None,
-    cohort_selection_secondary=None,
-    columns_set=None,
-    project=None,
-    routine=None,
-    procedure=None,
-    paths=None,
-    report=None,
-):
-    """
-    Control branch of procedure.
-
-    arguments:
-        sort (int): sequential index for sort order
-        group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis
-        tissue (str): name of tissue that distinguishes study design and
-            set of relevant samples, either 'adipose' or 'muscle'
-        cohort_selection_primary (dict<list<str>>): filters on rows in table
-            for selection of samples relevant to cohort for analysis
-        factor_availability (dict<list<str>>): features and their values
-            corresponding to factors of interest in the analysis
-        cohort_selection_secondary (dict<list<str>>): filters on rows in table
-            for selection of samples relevant to cohort for analysis
-        columns_set (list<str>): names of columns for feature variables that
-            are relevant to the current set or instance of parameters
-        project (str): name of project
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics'
-        procedure (str): name of procedure, a set or step in the routine
-            process
-        paths (dict<str>): collection of paths to directories for procedure's
-            files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Read source information from file.
-    pail_source_sample = read_source_sample(
-        paths=paths,
-        report=report,
-    )
-    # Select set of samples relevant for analysis.
-    pail_sample_primary = select_sets_identifier_table_sample(
-        table_sample=pail_source_sample["table_sample"],
-        name_set=name_set,
-        tissue=tissue,
-        cohort_selection=cohort_selection_primary,
-        factor_availability=factor_availability,
-        report=report,
-    )
-    # Organize tertiles for feature variables with continuous values that the
-    # parameters specify.
-    table_tertile = organize_describe_summarize_table_sample_tertiles(
-        table=pail_sample_primary["table_selection"],
-        cohort_selection=cohort_selection_secondary,
-        group=group,
-        name_set=name_set,
-        tissue=tissue,
-        paths=paths,
-        report=report,
-    )
-    # Select sets of samples on the basis of tertiles.
-    pail_sample_secondary = select_sets_identifier_table_sample(
-        table_sample=table_tertile,
-        name_set=name_set,
-        tissue=tissue,
-        cohort_selection=cohort_selection_secondary,
-        factor_availability=factor_availability,
-        report=report,
-    )
-    # Filter rows in table for non-missing values across relevant columns.
-    pail_sample = select_sets_final_identifier_table_sample(
-        table_sample=pail_sample_secondary["table_selection"],
-        name_set=name_set,
-        tissue=tissue,
-        columns_set=columns_set,
-        report=report,
-    )
-    # Summarize the counts of samples corresponding to each set of parameters.
-    report_write_count_samples(
-        samples=pail_sample["samples_selection"],
-        sort=sort,
-        group=group,
-        name_set=name_set,
-        tissue=tissue,
-        paths=paths,
-        report=report,
-    )
-    # Return information.
-    return pail_sample
-
-
-def control_procedure_part_branch_signal(
-    samples=None,
-    tissue=None,
-    scale_combination=None,
-    paths=None,
-    report=None,
-):
-    """
-    Control branch of procedure.
-
-    arguments:
-        samples (list<str>): identifiers of samples corresponding to
-            measurement values of signal intensity that are relevant
-        tissue (str): name of tissue that distinguishes study design and
-            set of relevant samples, either 'adipose' or 'muscle'
-        scale_combination (bool): whether to adjust the scale of signals and
-            combine with supplemental information about genes
-        paths (dict<str>): collection of paths to directories for procedure's
-            files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    # Read source information from file.
-    pail_source_sample = read_source_sample(
-        paths=paths,
-        report=report,
-    )
-    pail_source_main = read_source_main(
-        tissue=tissue,
-        paths=paths,
-        report=report,
-    )
-
-    # Organize from source the information about signals.
-    columns_gene = define_column_sequence_table_main_gene()
-    pail_organization_main = organize_table_main(
-        table_main=pail_source_main["table_main"],
-        columns_gene=columns_gene,
-        samples=samples,
-        tissue=tissue,
-        report=report,
-    )
-
-    # Filter columns and rows in main table.
-    table_filter = filter_table_main(
-        table_main=pail_organization_main["table_main"],
-        columns_gene=columns_gene,
-        samples_all=samples,
-        samples_control=[],
-        samples_intervention=[],
-        filter_rows_identity=True,
-        filter_rows_signal=True,
-        filter_rows_signal_by_condition=False,
-        threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
-        threshold_signal_high=None,
-        proportion_signal_all=0.5, # proportion of smaller condition to total
-        proportion_signal_control=0.5, # inactive
-        proportion_signal_intervention=0.5, # inactive
-        tissue=tissue,
-        report=report,
-    )
-
-    # Separate tables for information of distinct types.
-    pail_separate = separate_table_main_columns(
-        table_main=table_filter,
-        columns_gene=columns_gene,
-        columns_signal=samples,
-        tissue=tissue,
-        report=report,
-    )
-
-    # Fill missing values of signal intensity.
-    table_signal = porg.fill_missing_values_table_by_row(
-        table=pail_separate["table_signal"],
-        columns=samples,
-        method="zero",
-        report=report,
-    )
-
-    # Determine whether to adjust the scale of signals and combine with
-    # supplemental information about genes.
-    if scale_combination:
-        # Scale values of signal intensity across genes within each sample.
-        # The goal of this scaling is to make the individual samples more
-        # comparable to each other.
-        # This scaling can decrease the variance or noise in measurements between
-        # samples.
-        # Normalize distribution values of signal intensity by taking the
-        # natural logarithm.
-        table_signal_scale = scale_normalize_values_intensity_signal_table(
-            table=table_signal,
-            method="deseq",
-            report=report,
-        )
-        # Combine and organize signals across samples and genes with supplemental
-        # information about genes.
-        table_combination = combine_organize_table_signal_genes_samples(
-            table_signal=table_signal_scale,
-            table_gene=pail_separate["table_gene"],
-            table_sample=pail_source_sample["table_sample_file"],
-            columns_signal=samples,
-            columns_gene=columns_gene,
-            tissue=tissue,
-            report=report,
-        )
-    else:
-        table_signal_scale = pandas.DataFrame()
-        table_combination = pandas.DataFrame()
-        pass
-
-    ##########
-    # Collect information.
-    pail = dict()
-    pail["table_gene"] = pail_separate["table_gene"]
-    pail["table_signal"] = table_signal
-    pail["table_signal_scale"] = table_signal_scale
-    pail["table_combination"] = table_combination
-    # Return information.
-    return pail
-
-
-def control_procedure_part_branch(
-    sort=None,
-    group=None,
-    name_set=None,
-    tissue=None,
-    cohort_selection_primary=None,
-    factor_availability=None,
-    cohort_selection_secondary=None,
-    columns_set=None,
-    project=None,
-    routine=None,
-    procedure=None,
-    path_directory_dock=None,
-    report=None,
-):
-    """
-    Control branch of procedure.
-
-    arguments:
-        sort (int): sequential index for sort order
-        group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis
-        tissue (str): name of tissue that distinguishes study design and
-            set of relevant samples, either 'adipose' or 'muscle'
-        cohort_selection_primary (dict<list<str>>): filters on rows in table
-            for selection of samples relevant to cohort for analysis
-        factor_availability (dict<list<str>>): features and their values
-            corresponding to factors of interest in the analysis
-        cohort_selection_secondary (dict<list<str>>): filters on rows in table
-            for selection of samples relevant to cohort for analysis
-        columns_set (list<str>): names of columns for feature variables that
-            are relevant to the current set or instance of parameters
-        project (str): name of project
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics'
-        procedure (str): name of procedure, a set or step in the routine
-            process
-        path_directory_dock (str): path to dock directory for procedure's
-            source and product directories and files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-
-    """
-
-    ##########
-    # 1. Initialize directories for read of source and write of product files.
-    # Initialize directories for instance-specific parallel branch procedure.
-    paths = initialize_directories_branch(
-        project=project,
-        routine=routine,
-        procedure=procedure,
-        tissue=tissue,
-        name_set=name_set,
-        path_directory_dock=path_directory_dock,
-        restore=True,
-        report=report,
-    )
-
-    ##########
-    # 2. Prepare data for subjects and samples with stratification for a
-    # specific instance of analysis.
-    pail_sample = control_procedure_part_branch_sample(
-        sort=sort,
-        group=group,
-        name_set=name_set,
-        tissue=tissue, # adipose, muscle
-        cohort_selection_primary=cohort_selection_primary,
-        factor_availability=factor_availability,
-        cohort_selection_secondary=cohort_selection_secondary,
-        columns_set=columns_set,
-        project=project,
-        routine=routine,
-        procedure=procedure,
-        paths=paths,
-        report=report,
-    )
-
-    ##########
-    # 3. Prepare data for signals across genes and samples with stratification
-    # for a specific instance of analysis.
-    pail_signal = control_procedure_part_branch_signal(
-        samples=pail_sample["samples_selection"],
-        tissue=tissue, # adipose, muscle
-        scale_combination=False,
-        paths=paths,
-        report=report,
-    )
-
-    ##########
-    # 4. Check the coherence of separate tables for analysis.
-    check_coherence_table_sample_table_signal(
-        table_sample=pail_sample["table_selection"],
-        table_signal=pail_signal["table_signal"],
-        tissue=tissue,
-        name_set=name_set,
-        report=report,
-    )
-
-
-    # TODO: TCW; 24 July 2024
-    # TODO:
-    # 1. - In future, add a pseudo-count of 1 to any zeros or missing values.
-    #    - Silverman et al, 2020 (PubMed:33101615) is a good review of methods for handling zeros.
-    # 2. - In future, apply a variety of scale-adjustment and normalization methods.
-    #    - DESeq2 algorithm (PubMed:25516281), edgeR algorithm (PubMed:20196867), MRN algorithm (PubMed:26442135)
-    #    - Evans, 2018 (PubMed:28334202)
-    # 3. - In future, apply logarithmic transformation and evaluate distributions (histograms).
-    # 4. - In future, evaluate coefficient of variance of each gene across control samples.
-
-    ##########
-    # Collect information.
-    # Collections of files.
-    pail_write_data = dict()
-    pail_write_data[str("table_sample")] = (
-        pail_sample["table_selection"]
-    )
-    pail_write_data[str("table_gene")] = (
-        pail_signal["table_gene"]
-    )
-    pail_write_data[str("table_signal")] = (
-        pail_signal["table_signal"]
-    )
-
-    ##########
-    # Write product information to file.
-    putly.write_tables_to_file(
-        pail_write=pail_write_data,
-        path_directory=paths["out_data"],
-        reset_index=False,
-        write_index=True,
-        type="text",
-    )
-    putly.write_tables_to_file(
-        pail_write=pail_write_data,
-        path_directory=paths["out_data"],
-        reset_index=False,
-        write_index=True,
-        type="pickle",
-    )
-    pass
-
-
-##########
-# Manage parallelization.
-
-
-def control_parallel_instance(
-    instance=None,
-    parameters=None,
-):
-    """
-    Control procedure to organize within tables the information about genetic
-    correlations from LDSC.
-
-    arguments:
-        instance (dict): parameters specific to current instance
-            sort (int): sequential index for sort order
-            group (str): name of a group of analyses
-            name_set (str): name for instance set of parameters for selection
-                of samples in cohort and defining analysis
-            tissue (str): name of tissue that distinguishes study design and
-                set of relevant samples, either 'adipose' or 'muscle'
-            cohort_selection_primary (dict<list<str>>): filters on rows in
-                table for selection of samples relevant to cohort for analysis
-            factor_availability (dict<list<str>>): features and their values
-                corresponding to factors of interest in the analysis
-            cohort_selection_secondary (dict<list<str>>): filters on rows in
-                table for selection of samples relevant to cohort for analysis
-            columns_set (list<str>): names of columns for feature variables
-                that are relevant to the current set or instance of parameters
-        parameters (dict): parameters common to all instances
-            project (str): name of project
-            routine (str): name of routine, either 'transcriptomics' or
-                'proteomics'
-            procedure (str): name of procedure, a set or step in the routine
-                process
-            path_directory_dock (str): path to dock directory for procedure's
-                source and product directories and files
-            report (bool): whether to print reports
-
-    raises:
-
-    returns:
-
-    """
-
-    ##########
-    # Extract parameters.
-    # Extract parameters specific to each instance.
-    sort = instance["sort"]
-    group = instance["group"]
-    name_set = instance["name_set"]
-    tissue = instance["tissue"]
-    cohort_selection_primary = instance["cohort_selection_primary"]
-    factor_availability = instance["factor_availability"]
-    cohort_selection_secondary = instance["cohort_selection_secondary"]
-    columns_set = instance["columns_set"]
-    # Extract parameters common across all instances.
-    project = parameters["project"]
-    routine = parameters["routine"]
-    procedure = parameters["procedure"]
-    path_directory_dock = parameters["path_directory_dock"]
-    report = parameters["report"]
-
-    ##########
-    # Control procedure with split for parallelization.
-    control_procedure_part_branch(
-        sort=sort,
-        group=group,
-        name_set=name_set,
-        tissue=tissue, # adipose, muscle
-        cohort_selection_primary=cohort_selection_primary,
-        factor_availability=factor_availability,
-        cohort_selection_secondary=cohort_selection_secondary,
-        columns_set=columns_set,
-        project=project,
-        routine=routine,
-        procedure=procedure,
-        path_directory_dock=path_directory_dock,
-        report=report,
-    )
-    pass
-
-
-def collect_scrap_parallel_instances_for_analysis_sets(
-):
-    """
-    Collect scrap parallel instances for analysis sets.
-
-    arguments:
-
-    raises:
-
-    returns:
-
-    """
-
-    # Collect parameters specific to each instance.
-    # tissue: adipose
-    instances = [
-        {
-            "name_set": str(
-                "adipose_elder-visit-second_intervention"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "study_clinic_visit": ["second",],
-            },
-            "factor_availability": {
-                "intervention_text": ["placebo", "active",],
-            },
-        },
-        {
-            "name_set": str(
-                "adipose_elder-active_visit"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "intervention_text": ["active",],
-            },
-            "factor_availability": {
-                "study_clinic_visit": ["first", "second",],
-            },
-        },
-    ]
-    # tissue: muscle
-    instances = [
-        {
-            "name_set": str(
-                "muscle_exercise-0hr_age"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "exercise_time_point": ["0_hour",],
-            },
-            "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_younger_exercise"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "cohort_age_text": ["younger",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-        {
-            "name_set": str(
-                "muscle_elder_exercise"
-            ),
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "cohort_age_text": ["elder",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-    ]
-    pass
-
-
-def control_parallel_instances(
-    instances=None,
-    project=None,
-    routine=None,
-    procedure=None,
-    path_directory_dock=None,
-    report=None,
-):
-    """
-    Control procedure for parallel instances.
-
-    arguments:
-        instances (list<dict>): parameters to control individual instances in
-            parallel
-        project (str): name of project
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics'
-        procedure (str): name of procedure, a set or step in the routine
-            process
-        path_directory_dock (str): path to dock directory for procedure's
-            source and product directories and files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-
-    """
-
-    # Collect parameters common across all instances.
-    parameters = dict()
-    parameters["project"] = project
-    parameters["routine"] = routine
-    parameters["procedure"] = procedure
-    parameters["path_directory_dock"] = path_directory_dock
-    parameters["report"] = report
-
-    # Execute procedure iteratively with parallelization across instances.
-    if True:
-        prall.drive_procedure_parallel(
-            function_control=(
-                control_parallel_instance
-            ),
-            instances=instances,
-            parameters=parameters,
-            cores=5,
-            report=True,
-        )
-    else:
-        # Execute procedure directly for testing.
-        control_parallel_instance(
-            instance=instances[0],
-            parameters=parameters,
-        )
-    pass
+# TODO: TCW; 23 September 2024
+# 1. support an additional, 3rd "supplement" covariate in DESeq2 script
+# 2. run updated DESeq2 analyses with p16+, CD68+ adipose
+# 3. share updated DESeq2 report with team
+# 4.
 
 
 ##########
@@ -3505,6 +2919,637 @@ def control_procedure_whole_trunk_description(
 
 
 ##########
+# Control procedure within branch for parallelization.
+
+
+def control_procedure_part_branch_sample(
+    sort=None,
+    group=None,
+    name_set=None,
+    tissue=None,
+    cohort_selection_primary=None,
+    factor_availability=None,
+    cohort_selection_secondary=None,
+    continuity_scale=None,
+    columns_set=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    paths=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        sort (int): sequential index for sort order
+        group (str): name of a group of analyses
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        cohort_selection_primary (dict<list<str>>): filters on rows in table
+            for selection of samples relevant to cohort for analysis
+        factor_availability (dict<list<str>>): features and their values
+            corresponding to factors of interest in the analysis
+        cohort_selection_secondary (dict<list<str>>): filters on rows in table
+            for selection of samples relevant to cohort for analysis
+        continuity_scale (list<str>): names of columns for covariates with
+            values on continuous scale of measurement, interval or ratio,
+            for which to standardize the scale by z score
+        columns_set (list<str>): names of columns for feature variables that
+            are relevant to the current set or instance of parameters
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Read source information from file.
+    pail_source_sample = read_source_sample(
+        paths=paths,
+        report=report,
+    )
+    # Select set of samples relevant for analysis.
+    pail_sample_primary = select_sets_identifier_table_sample(
+        table_sample=pail_source_sample["table_sample"],
+        name_set=name_set,
+        tissue=tissue,
+        cohort_selection=cohort_selection_primary,
+        factor_availability=factor_availability,
+        report=report,
+    )
+    # Organize tertiles for feature variables with continuous values that the
+    # parameters specify.
+    table_tertile = organize_describe_summarize_table_sample_tertiles(
+        table=pail_sample_primary["table_selection"],
+        cohort_selection=cohort_selection_secondary,
+        group=group,
+        name_set=name_set,
+        tissue=tissue,
+        paths=paths,
+        report=report,
+    )
+    # Select sets of samples on the basis of tertiles.
+    pail_sample_secondary = select_sets_identifier_table_sample(
+        table_sample=table_tertile,
+        name_set=name_set,
+        tissue=tissue,
+        cohort_selection=cohort_selection_secondary,
+        factor_availability=factor_availability,
+        report=report,
+    )
+    # Filter rows in table for non-missing values across relevant columns.
+    pail_sample = select_sets_final_identifier_table_sample(
+        table_sample=pail_sample_secondary["table_selection"],
+        name_set=name_set,
+        tissue=tissue,
+        continuity_scale=continuity_scale,
+        columns_set=columns_set,
+        report=report,
+    )
+    # Summarize the counts of samples corresponding to each set of parameters.
+    report_write_count_samples(
+        samples=pail_sample["samples_selection"],
+        sort=sort,
+        group=group,
+        name_set=name_set,
+        tissue=tissue,
+        paths=paths,
+        report=report,
+    )
+    # Return information.
+    return pail_sample
+
+
+def control_procedure_part_branch_signal(
+    samples=None,
+    tissue=None,
+    scale_combination=None,
+    paths=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        samples (list<str>): identifiers of samples corresponding to
+            measurement values of signal intensity that are relevant
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        scale_combination (bool): whether to adjust the scale of signals and
+            combine with supplemental information about genes
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Read source information from file.
+    pail_source_sample = read_source_sample(
+        paths=paths,
+        report=report,
+    )
+    pail_source_main = read_source_main(
+        tissue=tissue,
+        paths=paths,
+        report=report,
+    )
+
+    # Organize from source the information about signals.
+    columns_gene = define_column_sequence_table_main_gene()
+    pail_organization_main = organize_table_main(
+        table_main=pail_source_main["table_main"],
+        columns_gene=columns_gene,
+        samples=samples,
+        tissue=tissue,
+        report=report,
+    )
+
+    # Filter columns and rows in main table.
+    table_filter = filter_table_main(
+        table_main=pail_organization_main["table_main"],
+        columns_gene=columns_gene,
+        samples_all=samples,
+        samples_control=[],
+        samples_intervention=[],
+        filter_rows_identity=True,
+        filter_rows_signal=True,
+        filter_rows_signal_by_condition=False,
+        threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
+        threshold_signal_high=None,
+        proportion_signal_all=0.5, # proportion of smaller condition to total
+        proportion_signal_control=0.5, # inactive
+        proportion_signal_intervention=0.5, # inactive
+        tissue=tissue,
+        report=report,
+    )
+
+    # Separate tables for information of distinct types.
+    pail_separate = separate_table_main_columns(
+        table_main=table_filter,
+        columns_gene=columns_gene,
+        columns_signal=samples,
+        tissue=tissue,
+        report=report,
+    )
+
+    # Fill missing values of signal intensity.
+    table_signal = porg.fill_missing_values_table_by_row(
+        table=pail_separate["table_signal"],
+        columns=samples,
+        method="zero",
+        report=report,
+    )
+
+    # Determine whether to adjust the scale of signals and combine with
+    # supplemental information about genes.
+    if scale_combination:
+        # Scale values of signal intensity across genes within each sample.
+        # The goal of this scaling is to make the individual samples more
+        # comparable to each other.
+        # This scaling can decrease the variance or noise in measurements between
+        # samples.
+        # Normalize distribution values of signal intensity by taking the
+        # natural logarithm.
+        table_signal_scale = scale_normalize_values_intensity_signal_table(
+            table=table_signal,
+            method="deseq",
+            report=report,
+        )
+        # Combine and organize signals across samples and genes with supplemental
+        # information about genes.
+        table_combination = combine_organize_table_signal_genes_samples(
+            table_signal=table_signal_scale,
+            table_gene=pail_separate["table_gene"],
+            table_sample=pail_source_sample["table_sample_file"],
+            columns_signal=samples,
+            columns_gene=columns_gene,
+            tissue=tissue,
+            report=report,
+        )
+    else:
+        table_signal_scale = pandas.DataFrame()
+        table_combination = pandas.DataFrame()
+        pass
+
+    ##########
+    # Collect information.
+    pail = dict()
+    pail["table_gene"] = pail_separate["table_gene"]
+    pail["table_signal"] = table_signal
+    pail["table_signal_scale"] = table_signal_scale
+    pail["table_combination"] = table_combination
+    # Return information.
+    return pail
+
+
+def control_procedure_part_branch(
+    sort=None,
+    group=None,
+    name_set=None,
+    tissue=None,
+    cohort_selection_primary=None,
+    factor_availability=None,
+    cohort_selection_secondary=None,
+    continuity_scale=None,
+    columns_set=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        sort (int): sequential index for sort order
+        group (str): name of a group of analyses
+        name_set (str): name for instance set of parameters for selection of
+            samples in cohort and defining analysis
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        cohort_selection_primary (dict<list<str>>): filters on rows in table
+            for selection of samples relevant to cohort for analysis
+        factor_availability (dict<list<str>>): features and their values
+            corresponding to factors of interest in the analysis
+        cohort_selection_secondary (dict<list<str>>): filters on rows in table
+            for selection of samples relevant to cohort for analysis
+        continuity_scale (list<str>): names of columns for covariates with
+            values on continuous scale of measurement, interval or ratio,
+            for which to standardize the scale by z score
+        columns_set (list<str>): names of columns for feature variables that
+            are relevant to the current set or instance of parameters
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # 1. Initialize directories for read of source and write of product files.
+    # Initialize directories for instance-specific parallel branch procedure.
+    paths = initialize_directories_branch(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        tissue=tissue,
+        name_set=name_set,
+        path_directory_dock=path_directory_dock,
+        restore=True,
+        report=report,
+    )
+
+    ##########
+    # 2. Prepare data for subjects and samples with stratification for a
+    # specific instance of analysis.
+    pail_sample = control_procedure_part_branch_sample(
+        sort=sort,
+        group=group,
+        name_set=name_set,
+        tissue=tissue, # adipose, muscle
+        cohort_selection_primary=cohort_selection_primary,
+        factor_availability=factor_availability,
+        cohort_selection_secondary=cohort_selection_secondary,
+        continuity_scale=continuity_scale,
+        columns_set=columns_set,
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        paths=paths,
+        report=report,
+    )
+
+    ##########
+    # 3. Prepare data for signals across genes and samples with stratification
+    # for a specific instance of analysis.
+    pail_signal = control_procedure_part_branch_signal(
+        samples=pail_sample["samples_selection"],
+        tissue=tissue, # adipose, muscle
+        scale_combination=False,
+        paths=paths,
+        report=report,
+    )
+
+    ##########
+    # 4. Check the coherence of separate tables for analysis.
+    check_coherence_table_sample_table_signal(
+        table_sample=pail_sample["table_selection"],
+        table_signal=pail_signal["table_signal"],
+        tissue=tissue,
+        name_set=name_set,
+        report=report,
+    )
+
+
+    # TODO: TCW; 24 July 2024
+    # TODO:
+    # 1. - In future, add a pseudo-count of 1 to any zeros or missing values.
+    #    - Silverman et al, 2020 (PubMed:33101615) is a good review of methods for handling zeros.
+    # 2. - In future, apply a variety of scale-adjustment and normalization methods.
+    #    - DESeq2 algorithm (PubMed:25516281), edgeR algorithm (PubMed:20196867), MRN algorithm (PubMed:26442135)
+    #    - Evans, 2018 (PubMed:28334202)
+    # 3. - In future, apply logarithmic transformation and evaluate distributions (histograms).
+    # 4. - In future, evaluate coefficient of variance of each gene across control samples.
+
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_data = dict()
+    pail_write_data[str("table_sample")] = (
+        pail_sample["table_selection"]
+    )
+    pail_write_data[str("table_gene")] = (
+        pail_signal["table_gene"]
+    )
+    pail_write_data[str("table_signal")] = (
+        pail_signal["table_signal"]
+    )
+
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=paths["out_data"],
+        reset_index=False,
+        write_index=True,
+        type="text",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=paths["out_data"],
+        reset_index=False,
+        write_index=True,
+        type="pickle",
+    )
+    pass
+
+
+##########
+# Manage parallelization.
+
+
+def control_parallel_instance(
+    instance=None,
+    parameters=None,
+):
+    """
+    Control procedure to organize within tables the information about genetic
+    correlations from LDSC.
+
+    arguments:
+        instance (dict): parameters specific to current instance
+            sort (int): sequential index for sort order
+            group (str): name of a group of analyses
+            name_set (str): name for instance set of parameters for selection
+                of samples in cohort and defining analysis
+            tissue (str): name of tissue that distinguishes study design and
+                set of relevant samples, either 'adipose' or 'muscle'
+            cohort_selection_primary (dict<list<str>>): filters on rows in
+                table for selection of samples relevant to cohort for analysis
+            factor_availability (dict<list<str>>): features and their values
+                corresponding to factors of interest in the analysis
+            cohort_selection_secondary (dict<list<str>>): filters on rows in
+                table for selection of samples relevant to cohort for analysis
+            continuity_scale (list<str>): names of columns for covariates with
+                values on continuous scale of measurement, interval or ratio,
+                for which to standardize the scale by z score
+            columns_set (list<str>): names of columns for feature variables
+                that are relevant to the current set or instance of parameters
+        parameters (dict): parameters common to all instances
+            project (str): name of project
+            routine (str): name of routine, either 'transcriptomics' or
+                'proteomics'
+            procedure (str): name of procedure, a set or step in the routine
+                process
+            path_directory_dock (str): path to dock directory for procedure's
+                source and product directories and files
+            report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Extract parameters.
+    # Extract parameters specific to each instance.
+    sort = instance["sort"]
+    group = instance["group"]
+    name_set = instance["name_set"]
+    tissue = instance["tissue"]
+    cohort_selection_primary = instance["cohort_selection_primary"]
+    factor_availability = instance["factor_availability"]
+    cohort_selection_secondary = instance["cohort_selection_secondary"]
+    continuity_scale = instance["continuity_scale"]
+    columns_set = instance["columns_set"]
+    # Extract parameters common across all instances.
+    project = parameters["project"]
+    routine = parameters["routine"]
+    procedure = parameters["procedure"]
+    path_directory_dock = parameters["path_directory_dock"]
+    report = parameters["report"]
+
+    ##########
+    # Control procedure with split for parallelization.
+    control_procedure_part_branch(
+        sort=sort,
+        group=group,
+        name_set=name_set,
+        tissue=tissue, # adipose, muscle
+        cohort_selection_primary=cohort_selection_primary,
+        factor_availability=factor_availability,
+        cohort_selection_secondary=cohort_selection_secondary,
+        continuity_scale=continuity_scale,
+        columns_set=columns_set,
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        report=report,
+    )
+    pass
+
+
+def collect_scrap_parallel_instances_for_analysis_sets(
+):
+    """
+    Collect scrap parallel instances for analysis sets.
+
+    arguments:
+
+    raises:
+
+    returns:
+
+    """
+
+    # Collect parameters specific to each instance.
+    # tissue: adipose
+    instances = [
+        {
+            "name_set": str(
+                "adipose_elder-visit-second_intervention"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "study_clinic_visit": ["second",],
+            },
+            "factor_availability": {
+                "intervention_text": ["placebo", "active",],
+            },
+        },
+        {
+            "name_set": str(
+                "adipose_elder-active_visit"
+            ),
+            "tissue": "adipose",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "intervention_text": ["active",],
+            },
+            "factor_availability": {
+                "study_clinic_visit": ["first", "second",],
+            },
+        },
+    ]
+    # tissue: muscle
+    instances = [
+        {
+            "name_set": str(
+                "muscle_exercise-0hr_age"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "exercise_time_point": ["0_hour",],
+            },
+            "factor_availability": {
+                "cohort_age_text": ["younger", "elder",],
+            },
+        },
+        {
+            "name_set": str(
+                "muscle_younger_exercise"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["younger",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+        {
+            "name_set": str(
+                "muscle_elder_exercise"
+            ),
+            "tissue": "muscle",
+            "cohort_selection": {
+                "inclusion": [1,],
+                "tissue": ["muscle",],
+                "cohort_age_text": ["elder",],
+            },
+            "factor_availability": {
+                "exercise_time_point": ["0_hour", "3_hour",],
+            },
+        },
+    ]
+    pass
+
+
+def control_parallel_instances(
+    instances=None,
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    report=None,
+):
+    """
+    Control procedure for parallel instances.
+
+    arguments:
+        instances (list<dict>): parameters to control individual instances in
+            parallel
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Collect parameters common across all instances.
+    parameters = dict()
+    parameters["project"] = project
+    parameters["routine"] = routine
+    parameters["procedure"] = procedure
+    parameters["path_directory_dock"] = path_directory_dock
+    parameters["report"] = report
+
+    # Execute procedure iteratively with parallelization across instances.
+    if True:
+        prall.drive_procedure_parallel(
+            function_control=(
+                control_parallel_instance
+            ),
+            instances=instances,
+            parameters=parameters,
+            cores=5,
+            report=True,
+        )
+    else:
+        # Execute procedure directly for testing.
+        control_parallel_instance(
+            instance=instances[0],
+            parameters=parameters,
+        )
+    pass
+
+
+##########
 # Call main procedure.
 
 
@@ -3579,7 +3624,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to describe tables of signals with adjustment of scale
     # and normalization.
-    if True:
+    if False:
         # Control procedure for description of signal data as a whole.
         control_procedure_whole_trunk_description(
             tissue="muscle",
@@ -3599,7 +3644,11 @@ def execute_procedure(
         )
         pass
 
-    if False:
+    ##########
+    # Branch procedure to prepare tables of signals without adjustment of scale
+    # or normalization for selections of samples in specific instances of
+    # analysis.
+    if True:
         # Initialize directories for trunk procedure.
         paths = initialize_directories_trunk(
             project=project,
