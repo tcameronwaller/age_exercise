@@ -466,10 +466,10 @@ def define_column_types_table_parameter_instances():
     # Specify variable types of columns within table.
     types_columns = dict()
     types_columns["inclusion"] = "string" # "int32"
+    types_columns["tissue"] = "string"
     types_columns["sort"] = "int32" # "int32"
     types_columns["group"] = "string"
     types_columns["instance"] = "string"
-    types_columns["tissue"] = "string"
     types_columns["cohort_selection_primary"] = "string"
     types_columns["factor_availability"] = "string"
     types_columns["cohort_selection_secondary"] = "string"
