@@ -80,6 +80,8 @@ import exercise.transcriptomics.organize_sample as extr_sample
 
 ##########
 # 1. Initialize directories for read of source and write of product files.
+# There is a hierarchy in these functions to initialize directories to manage
+# the hierarchical tree structure of sub-procedures.
 
 
 def initialize_directories_trunk(
@@ -151,12 +153,6 @@ def initialize_directories_trunk(
     paths["out_parts"] = os.path.join(
         paths["out_procedure"], "parts",
     )
-    paths["out_summary"] = os.path.join(
-        paths["out_parts"], "summary",
-    )
-    paths["out_summary_instances"] = os.path.join(
-        paths["out_summary"], "instances",
-    )
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
@@ -166,9 +162,6 @@ def initialize_directories_trunk(
         paths["out_whole_preparation"],
         paths["out_whole_description"],
         paths["out_whole_plot"],
-        paths["out_parts"],
-        paths["out_summary"],
-        paths["out_summary_instances"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
@@ -196,12 +189,84 @@ def initialize_directories_trunk(
     return paths
 
 
-def initialize_directories_branch(
+def initialize_directories_before_branch(
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    restore=None,
+    report=None,
+):
+    """
+    Initialize directories for procedure's product files.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        restore (bool): whether to remove previous versions of data
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<str>): collection of paths to directories for procedure's files
+
+    """
+
+    ##########
+    # Initialize directories for trunk procedure.
+    paths = initialize_directories_trunk(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=False,
+        report=report,
+    )
+
+    ##########
+    # Define paths to directories.
+
+    # Initialize directories in main branch.
+    paths_initialization = [
+        paths["out_parts"],
+    ]
+    # Remove previous directories and files to avoid version or batch
+    # confusion.
+    if restore:
+        for path in paths_initialization:
+            putly.remove_directory(path=path) # caution
+            pass
+    # Create directories.
+    for path in paths_initialization:
+        putly.create_directories(
+            path=path,
+        )
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: initialize_directories_before_branch()")
+        putly.print_terminal_partition(level=5)
+        print("path to dock directory for procedure's files: ")
+        print(path_directory_dock)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return paths
+
+
+def initialize_directories_branch_tissue(
     project=None,
     routine=None,
     procedure=None,
     tissue=None,
-    name_set=None,
     path_directory_dock=None,
     restore=None,
     report=None,
@@ -217,8 +282,6 @@ def initialize_directories_branch(
             process
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis by differential expression
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -248,22 +311,121 @@ def initialize_directories_branch(
     paths["out_tissue"] = os.path.join(
         paths["out_parts"], str(tissue),
     )
-    paths["out_set"] = os.path.join(
-        paths["out_tissue"], str(name_set),
+    paths["out_summary"] = os.path.join(
+        paths["out_tissue"], "summary",
+    )
+    paths["out_summary_instances"] = os.path.join(
+        paths["out_summary"], "instances",
+    )
+    # Initialize directories in main branch.
+    paths_initialization = [
+        paths["out_tissue"],
+        paths["out_summary"],
+        paths["out_summary_instances"],
+    ]
+    # Remove previous directories and files to avoid version or batch
+    # confusion.
+    if restore:
+        for path in paths_initialization:
+            putly.remove_directory(path=path) # caution
+            pass
+    # Create directories.
+    for path in paths_initialization:
+        putly.create_directories(
+            path=path,
+        )
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: initialize_directories_branch_tissue()")
+        putly.print_terminal_partition(level=5)
+        print("path to dock directory for procedure's files: ")
+        print(path_directory_dock)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return paths
+
+
+def initialize_directories_branch_instance(
+    project=None,
+    routine=None,
+    procedure=None,
+    tissue=None,
+    name_instance=None,
+    path_directory_dock=None,
+    restore=None,
+    report=None,
+):
+    """
+    Initialize directories for procedure's product files.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        restore (bool): whether to remove previous versions of data
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<str>): collection of paths to directories for procedure's files
+
+    """
+
+    ##########
+    # Initialize directories for trunk procedure.
+    paths = initialize_directories_trunk(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=False,
+        report=report,
+    )
+
+    ##########
+    # Initialize directories for instance-specific parallel branch procedure.
+    # Define paths to directories.
+    paths["out_tissue"] = os.path.join(
+        paths["out_parts"], str(tissue),
+    )
+    paths["out_summary"] = os.path.join(
+        paths["out_tissue"], "summary",
+    )
+    paths["out_summary_instances"] = os.path.join(
+        paths["out_summary"], "instances",
+    )
+    paths["out_tissue"] = os.path.join(
+        paths["out_parts"], str(tissue),
+    )
+    paths["out_instance"] = os.path.join(
+        paths["out_tissue"], str(name_instance),
     )
     #paths["out_test"] = os.path.join(
-    #    paths["out_set"], "test",
+    #    paths["out_instance"], "test",
     #)
     paths["out_data"] = os.path.join(
-        paths["out_set"], "data",
+        paths["out_instance"], "data",
     )
     #paths["out_plot"] = os.path.join(
-    #    paths["out_set"], "plot",
+    #    paths["out_instance"], "plot",
     #)
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_tissue"], # omit to avoid conflict in parallel branches
-        paths["out_set"],
+        paths["out_instance"],
         paths["out_data"],
     ]
     # Remove previous directories and files to avoid version or batch
@@ -317,7 +479,7 @@ def define_column_types_table_parameter_instances():
     types_columns["inclusion"] = "string" # "int32"
     types_columns["sort"] = "int32" # "int32"
     types_columns["group"] = "string"
-    types_columns["name_set"] = "string"
+    types_columns["name_instance"] = "string"
     types_columns["tissue"] = "string"
     types_columns["cohort_selection_primary"] = "string"
     types_columns["factor_availability"] = "string"
@@ -401,10 +563,13 @@ def read_organize_source_parameter_instances(
     instances = list()
     for index, row in table.iterrows():
         if (int(row["inclusion"]) == 1):
+            # Collect parameters for current instance.
             pail = dict()
+            # Collect names of unique columns relevant to current instance.
+            columns = list()
             pail["sort"] = str(row["sort"])
             pail["group"] = str(row["group"])
-            pail["name_set"] = str(row["name_set"])
+            pail["name_instance"] = str(row["name_instance"])
             pail["tissue"] = str(row["tissue"])
             if (str(row["cohort_selection_primary"]).strip() != "none"):
                 pail["cohort_selection_primary"] = dict()
@@ -414,6 +579,7 @@ def read_organize_source_parameter_instances(
                         part_split[1].split(",")
                     )
                     pass
+                columns.extend(list(pail["cohort_selection_primary"].keys()))
                 pass
             else:
                 pail["cohort_selection_primary"] = None
@@ -426,6 +592,7 @@ def read_organize_source_parameter_instances(
                         part_split[1].split(",")
                     )
                     pass
+                columns.extend(list(pail["factor_availability"].keys()))
                 pass
             else:
                 pail["factor_availability"] = None
@@ -439,6 +606,14 @@ def read_organize_source_parameter_instances(
                         part_split[1].split(",")
                     )
                     pass
+                columns.extend(list(pail["cohort_selection_secondary"].keys()))
+                # Extract names of columns corresponding to feature variables for
+                # which to calculate tertiles.
+                columns_tertile = extract_source_columns_for_tertiles(
+                    cohort_selection=pail["cohort_selection_secondary"],
+                    report=report,
+                )
+                columns.extend(columns_tertile)
                 pass
             else:
                 pail["cohort_selection_secondary"] = None
@@ -447,26 +622,15 @@ def read_organize_source_parameter_instances(
                 pail["continuity_scale"] = (
                     row["continuity_scale"].strip().split(",")
                 )
+                columns.extend(pail["continuity_scale"])
             else:
                 pail["continuity_scale"] = None
                 pass
             # Collect names of unique columns relevant to current instance.
-            columns = list()
             #columns.append("identifier_signal")
             #columns.append("inclusion")
             #columns.append("tissue")
-            columns.extend(list(pail["cohort_selection_primary"].keys()))
-            columns.extend(list(pail["factor_availability"].keys()))
-            columns.extend(list(pail["cohort_selection_secondary"].keys()))
-            # Extract names of columns corresponding to feature variables for
-            # which to calculate tertiles.
-            columns_tertile = extract_source_columns_for_tertiles(
-                cohort_selection=pail["cohort_selection_secondary"],
-                report=report,
-            )
-            columns.extend(columns_tertile)
             # Extract and include names of other columns.
-            columns.extend(pail["continuity_scale"])
             columns_formula = row["formula_text"].strip().split(",")
             columns.extend(columns_formula)
             columns = putly.collect_unique_elements(
@@ -841,7 +1005,7 @@ def read_organize_write_summary_instances(
 
 def select_sets_identifier_table_sample(
     table_sample=None,
-    name_set=None,
+    name_instance=None,
     tissue=None,
     cohort_selection=None,
     factor_availability=None,
@@ -859,8 +1023,8 @@ def select_sets_identifier_table_sample(
     arguments:
         table_sample (object): Pandas data-frame table of information about
             samples that correspond to signals within accompanying main table
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis by differential expression
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         cohort_selection (dict<list<str>>): filters on rows in table for
@@ -992,7 +1156,7 @@ def select_sets_identifier_table_sample(
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_signal.py")
         print("function: select_sets_identifier_table_sample_primary()")
-        print("name_set: " + str(name_set))
+        print("name_instance: " + str(name_instance))
         print("tissue: " + tissue)
         print("features for cohort selection:")
         print(str(cohort_selection.keys()))
@@ -1090,7 +1254,7 @@ def organize_describe_summarize_table_sample_tertiles(
     table=None,
     cohort_selection=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     tissue=None,
     paths=None,
     report=None,
@@ -1105,8 +1269,8 @@ def organize_describe_summarize_table_sample_tertiles(
         cohort_selection (dict<list<str>>): filters on rows in table for
             selection of samples relevant to cohort for analysis
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         paths (dict<str>): collection of paths to directories for procedure's
@@ -1191,7 +1355,7 @@ def organize_describe_summarize_table_sample_tertiles(
 
 def select_sets_final_identifier_table_sample(
     table_sample=None,
-    name_set=None,
+    name_instance=None,
     tissue=None,
     continuity_scale=None,
     columns_set=None,
@@ -1209,8 +1373,8 @@ def select_sets_final_identifier_table_sample(
     arguments:
         table_sample (object): Pandas data-frame table of information about
             samples that correspond to signals within accompanying main table
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis by differential expression
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         continuity_scale (list<str>): names of columns for covariates with
@@ -1297,7 +1461,7 @@ def select_sets_final_identifier_table_sample(
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_signal.py")
         print("function: select_sets_final_identifier_table_sample()")
-        print("name_set: " + str(name_set))
+        print("name_instance: " + str(name_instance))
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
         print("sample table, filtered by set selection rules:")
@@ -1312,7 +1476,7 @@ def report_write_count_samples(
     samples=None,
     sort=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     tissue=None,
     paths=None,
     report=None,
@@ -1325,8 +1489,8 @@ def report_write_count_samples(
             columns for measurement values of signal intensity across features
         sort (int): sequential index for sort order
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         paths (dict<str>): collection of paths to directories for procedure's
@@ -1347,13 +1511,13 @@ def report_write_count_samples(
     record = dict()
     record["sort"] = sort
     record["group"] = group
-    record["name_set"] = name_set
+    record["name_instance"] = name_instance
     record["tissue"] = tissue
     record["count_samples"] = int(len(samples))
     # Write product information to file.
     putly.write_object_to_file_pickle(
         object=record,
-        name_file=str("record_" + name_set),
+        name_file=str("record_" + name_instance),
         path_directory=paths["out_summary_instances"],
     )
     # Return information.
@@ -2480,7 +2644,7 @@ def check_coherence_table_sample_table_signal(
     table_sample=None,
     table_signal=None,
     tissue=None,
-    name_set=None,
+    name_instance=None,
     report=None,
 ):
     """
@@ -2496,8 +2660,8 @@ def check_coherence_table_sample_table_signal(
             features across rows
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
             distinguishes study design and sets of samples
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis by differential expression
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         report (bool): whether to print reports
 
     raises:
@@ -2554,7 +2718,7 @@ def check_coherence_table_sample_table_signal(
         print("module: exercise.transcriptomics.organize_signal.py")
         print("function: check_coherence_table_sample_table_signal()")
         print("tissue: " + tissue)
-        print("name_set: " + name_set)
+        print("name_instance: " + name_instance)
         putly.print_terminal_partition(level=5)
         count_rows = (table_sample.shape[0])
         count_columns = (table_sample.shape[1])
@@ -2972,7 +3136,7 @@ def control_procedure_whole_trunk_description(
 def control_procedure_part_branch_sample(
     sort=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     tissue=None,
     cohort_selection_primary=None,
     factor_availability=None,
@@ -2991,8 +3155,8 @@ def control_procedure_part_branch_sample(
     arguments:
         sort (int): sequential index for sort order
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         cohort_selection_primary (dict<list<str>>): filters on rows in table
@@ -3030,7 +3194,7 @@ def control_procedure_part_branch_sample(
     # Select set of samples relevant for analysis.
     pail_sample_primary = select_sets_identifier_table_sample(
         table_sample=pail_source_sample["table_sample"],
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue,
         cohort_selection=cohort_selection_primary,
         factor_availability=factor_availability,
@@ -3042,7 +3206,7 @@ def control_procedure_part_branch_sample(
         table=pail_sample_primary["table_selection"],
         cohort_selection=cohort_selection_secondary,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue,
         paths=paths,
         report=report,
@@ -3050,7 +3214,7 @@ def control_procedure_part_branch_sample(
     # Select sets of samples on the basis of tertiles.
     pail_sample_secondary = select_sets_identifier_table_sample(
         table_sample=table_tertile,
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue,
         cohort_selection=cohort_selection_secondary,
         factor_availability=factor_availability,
@@ -3059,7 +3223,7 @@ def control_procedure_part_branch_sample(
     # Filter rows in table for non-missing values across relevant columns.
     pail_sample = select_sets_final_identifier_table_sample(
         table_sample=pail_sample_secondary["table_selection"],
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue,
         continuity_scale=continuity_scale,
         columns_set=columns_set,
@@ -3070,7 +3234,7 @@ def control_procedure_part_branch_sample(
         samples=pail_sample["samples_selection"],
         sort=sort,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue,
         paths=paths,
         report=report,
@@ -3209,7 +3373,7 @@ def control_procedure_part_branch_signal(
 def control_procedure_part_branch(
     sort=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     tissue=None,
     cohort_selection_primary=None,
     factor_availability=None,
@@ -3228,8 +3392,8 @@ def control_procedure_part_branch(
     arguments:
         sort (int): sequential index for sort order
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection of
-            samples in cohort and defining analysis
+        name_instance (str): name for instance set of parameters for selection
+            of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         cohort_selection_primary (dict<list<str>>): filters on rows in table
@@ -3266,7 +3430,7 @@ def control_procedure_part_branch(
         routine=routine,
         procedure=procedure,
         tissue=tissue,
-        name_set=name_set,
+        name_instance=name_instance,
         path_directory_dock=path_directory_dock,
         restore=True,
         report=report,
@@ -3278,7 +3442,7 @@ def control_procedure_part_branch(
     pail_sample = control_procedure_part_branch_sample(
         sort=sort,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue, # adipose, muscle
         cohort_selection_primary=cohort_selection_primary,
         factor_availability=factor_availability,
@@ -3309,7 +3473,7 @@ def control_procedure_part_branch(
         table_sample=pail_sample["table_selection"],
         table_signal=pail_signal["table_signal"],
         tissue=tissue,
-        name_set=name_set,
+        name_instance=name_instance,
         report=report,
     )
 
@@ -3373,8 +3537,8 @@ def control_parallel_instance(
         instance (dict): parameters specific to current instance
             sort (int): sequential index for sort order
             group (str): name of a group of analyses
-            name_set (str): name for instance set of parameters for selection
-                of samples in cohort and defining analysis
+            name_instance (str): name for instance set of parameters for
+                selection of samples in cohort and definition of analysis
             tissue (str): name of tissue that distinguishes study design and
                 set of relevant samples, either 'adipose' or 'muscle'
             cohort_selection_primary (dict<list<str>>): filters on rows in
@@ -3409,7 +3573,7 @@ def control_parallel_instance(
     # Extract parameters specific to each instance.
     sort = instance["sort"]
     group = instance["group"]
-    name_set = instance["name_set"]
+    name_instance = instance["name_instance"]
     tissue = instance["tissue"]
     cohort_selection_primary = instance["cohort_selection_primary"]
     factor_availability = instance["factor_availability"]
@@ -3428,7 +3592,7 @@ def control_parallel_instance(
     control_procedure_part_branch(
         sort=sort,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         tissue=tissue, # adipose, muscle
         cohort_selection_primary=cohort_selection_primary,
         factor_availability=factor_availability,
@@ -3461,7 +3625,7 @@ def collect_scrap_parallel_instances_for_analysis_sets(
     # tissue: adipose
     instances = [
         {
-            "name_set": str(
+            "name_instance": str(
                 "adipose_elder-visit-second_intervention"
             ),
             "tissue": "adipose",
@@ -3476,7 +3640,7 @@ def collect_scrap_parallel_instances_for_analysis_sets(
             },
         },
         {
-            "name_set": str(
+            "name_instance": str(
                 "adipose_elder-active_visit"
             ),
             "tissue": "adipose",
@@ -3494,7 +3658,7 @@ def collect_scrap_parallel_instances_for_analysis_sets(
     # tissue: muscle
     instances = [
         {
-            "name_set": str(
+            "name_instance": str(
                 "muscle_exercise-0hr_age"
             ),
             "tissue": "muscle",
@@ -3508,7 +3672,7 @@ def collect_scrap_parallel_instances_for_analysis_sets(
             },
         },
         {
-            "name_set": str(
+            "name_instance": str(
                 "muscle_younger_exercise"
             ),
             "tissue": "muscle",
@@ -3522,7 +3686,7 @@ def collect_scrap_parallel_instances_for_analysis_sets(
             },
         },
         {
-            "name_set": str(
+            "name_instance": str(
                 "muscle_elder_exercise"
             ),
             "tissue": "muscle",
@@ -3598,6 +3762,12 @@ def control_parallel_instances(
 
 ##########
 # Call main procedure.
+
+# TODO: TCW; 24 September 2024
+# I need somehow to separate the "trunk" directory initializations for the
+# "whole" and "partial" procedures so that the "partial" branch procedure
+# starts with a clean slate, at least for the partials...
+
 
 
 def execute_procedure(
@@ -3696,15 +3866,16 @@ def execute_procedure(
     # or normalization for selections of samples in specific instances of
     # analysis.
     if True:
-        # Initialize directories for trunk procedure.
-        paths = initialize_directories_trunk(
+        # Initialize directories before branch procedure.
+        paths = initialize_directories_before_branch(
             project=project,
             routine=routine,
             procedure=procedure,
             path_directory_dock=path_directory_dock,
-            restore=False,
+            restore=True,
             report=report,
         )
+
         ##########
         # Read and organize parameters for parallel instances.
         instances = read_organize_source_parameter_instances(
