@@ -407,9 +407,9 @@ def read_organize_source_parameter_instances(
             pail["name_set"] = str(row["name_set"])
             pail["tissue"] = str(row["tissue"])
             if (str(row["cohort_selection_primary"]).strip() != "none"):
+                pail["cohort_selection_primary"] = dict()
                 for part in row["cohort_selection_primary"].strip().split(";"):
                     part_split = part.split(":")
-                    pail["cohort_selection_primary"] = dict()
                     pail["cohort_selection_primary"][part_split[0]] = (
                         part_split[1].split(",")
                     )
@@ -419,9 +419,9 @@ def read_organize_source_parameter_instances(
                 pail["cohort_selection_primary"] = None
                 pass
             if (str(row["factor_availability"]).strip() != "none"):
+                pail["factor_availability"] = dict()
                 for part in row["factor_availability"].strip().split(";"):
                     part_split = part.split(":")
-                    pail["factor_availability"] = dict()
                     pail["factor_availability"][part_split[0]] = (
                         part_split[1].split(",")
                     )
@@ -431,10 +431,10 @@ def read_organize_source_parameter_instances(
                 pail["factor_availability"] = None
                 pass
             if (str(row["cohort_selection_secondary"]).strip() != "none"):
+                pail["cohort_selection_secondary"] = dict()
                 for part in row["cohort_selection_secondary"].strip(
                 ).split(";"):
                     part_split = part.split(":")
-                    pail["cohort_selection_secondary"] = dict()
                     pail["cohort_selection_secondary"][part_split[0]] = (
                         part_split[1].split(",")
                     )
@@ -1252,6 +1252,7 @@ def select_sets_final_identifier_table_sample(
         subset=columns_set,
         inplace=True,
     )
+
     # Filter and sort columns within table.
     columns_sequence = copy.deepcopy(columns_set)
     columns_sequence.insert(0, "tissue")
@@ -1263,10 +1264,30 @@ def select_sets_final_identifier_table_sample(
             columns_sequence=columns_sequence,
             report=report,
         )
-    # Extract identifiers of samples in separate groups.
-    samples_selection = copy.deepcopy(
-        table_selection["identifier_signal"].to_list()
+
+    # Organize indices in table.
+    table_selection.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
     )
+    table_selection.set_index(
+        ["identifier_signal"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+
+    # Extract identifiers of samples in separate groups.
+    #samples_selection = copy.deepcopy(
+    #    table_selection["identifier_signal"].to_list()
+    #)
+    samples_selection = copy.deepcopy(
+        table_selection.index.get_level_values(
+            "identifier_signal"
+        ).unique().to_list()
+    )
+
     # Collect information.
     pail = dict()
     pail["table_selection"] = table_selection
@@ -2491,11 +2512,11 @@ def check_coherence_table_sample_table_signal(
     table_sample_extract = table_sample.copy(deep=True)
     table_signal = table_signal.copy(deep=True)
     # Organize indices in table.
-    #table_sample_extract.reset_index(
-    #    level=None,
-    #    inplace=True,
-    #    drop=False, # remove index; do not move to regular columns
-    #)
+    table_sample_extract.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
     # Extract identifiers of samples from each separate table.
     samples_sample = copy.deepcopy(
         table_sample_extract["identifier_signal"].to_list()
