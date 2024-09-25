@@ -386,10 +386,11 @@ def initialize_directories_branch_instance(
 
     ##########
     # Initialize directories for trunk procedure.
-    paths = initialize_directories_trunk(
+    paths = initialize_directories_branch_tissue(
         project=project,
         routine=routine,
         procedure=procedure,
+        tissue=tissue,
         path_directory_dock=path_directory_dock,
         restore=False,
         report=report,
@@ -398,18 +399,6 @@ def initialize_directories_branch_instance(
     ##########
     # Initialize directories for instance-specific parallel branch procedure.
     # Define paths to directories.
-    paths["out_tissue"] = os.path.join(
-        paths["out_parts"], str(tissue),
-    )
-    paths["out_summary"] = os.path.join(
-        paths["out_tissue"], "summary",
-    )
-    paths["out_summary_instances"] = os.path.join(
-        paths["out_summary"], "instances",
-    )
-    paths["out_tissue"] = os.path.join(
-        paths["out_parts"], str(tissue),
-    )
     paths["out_instance"] = os.path.join(
         paths["out_tissue"], str(name_instance),
     )
@@ -2910,12 +2899,6 @@ def create_write_chart_feature_signal_observations_distribution(
 ###############################################################################
 # Procedure
 
-# TODO: TCW; 23 September 2024
-# 1. support an additional, 3rd "supplement" covariate in DESeq2 script
-# 2. run updated DESeq2 analyses with p16+, CD68+ adipose
-# 3. share updated DESeq2 report with team
-# 4.
-
 
 ##########
 # Control procedure for whole signal data for each tissue type.
@@ -3425,7 +3408,7 @@ def control_procedure_part_branch(
     ##########
     # 1. Initialize directories for read of source and write of product files.
     # Initialize directories for instance-specific parallel branch procedure.
-    paths = initialize_directories_branch(
+    paths = initialize_directories_branch_instance(
         project=project,
         routine=routine,
         procedure=procedure,
@@ -3763,12 +3746,6 @@ def control_parallel_instances(
 ##########
 # Call main procedure.
 
-# TODO: TCW; 24 September 2024
-# I need somehow to separate the "trunk" directory initializations for the
-# "whole" and "partial" procedures so that the "partial" branch procedure
-# starts with a clean slate, at least for the partials...
-
-
 
 def execute_procedure(
     path_directory_dock=None,
@@ -3871,6 +3848,24 @@ def execute_procedure(
             project=project,
             routine=routine,
             procedure=procedure,
+            path_directory_dock=path_directory_dock,
+            restore=True,
+            report=report,
+        )
+        initialize_directories_branch_tissue(
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            tissue="muscle",
+            path_directory_dock=path_directory_dock,
+            restore=True,
+            report=report,
+        )
+        initialize_directories_branch_tissue(
+            project=project,
+            routine=routine,
+            procedure=procedure,
+            tissue="adipose",
             path_directory_dock=path_directory_dock,
             restore=True,
             report=report,
