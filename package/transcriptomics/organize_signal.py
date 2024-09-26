@@ -1412,10 +1412,16 @@ def select_sets_final_identifier_table_sample(
     )
 
     # Filter and sort columns within table.
+    # Here it is necessary to filter to unique names of columns because
+    # otherwise the column "tissue" has a redundant occurrence due to the
+    # extraction from the parameters for selection of samples in the cohort.
     columns_sequence = copy.deepcopy(columns_set)
     columns_sequence.insert(0, "tissue")
     columns_sequence.insert(0, "inclusion")
     columns_sequence.insert(0, "identifier_signal")
+    columns_sequence = putly.collect_unique_elements(
+        elements=columns_sequence,
+    )
     if True:
         table_selection = porg.filter_sort_table_columns(
             table=table_selection,
@@ -3847,6 +3853,9 @@ def execute_procedure(
     # Branch procedure to prepare tables of signals without adjustment of scale
     # or normalization for selections of samples in specific instances of
     # analysis.
+
+    # The current implementation requires manual switch on or off according to
+    # the tissues that are included in the batch.
     if True:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
