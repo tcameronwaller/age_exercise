@@ -178,7 +178,7 @@ def initialize_directories(
     procedure=None,
     tissue=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     path_directory_dock=None,
     restore=None,
     report=None,
@@ -195,8 +195,8 @@ def initialize_directories(
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection
-            of samples in cohort and defining analysis
+        name_instance (str): name of instance set of parameters for
+            selection of samples in cohort and definition of analysis
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -237,17 +237,17 @@ def initialize_directories(
     paths["out_group"] = os.path.join(
         paths["out_tissue"], str(group),
     )
-    paths["out_set"] = os.path.join(
-        paths["out_group"], str(name_set),
+    paths["out_instance"] = os.path.join(
+        paths["out_group"], str(name_instance),
     )
     #paths["out_test"] = os.path.join(
-    #    paths["out_set"], "test",
+    #    paths["out_instance"], "test",
     #)
     paths["out_data"] = os.path.join(
-        paths["out_set"], "data",
+        paths["out_instance"], "data",
     )
     paths["out_plot"] = os.path.join(
-        paths["out_set"], "plot",
+        paths["out_instance"], "plot",
     )
     paths["out_data_overall"] = os.path.join(
         paths["out_procedure"], "data",
@@ -260,7 +260,7 @@ def initialize_directories(
         #paths["out_project"],
         #paths["out_routine"],
         #paths["out_procedure"], # omit to avoid conflict in parallel branches
-        paths["out_set"],
+        paths["out_instance"],
         paths["out_data"],
         paths["out_plot"],
     ]
@@ -364,7 +364,7 @@ def define_column_types_table_gene_emphasis():
 def read_source(
     tissue=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     paths=None,
     report=None,
 ):
@@ -378,8 +378,8 @@ def read_source(
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection
-            of samples in cohort and defining analysis
+        name_instance (str): name of instance set of parameters for
+            selection of samples in cohort and definition of analysis
         paths : (dict<str>): collection of paths to directories for procedure's
             files
         report (bool): whether to print reports
@@ -398,7 +398,7 @@ def read_source(
     # Define paths to child files.
     path_file_table_deseq2 = os.path.join(
         paths["out_routine"], "deseq2", tissue, group,
-        str("table_result_deseq2_" + name_set + ".tsv"),
+        str("table_result_deseq2_" + name_instance + ".tsv"),
     )
     path_file_table_gene_emphasis = os.path.join(
         paths["in_parameters_private"], "gene_sets_emphasis",
@@ -519,7 +519,7 @@ def organize_table_change_deseq2(
     table=None,
     columns_sequence=None,
     tissue=None,
-    name_set=None,
+    name_instance=None,
     report=None,
 ):
     """
@@ -532,7 +532,7 @@ def organize_table_change_deseq2(
             filter and sort columns in table
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for set of samples and parameters in the
+        name_instance (str): name for set of samples and parameters in the
             analysis of differential expression
         report (bool): whether to print reports
 
@@ -661,7 +661,7 @@ def organize_table_change_deseq2(
         print("function: organize_table_change_deseq2()")
         putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
-        print("name_set: " + name_set)
+        print("name_instance: " + name_instance)
         putly.print_terminal_partition(level=4)
         count_rows = (pail["table_significance"].shape[0])
         count_columns = (pail["table_significance"].shape[1])
@@ -688,7 +688,7 @@ def select_sets_differential_expression_gene(
     threshold_fold=None,
     threshold_p=None,
     tissue=None,
-    name_set=None,
+    name_instance=None,
     report=None,
 ):
     """
@@ -715,7 +715,7 @@ def select_sets_differential_expression_gene(
             base-ten logarithm, as the actual values themselves
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for set of samples and parameters in the
+        name_instance (str): name for set of samples and parameters in the
             analysis of differential expression
         report (bool): whether to print reports
 
@@ -762,7 +762,7 @@ def select_sets_differential_expression_gene(
         print("function: select_sets_differential_expression_gene()")
         putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
-        print("name_set: " + name_set)
+        print("name_instance: " + name_instance)
         putly.print_terminal_partition(level=4)
         count_both = (len(pail["genes_threshold"]))
         count_up = (len(pail["genes_up"]))
@@ -790,7 +790,7 @@ def create_write_chart_fold_change(
     threshold_p=None,
     identifiers_emphasis=None,
     tissue=None,
-    name_set=None,
+    name_instance=None,
     paths=None,
     report=None,
 ):
@@ -824,7 +824,7 @@ def create_write_chart_fold_change(
             on the chart
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_set (str): name for set of samples and parameters in the
+        name_instance (str): name for set of samples and parameters in the
             analysis of differential expression
         paths : (dict<str>): collection of paths to directories for procedure's
             files
@@ -838,7 +838,7 @@ def create_write_chart_fold_change(
     """
 
     # Organize parameters.
-    name_figure = name_set
+    name_figure = name_instance
     #path_directory = paths["out_plot"]
     path_directory = paths["out_plot_overall"]
 
@@ -925,7 +925,7 @@ def create_write_chart_fold_change(
 def control_procedure_part_branch(
     tissue=None,
     group=None,
-    name_set=None,
+    name_instance=None,
     project=None,
     routine=None,
     procedure=None,
@@ -939,8 +939,8 @@ def control_procedure_part_branch(
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         group (str): name of a group of analyses
-        name_set (str): name for instance set of parameters for selection
-            of samples in cohort and defining analysis
+        name_instance (str): name of instance set of parameters for
+            selection of samples in cohort and definition of analysis
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -964,7 +964,7 @@ def control_procedure_part_branch(
         procedure=procedure,
         tissue=tissue,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         path_directory_dock=path_directory_dock,
         restore=True,
         report=report,
@@ -975,7 +975,7 @@ def control_procedure_part_branch(
     pail_source = read_source(
         tissue=tissue,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         paths=paths,
         report=report,
     )
@@ -988,7 +988,7 @@ def control_procedure_part_branch(
         table=pail_source["table_deseq2"],
         columns_sequence=columns_sequence,
         tissue=tissue,
-        name_set=name_set,
+        name_instance=name_instance,
         report=report,
     )
     #pail_organization["table_change"]
@@ -1004,7 +1004,7 @@ def control_procedure_part_branch(
         threshold_fold=math.log(float(1.0), 2), # base two logarithm
         threshold_p=(-1 * math.log(float(0.05), 10)), # negative base ten logarithm
         tissue=tissue,
-        name_set=name_set,
+        name_instance=name_instance,
         report=report,
     )
 
@@ -1018,7 +1018,7 @@ def control_procedure_part_branch(
             column_name="gene_name",
             column_rank="rank_fold_p",
             tissue=tissue,
-            name_set=name_set,
+            name_instance=name_instance,
             report=report,
         )
 
@@ -1037,7 +1037,7 @@ def control_procedure_part_branch(
         threshold_p=(-1 * math.log(float(0.001), 10)), # negative base ten logarithm
         identifiers_emphasis=identifiers_emphasis,
         tissue=tissue,
-        name_set=name_set,
+        name_instance=name_instance,
         paths=paths,
         report=report,
     )
@@ -1057,7 +1057,7 @@ def control_procedure_part_branch(
         pail_selection["genes_down"]
     )
     pail_write_tables = dict()
-    pail_write_tables[str("table_" + name_set)] = (
+    pail_write_tables[str("table_" + name_instance)] = (
         pail_organization["table"]
     )
 
@@ -1094,8 +1094,8 @@ def control_parallel_instance(
             tissue (str): name of tissue that distinguishes study design and
                 set of relevant samples, either 'adipose' or 'muscle'
             group (str): name of a group of analyses
-            name_set (str): name for instance set of parameters for selection
-                of samples in cohort and defining analysis
+            name_instance (str): name of instance set of parameters for
+                selection of samples in cohort and definition of analysis
         parameters (dict): parameters common to all instances
             project (str): name of project
             routine (str): name of routine, either 'transcriptomics' or
@@ -1117,7 +1117,7 @@ def control_parallel_instance(
     # Extract parameters specific to each instance.
     tissue = instance["tissue"]
     group = instance["group"]
-    name_set = instance["name_set"]
+    name_instance = instance["name_instance"]
     # Extract parameters common across all instances.
     project = parameters["project"]
     routine = parameters["routine"]
@@ -1130,7 +1130,7 @@ def control_parallel_instance(
     control_procedure_part_branch(
         tissue=tissue,
         group=group,
-        name_set=name_set,
+        name_instance=name_instance,
         project=project,
         routine=routine,
         procedure=procedure,

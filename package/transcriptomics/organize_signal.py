@@ -370,7 +370,7 @@ def initialize_directories_branch_instance(
             process
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
@@ -1017,7 +1017,7 @@ def select_sets_identifier_table_sample(
     arguments:
         table_sample (object): Pandas data-frame table of information about
             samples that correspond to signals within accompanying main table
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
@@ -1263,7 +1263,7 @@ def organize_describe_summarize_table_sample_tertiles(
         cohort_selection (dict<list<str>>): filters on rows in table for
             selection of samples relevant to cohort for analysis
         group (str): name of a group of analyses
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
@@ -1367,7 +1367,7 @@ def select_sets_final_identifier_table_sample(
     arguments:
         table_sample (object): Pandas data-frame table of information about
             samples that correspond to signals within accompanying main table
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
@@ -1489,7 +1489,7 @@ def report_write_count_samples(
             columns for measurement values of signal intensity across features
         sort (int): sequential index for sort order
         group (str): name of a group of analyses
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
@@ -2660,7 +2660,7 @@ def check_coherence_table_sample_table_signal(
             features across rows
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
             distinguishes study design and sets of samples
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         report (bool): whether to print reports
 
@@ -3149,7 +3149,7 @@ def control_procedure_part_branch_sample(
     arguments:
         sort (int): sequential index for sort order
         group (str): name of a group of analyses
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
@@ -3386,7 +3386,7 @@ def control_procedure_part_branch(
     arguments:
         sort (int): sequential index for sort order
         group (str): name of a group of analyses
-        name_instance (str): name for instance set of parameters for selection
+        name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
@@ -3531,7 +3531,7 @@ def control_parallel_instance(
         instance (dict): parameters specific to current instance
             sort (int): sequential index for sort order
             group (str): name of a group of analyses
-            name_instance (str): name for instance set of parameters for
+            name_instance (str): name of instance set of parameters for
                 selection of samples in cohort and definition of analysis
             tissue (str): name of tissue that distinguishes study design and
                 set of relevant samples, either 'adipose' or 'muscle'
