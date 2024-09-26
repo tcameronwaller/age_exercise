@@ -498,10 +498,10 @@ def define_column_sequence_table_change_deseq2():
         "fold_change_log2_standard_error",
         #"stat",
         "p_value",
-        "p_value_threshold",
+        "p_value_fill",
         "p_value_negative_log10",
         "q_value",
-        "q_value_threshold",
+        "q_value_fill",
         "q_value_negative_log10",
         "gene_identifier_base",
         "rank_fold_p",
@@ -580,12 +580,12 @@ def organize_table_change_deseq2(
             (table_change["q_value"] >= float(0))
         ), :
     ]
-    table_change["p_value_threshold"] = table_change.apply(
+    table_change["p_value_fill"] = table_change.apply(
         lambda row:
             2.23E-308 if (float(row["p_value"]) < 2.23E-308) else row["p_value"],
         axis="columns", # apply function to each row
     )
-    table_change["q_value_threshold"] = table_change.apply(
+    table_change["q_value_fill"] = table_change.apply(
         lambda row:
             2.23E-308 if (float(row["q_value"]) < 2.23E-308) else row["q_value"],
         axis="columns", # apply function to each row
@@ -595,10 +595,10 @@ def organize_table_change_deseq2(
         (
             (pandas.notna(table_change["fold_change_log2"])) &
             (pandas.notna(table_change["fold_change_log2_standard_error"])) &
-            (pandas.notna(table_change["p_value_threshold"])) &
-            (pandas.notna(table_change["q_value_threshold"])) &
-            (table_change["p_value_threshold"] > float(0)) &
-            (table_change["q_value_threshold"] > float(0))
+            (pandas.notna(table_change["p_value_fill"])) &
+            (pandas.notna(table_change["q_value_fill"])) &
+            (table_change["p_value_fill"] > float(0)) &
+            (table_change["q_value_fill"] > float(0))
         ), :
     ]
 
@@ -608,11 +608,11 @@ def organize_table_change_deseq2(
     #    table_change["p_value"]
     #)
     table_change["p_value_negative_log10"] = table_change.apply(
-        lambda row: (-1*math.log(row["p_value_threshold"], 10)),
+        lambda row: (-1*math.log(row["p_value_fill"], 10)),
         axis="columns", # apply function to each row
     )
     table_change["q_value_negative_log10"] = table_change.apply(
-        lambda row: (-1*math.log(row["q_value_threshold"], 10)),
+        lambda row: (-1*math.log(row["q_value_fill"], 10)),
         axis="columns", # apply function to each row
     )
 
@@ -646,7 +646,7 @@ def organize_table_change_deseq2(
     # Filter rows within table.
     table_significance = table_change.loc[
         (
-            (table_change["q_value_threshold"] < 0.05)
+            (table_change["q_value_fill"] < 0.05)
         ), :
     ].copy(deep=True)
 
