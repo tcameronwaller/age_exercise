@@ -908,7 +908,8 @@ def read_source_signal_for_description(
     return pail
 
 
-def read_organize_write_summary_instances(
+def read_organize_write_summary_instances_tissue(
+    tissue=None,
     paths=None,
     report=None,
 ):
@@ -3856,7 +3857,7 @@ def execute_procedure(
             restore=True,
             report=report,
         )
-        initialize_directories_branch_tissue(
+        paths_muscle = initialize_directories_branch_tissue(
             project=project,
             routine=routine,
             procedure=procedure,
@@ -3865,7 +3866,7 @@ def execute_procedure(
             restore=True,
             report=report,
         )
-        initialize_directories_branch_tissue(
+        paths_adipose = initialize_directories_branch_tissue(
             project=project,
             routine=routine,
             procedure=procedure,
@@ -3893,8 +3894,14 @@ def execute_procedure(
         )
         ##########
         # Organize summary information about all instances overall.
-        read_organize_write_summary_instances(
-            paths=paths,
+        read_organize_write_summary_instances_tissue(
+            tissue="muscle",
+            paths=paths_muscle,
+            report=report,
+        )
+        read_organize_write_summary_instances_tissue(
+            tissue="adipose",
+            paths=paths_adipose,
             report=report,
         )
 
