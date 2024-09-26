@@ -35,8 +35,8 @@ path_directory_parameters_private="$path_directory_dock/in_parameters_private/ex
 path_directory_product_parent="$path_directory_dock/out_exercise/transcriptomics/deseq2"
 
 # Files.
-path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
-#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_temp_test_2024-09-11.tsv"
+#path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression.tsv"
+path_file_table_parameter="$path_directory_parameters_private/table_set_differential_expression_temp_test_2024-09-25.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
@@ -94,7 +94,7 @@ do
   raw_subject="${array[18]}"
   raw_threshold_significance="${array[19]}"
   raw_note="${array[20]}"
-  name_instance="${raw_tissue}_${sort}_${raw_instance}"
+  name_instance="${raw_tissue}_${raw_sort}_${raw_instance}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
