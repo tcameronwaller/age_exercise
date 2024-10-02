@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 25 July 2024
-# Date, last execution or modification: 25 September 2024
-# Review: TCW; 25 September 2024
+# Date, last execution or modification: 1 October 2024
+# Review: TCW; 1 October 2024
 ###############################################################################
 # Note
 
@@ -92,8 +92,10 @@ do
   raw_supplement_3="${array[16]}"
   raw_levels_supplement_3="${array[17]}"
   raw_subject="${array[18]}"
-  raw_threshold_significance="${array[19]}"
-  raw_note="${array[20]}"
+  raw_results_contrast="${array[19]}"
+  raw_results_name="${array[20]}"
+  raw_threshold_significance="${array[21]}"
+  raw_note="${array[22]}"
   name_instance="${raw_tissue}_${raw_sort}_${raw_instance}"
 
   # Report.
@@ -120,8 +122,10 @@ do
     echo "field 16, supplement_3: ${raw_supplement_3}"
     echo "field 17, levels_supplement_3: ${raw_levels_supplement_3}"
     echo "field 18, subject: ${raw_subject}"
-    echo "field 19, threshold_significance: ${raw_threshold_significance}"
-    echo "field 20, note: ${raw_note}"
+    echo "field 19, results_contrast: ${raw_results_contrast}"
+    echo "field 20, results_name: ${raw_results_name}"
+    echo "field 21, threshold_significance: ${raw_threshold_significance}"
+    echo "field 22, note: ${raw_note}"
     echo "----------"
     echo "derivation fields"
     echo "----------"
@@ -172,6 +176,8 @@ do
       $raw_supplement_3 \
       $raw_levels_supplement_3 \
       $raw_subject \
+      $raw_results_contrast \
+      $raw_results_name \
       $raw_threshold_significance \
       $threads \
       $report
@@ -179,7 +185,6 @@ do
 
   fi
 done < "${input}"
-
 
 
 ###############################################################################

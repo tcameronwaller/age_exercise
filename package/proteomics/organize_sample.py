@@ -469,7 +469,31 @@ def define_sequence_columns_novel_sample_feature():
         #"tertiles_body_fat_percent",
         #"tertiles_insulin_sensitivity",
         #"tertiles_activity_steps",
+        "cohort_age_text_by_sex_text",
     ]
+    # Return information.
+    return columns_sequence
+
+
+def define_interaction_combination_categorical_factor():
+    """
+    Defines names of columns for interaction combinations of categorical factor
+    variables.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): names of columns for interaction combinations of
+            categorical factor variables and their specific single values for
+            designation as not 'other'
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = dict()
+    columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
     # Return information.
     return columns_sequence
 
@@ -736,6 +760,7 @@ def organize_table_sample_attribute(
     table=None,
     translations_column=None,
     columns_original=None,
+    columns_interaction=None,
     columns_novel=None,
     report=None,
 ):
@@ -752,6 +777,9 @@ def organize_table_sample_attribute(
             table
         columns_original (list<str>): names of original columns in sequence by
             which to filter and sort columns in table
+        columns_interaction (dict<str>): names of columns for interaction
+            combinations of categorical factor variables and their specific
+            single values for designation as not 'other'
         columns_novel (list<str>): names of original columns in sequence by
             which to filter and sort columns in table
         report (bool): whether to print reports
@@ -768,6 +796,7 @@ def organize_table_sample_attribute(
     # Copy other information.
     translations_column = copy.deepcopy(translations_column)
     columns_original = copy.deepcopy(columns_original)
+    columns_interaction = copy.deepcopy(columns_interaction)
     columns_novel = copy.deepcopy(columns_novel)
 
     # Translate names of columns to remove white space.
@@ -858,6 +887,30 @@ def organize_table_sample_attribute(
         to_replace=0,
         value=pandas.NA,
     )
+
+    # Define interaction combinations of categorical factor variables.
+    #interactions = define_interaction_combination_categorical_factor()
+    for interaction in columns_interaction.keys():
+        parts = list(str(interaction).strip().split("_by_"))
+        part_first = parts[0]
+        part_second = parts[1]
+        # Create interaction combination of categorical factor variables.
+        table[interaction] = table.apply(
+            lambda row: "_by_".join([
+                str(row[part_first]),
+                str(row[part_second]),
+            ]),
+            axis="columns", # apply function to each row
+        )
+        # Desginate all values of interaction combination as 'other' that do
+        # not match the specific single effect value.
+        match = str(columns_interaction[interaction]).strip()
+        table[interaction] = table.apply(
+            lambda row:
+                row[interaction] if (row[interaction] == match) else "other",
+            axis="columns", # apply function to each row
+        )
+        pass
 
     # Sort rows within table.
     table.sort_values(
@@ -1182,11 +1235,13 @@ def execute_procedure(
         inclusion="inclusion_proteomics",
         report=report,
     )
+    columns_interaction = define_interaction_combination_categorical_factor()
     columns_novel = define_sequence_columns_novel_sample_feature()
     table_sample_attribute = organize_table_sample_attribute(
         table=pail_source["table_sample_attribute"],
         translations_column=pail_parse["translations_column"],
         columns_original=pail_parse["columns_all"],
+        columns_interaction=columns_interaction,
         columns_novel=columns_novel,
         report=report,
     )

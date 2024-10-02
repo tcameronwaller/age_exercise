@@ -625,6 +625,11 @@ def read_organize_source_parameter_instances(
             #columns.append("tissue")
             # Extract and include names of other columns.
             columns_formula = row["formula_text"].strip().split(",")
+            # Remove any interaction terms, since these are not columns.
+            columns_formula = list(filter(
+                lambda column: (":" not in str(column)),
+                columns_formula
+            ))
             columns.extend(columns_formula)
             columns = putly.collect_unique_elements(
                 elements=columns,
@@ -3903,16 +3908,18 @@ def execute_procedure(
         )
         ##########
         # Organize summary information about all instances overall.
-        read_organize_write_summary_instances_tissue(
-            tissue="muscle",
-            paths=paths_muscle,
-            report=report,
-        )
-        read_organize_write_summary_instances_tissue(
-            tissue="adipose",
-            paths=paths_adipose,
-            report=report,
-        )
+        if False:
+            read_organize_write_summary_instances_tissue(
+                tissue="muscle",
+                paths=paths_muscle,
+                report=report,
+            )
+        if True:
+            read_organize_write_summary_instances_tissue(
+                tissue="adipose",
+                paths=paths_adipose,
+                report=report,
+            )
 
     pass
 

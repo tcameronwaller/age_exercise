@@ -1133,11 +1133,15 @@ def execute_procedure(
         report=report,
     )
     columns_original = pail_parse["columns_all"]
+    columns_interaction = (
+        expr_sample.define_interaction_combination_categorical_factor()
+    )
     columns_novel = expr_sample.define_sequence_columns_novel_sample_feature()
     table_sample_attribute = expr_sample.organize_table_sample_attribute(
         table=pail_source["table_sample_attribute"],
         translations_column=pail_parse["translations_column"],
         columns_original=columns_original,
+        columns_interaction=columns_interaction,
         columns_novel=columns_novel,
         report=report,
     )

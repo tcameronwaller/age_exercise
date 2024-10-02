@@ -49,6 +49,7 @@ import textwrap
 import exercise.transcriptomics.organize_sample
 import exercise.transcriptomics.organize_signal
 import exercise.transcriptomics.select_gene_sets
+import exercise.transcriptomics.interaction
 import exercise.proteomics.organize_sample
 
 #dir()
@@ -215,6 +216,15 @@ def define_subparser_transcriptomics(
         "-select_gene_sets",
         "--select_gene_sets",
         dest="select_gene_sets",
+        action="store_true",
+        help=(
+            "Analyze information about genes with differential expression."
+        )
+    )
+    parser_routine.add_argument(
+        "-interaction",
+        "--interaction",
+        dest="interaction",
         action="store_true",
         help=(
             "Analyze information about genes with differential expression."
@@ -399,6 +409,16 @@ def evaluate_parameters_transcriptomics(arguments):
         )
         # Execute procedure.
         exercise.transcriptomics.select_gene_sets.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+    if arguments.interaction:
+        # Report status.
+        print(
+           "... executing exercise.transcriptomics.interaction " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        exercise.transcriptomics.interaction.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 
