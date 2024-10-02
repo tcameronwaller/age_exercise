@@ -135,6 +135,12 @@ def preinitialize_directories(
     paths["out_data_overall"] = os.path.join(
         paths["out_procedure"], "data",
     )
+    paths["out_data_overall_text"] = os.path.join(
+        paths["out_data_overall"], "text",
+    )
+    paths["out_data_overall_pickle"] = os.path.join(
+        paths["out_data_overall"], "pickle",
+    )
     paths["out_plot_overall"] = os.path.join(
         paths["out_procedure"], "plot",
     )
@@ -144,6 +150,8 @@ def preinitialize_directories(
         #paths["out_routine"],
         paths["out_procedure"],
         paths["out_data_overall"],
+        paths["out_data_overall_text"],
+        paths["out_data_overall_pickle"],
         paths["out_plot_overall"],
     ]
     # Remove previous directories and files to avoid version or batch
@@ -209,28 +217,18 @@ def initialize_directories(
 
     """
 
-    # Collect paths.
-    paths = dict()
+    ##########
+    # Preinitialize directories before parallel branches.
+    paths = preinitialize_directories(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=False,
+        report=report,
+    )
+
     # Define paths to directories.
-    paths["dock"] = path_directory_dock
-    paths["in_data"] = os.path.join(
-        paths["dock"], "in_data", str(project), str(routine),
-    )
-    paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(routine),
-    )
-    paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(routine),
-    )
-    paths["out_project"] = os.path.join(
-        paths["dock"], str("out_" + project),
-    )
-    paths["out_routine"] = os.path.join(
-        paths["out_project"], str(routine),
-    )
-    paths["out_procedure"] = os.path.join(
-        paths["out_routine"], str(procedure),
-    )
     paths["out_tissue"] = os.path.join(
         paths["out_procedure"], str(tissue),
     )
@@ -248,12 +246,6 @@ def initialize_directories(
     )
     paths["out_plot"] = os.path.join(
         paths["out_instance"], "plot",
-    )
-    paths["out_data_overall"] = os.path.join(
-        paths["out_procedure"], "data",
-    )
-    paths["out_plot_overall"] = os.path.join(
-        paths["out_procedure"], "plot",
     )
     # Initialize directories in main branch.
     paths_initialization = [
@@ -650,6 +642,13 @@ def organize_table_change_deseq2(
         ), :
     ].copy(deep=True)
 
+    # Organize indices in table.
+    table_change.set_index(
+        ["identifier_gene"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
     # Collect information.
     pail = dict()
     pail["table"] = table_change
@@ -1069,10 +1068,17 @@ def control_procedure_part_branch(
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_data_overall"],
+        path_directory=paths["out_data_overall_text"],
         reset_index=False,
-        write_index=False,
+        write_index=True,
         type="text",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_data_overall_pickle"],
+        reset_index=False,
+        write_index=True,
+        type="pickle",
     )
     pass
 

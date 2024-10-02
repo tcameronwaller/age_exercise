@@ -1613,6 +1613,7 @@ def organize_table_main(
         lambda row: str(row["gene_identifier"]).strip().split(".")[0],
         axis="columns", # apply function to each row
     )
+    table_main["identifier_gene"] = table_main["gene_identifier_base"]
     # Replace values of zero for signal intensity with missing values.
     # Only replace values within table's columns for samples.
     # This implementation is more concise than iteration across specific
@@ -2303,7 +2304,7 @@ def scale_normalize_values_intensity_signal_table(
 
     arguments:
         table (object): Pandas data-frame table of values of intensity for
-            samples across columns and for proteins across rows
+            samples across columns and for genes across rows
         method (str): name of method to use for scaling values, currently only
             'deseq'
         report (bool): whether to print reports
@@ -3587,7 +3588,7 @@ def control_parallel_instance(
     report = parameters["report"]
 
     ##########
-    # Control procedure with split for parallelization.
+    # Control procedure with split branch for parallelization.
     control_procedure_part_branch(
         sort=sort,
         group=group,
@@ -3803,7 +3804,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Initialize directories.
         paths = initialize_directories_trunk(
             project=project,
@@ -3834,7 +3835,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to describe tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Control procedure for description of signal data as a whole.
         control_procedure_whole_trunk_description(
             tissue="muscle",
