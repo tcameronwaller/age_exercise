@@ -2344,14 +2344,20 @@ def scale_normalize_values_intensity_signal_table(
         name_rows_novel="identifier_gene",
         report=False,
     )
-    # Calculate the natural logarithm of
-    table_normal = table_scale.apply(
-        lambda row: (numpy.log(row.to_numpy(
+    # Calculate the natural logarithm of signal intensity values.
+    # math.log() # optimal for scalar values
+    # numpy.log() # optimal for array values
+    #table_normal = table_scale.map(
+    #    lambda value: math.log(value),
+    #    na_action="ignore", # ignore missing values in calculation
+    #)
+    table_normal = table_scale.transform(
+        lambda row: numpy.log(row.to_numpy(
             dtype="float64",
             na_value=numpy.nan,
             copy=True,
-        ))),
-        axis="index", # apply function to each column
+        )),
+        axis="columns", # apply function to each row
     )
     # Report.
     if report:

@@ -296,6 +296,7 @@ def extract_gene_signal_sets_by_two_categories_two_levels(
 
 
 def define_sequence_columns_table_interaction(
+    columns_gene=None,
     names_sets=None,
 ):
     """
@@ -306,6 +307,7 @@ def define_sequence_columns_table_interaction(
     columns.
 
     arguments:
+        columns_gene (list<str>): names of columns in gene table to transfer
         names_sets (list<str>): names for sets of samples and their signals
 
     raises:
@@ -315,6 +317,10 @@ def define_sequence_columns_table_interaction(
             columns in table
 
     """
+
+    # Copy other information.
+    columns_gene = copy.deepcopy(columns_gene)
+    names_sets = copy.deepcopy(names_sets)
 
     # Determine names of columns for statistics.
     statistics = [
@@ -331,10 +337,7 @@ def define_sequence_columns_table_interaction(
         pass
 
     # Specify sequence of columns within table.
-    columns_sequence = [
-        "gene_identifier",
-        "gene_name",
-    ]
+    columns_sequence = copy.deepcopy(columns_gene)
     columns_sequence.extend(columns_sets_statistics)
     columns_sequence.append("p_value_interaction")
     columns_sequence.append("q_value_interaction")
@@ -351,11 +354,12 @@ def create_table_interaction_by_two_categories_two_levels(
     column_category_second=None,
     column_sample_identifier=None,
     column_gene_identifier=None,
-    column_gene_name=None,
+    columns_gene=None,
     column_interaction_pvalue=None,
     column_interaction_qvalue=None,
     levels_category_first=None,
     levels_category_second=None,
+    z_score=None,
     method_signal_aggregation=None,
     table_sample=None,
     table_gene=None,
@@ -386,7 +390,7 @@ def create_table_interaction_by_two_categories_two_levels(
             identifiers that correspond to samples and their signals
         column_gene_identifier (str): name of column in tables for
             identifiers that correspond to genes and their signals
-        column_gene_name (str): name of column in gene table for name
+        columns_gene (list<str>): names of columns in gene table to transfer
         column_interaction_pvalue (str): name of column in interaction table
             for p-value corresponding to interaction between levels of the
             first and second categorical variables
@@ -397,6 +401,9 @@ def create_table_interaction_by_two_categories_two_levels(
             categorical variable
         levels_category_second (list<str>): levels, names, or values of second
             categorical variable
+        z_score (bool): whether to transform to z-scores to standardize
+            distribution of values of signal intensity for each gene across
+            samples
         method_signal_aggregation (str): method for the aggregation of values
             of signal for each gene across samples in each group or set; either
             'mean' or 'median'
@@ -419,6 +426,14 @@ def create_table_interaction_by_two_categories_two_levels(
 
     """
 
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
+    table_gene = table_gene.copy(deep=True)
+    table_signal = table_signal.copy(deep=True)
+    table_interaction = table_interaction.copy(deep=True)
+    # Copy other information.
+    columns_gene = copy.deepcopy(columns_gene)
+
 
     # Extract identifiers of samples in sets corresponding to all unique
     # combinations of level values of categorical variables.
@@ -431,19 +446,53 @@ def create_table_interaction_by_two_categories_two_levels(
         table=table_sample,
         report=report,
     )
+    # Collect unique identifiers of samples in all sets.
+    samples_all = list()
+    for set in sets_samples:
+        samples_all.extend(copy.deepcopy(set["samples"]))
+        pass
+    samples_all_unique = putly.collect_unique_elements(
+        elements=samples_all,
+    )
+
+    # Prepare information in table of values of signal intensity for genes
+    # across samples.
+    # Filter rows in signal table to keep only relevant genes.
+    table_signal = table_signal.loc[
+        table_signal.index.isin(identifiers_gene), :
+    ].copy(deep=True)
+    # Filter columns in signal table to keep only relevant samples.
+    # Signal table must have column "identifier_gene" set as index.
+    #table_signal = table_signal.loc[
+    #    :, table_signal.columns.isin(samples_all_unique)
+    #].copy(deep=True)
+    table_signal = table_signal.filter(
+        items=samples_all_unique,
+        axis="columns",
+    )
+    # Determine whether to transform to z-scores to standardize distribution of
+    # values of signal intensity for each gene across samples.
+    if z_score:
+        # Calculate the standard z-score of signal intensity values for each
+        # gene across samples.
+        table_signal = pscl.transform_standard_z_score_by_table_rows(
+            table=table_signal,
+            report=report,
+        )
 
     # Collect records of information, which will become rows in table.
     records = list()
-
     # Iterate on genes.
     for identifier_gene in identifiers_gene:
         # Collect information.
         record = dict()
         record["gene_identifier"] = identifier_gene
-        # Extract name of gene.
-        record["gene_name"] = str(
-            table_gene.at[identifier_gene, column_gene_name]
-        )
+        # Extract information about gene.
+        for column_gene in columns_gene:
+            record[column_gene] = str(
+                table_gene.at[identifier_gene, column_gene]
+            )
+            pass
         # Extract p-value of interaction.
         record["p_value_interaction"] = str(
             table_interaction.at[identifier_gene, column_interaction_pvalue]
@@ -458,7 +507,7 @@ def create_table_interaction_by_two_categories_two_levels(
             column_gene_identifier=column_gene_identifier,
             sets_samples=sets_samples,
             table=table_signal,
-            report=report,
+            report=False,
         )
         # Collect information.
         names_sets = list()
@@ -488,8 +537,10 @@ def create_table_interaction_by_two_categories_two_levels(
     table = pandas.DataFrame(data=records)
     # Filter and sort columns within table.
     columns_sequence = define_sequence_columns_table_interaction(
+        columns_gene=columns_gene,
         names_sets=names_sets,
     )
+    columns_sequence.insert(0, "gene_identifier")
     table = porg.filter_sort_table_columns(
         table=table,
         columns_sequence=columns_sequence,
@@ -500,18 +551,9 @@ def create_table_interaction_by_two_categories_two_levels(
 
 
     # TODO: TCW; 2 October 2024
-    # 1. figure out how to put all signals for each gene on z-score scale
-    #    - 1.1. filter signal table to include all relevant samples from all 4 groups
-    #    - 1.2. convert each gene's signals (across samples in columns) to z-score
-    #    - 1.3. proceed to stratify the groups, etc
+    # 1. include parameters for translation abbreviations of the category names
     # 2. write the table to file.
-    # 3. 
-
-    # 10. columns in summary table include gene ID, gene name, mean or median signal
-    #     in each of the 4 groups (combinations of levels for first and second factors),
-    #     and the p-value associated with the corresponding interaction term
-    # 11. save the table
-    # 12. create heatmap
+    # 3. create heatmap
 
 
 
@@ -687,11 +729,12 @@ def execute_procedure(
         column_category_second="sex_text",
         column_sample_identifier="identifier_signal",
         column_gene_identifier="identifier_gene",
-        column_gene_name="gene_name",
+        columns_gene=["gene_name", "gene_type", "gene_chromosome",],
         column_interaction_pvalue="p_value_fill",
         column_interaction_qvalue="q_value_fill",
         levels_category_first=["elder", "younger",],
         levels_category_second=["male", "female",],
+        z_score=True,
         method_signal_aggregation="mean", # "mean" or "median"
         table_sample=table_sample,
         table_gene=table_gene,
