@@ -135,9 +135,6 @@ def initialize_directories_trunk(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
-    paths["out_procedure"] = os.path.join(
-        paths["out_routine"], str(procedure),
-    )
     paths["out_whole"] = os.path.join(
         paths["out_procedure"], "whole",
     )

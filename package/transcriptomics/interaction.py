@@ -77,6 +77,102 @@ import exercise.transcriptomics.organize_signal as exrosig
 # Functionality
 
 
+##########
+# 1. Initialize directories for read of source and write of product files.
+
+
+def initialize_directories(
+    project=None,
+    routine=None,
+    procedure=None,
+    path_directory_dock=None,
+    restore=None,
+    report=None,
+):
+    """
+    Initialize directories for procedure's product files.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine, either 'transcriptomics' or
+            'proteomics'
+        procedure (str): name of procedure, a set or step in the routine
+            process
+        path_directory_dock (str): path to dock directory for procedure's
+            source and product directories and files
+        restore (bool): whether to remove previous versions of data
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<str>): collection of paths to directories for procedure's files
+
+    """
+
+    # Collect paths.
+    paths = dict()
+    # Define paths to directories.
+    paths["dock"] = path_directory_dock
+    paths["in_data"] = os.path.join(
+        paths["dock"], "in_data",
+    )
+    paths["in_parameters"] = os.path.join(
+        paths["dock"], "in_parameters", str(project), str(routine),
+    )
+    paths["in_parameters_private"] = os.path.join(
+        paths["dock"], "in_parameters_private", str(project), str(routine),
+    )
+    paths["out_project"] = os.path.join(
+        paths["dock"], str("out_" + project),
+    )
+    paths["out_routine"] = os.path.join(
+        paths["out_project"], str(routine),
+    )
+    paths["out_procedure"] = os.path.join(
+        paths["out_routine"], str(procedure),
+    )
+    paths["out_data"] = os.path.join(
+        paths["out_procedure"], "data",
+    )
+    paths["out_plot"] = os.path.join(
+        paths["out_procedure"], "plot",
+    )
+
+    # Initialize directories in main branch.
+    paths_initialization = [
+        #paths["out_project"],
+        #paths["out_routine"],
+        paths["out_procedure"],
+        paths["out_data"],
+        paths["out_plot"],
+    ]
+    # Remove previous directories and files to avoid version or batch
+    # confusion.
+    if restore:
+        for path in paths_initialization:
+            putly.remove_directory(path=path) # caution
+            pass
+    # Create directories.
+    for path in paths_initialization:
+        putly.create_directories(
+            path=path,
+        )
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.interaction.py")
+        print("function: initialize_directories()")
+        putly.print_terminal_partition(level=5)
+        print("path to dock directory for procedure's files: ")
+        print(path_directory_dock)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return paths
+
+
 
 def extract_sample_sets_by_two_categories_two_levels(
     categories_levels=None,
@@ -147,8 +243,8 @@ def extract_sample_sets_by_two_categories_two_levels(
         )
         record_set = dict()
         record_set["name"] = str(
-            category_first + ":" + level_first + ";" +
-            category_second + ":" + level_second
+            category_first + "-" + level_first + "_" +
+            category_second + "-" + level_second
         )
         record_set[category_first] = level_first
         record_set[category_second] = level_second
@@ -294,7 +390,6 @@ def extract_gene_signal_sets_by_two_categories_two_levels(
     return records_sets
 
 
-
 def define_sequence_columns_table_interaction(
     columns_gene=None,
     names_sets=None,
@@ -345,8 +440,6 @@ def define_sequence_columns_table_interaction(
     return columns_sequence
 
 
-
-
 def create_table_interaction_by_two_categories_two_levels(
     name_instance=None,
     identifiers_gene=None,
@@ -359,6 +452,8 @@ def create_table_interaction_by_two_categories_two_levels(
     column_interaction_qvalue=None,
     levels_category_first=None,
     levels_category_second=None,
+    translation_category_first=None,
+    translation_category_second=None,
     z_score=None,
     method_signal_aggregation=None,
     table_sample=None,
@@ -401,6 +496,10 @@ def create_table_interaction_by_two_categories_two_levels(
             categorical variable
         levels_category_second (list<str>): levels, names, or values of second
             categorical variable
+        translation_category_first (str): translation name of first categorical
+            variable, such as an abbreviation
+        translation_category_second (str): translation name of second
+            categorical variable, such as an abbreviation
         z_score (bool): whether to transform to z-scores to standardize
             distribution of values of signal intensity for each gene across
             samples
@@ -434,12 +533,31 @@ def create_table_interaction_by_two_categories_two_levels(
     # Copy other information.
     columns_gene = copy.deepcopy(columns_gene)
 
+    # Prepare sample table.
+    # Filter columns in table.
+    table_sample = table_sample.filter(
+        items=[
+            #column_sample_identifier,
+            column_category_first,
+            column_category_second,
+        ],
+        axis="columns",
+    )
+
+    # Translate names of columns.
+    translations = dict()
+    translations[column_category_first] = translation_category_first
+    translations[column_category_second] = translation_category_second
+    table_sample.rename(
+        columns=translations,
+        inplace=True,
+    )
 
     # Extract identifiers of samples in sets corresponding to all unique
     # combinations of level values of categorical variables.
     categories_levels = dict()
-    categories_levels[column_category_first] = levels_category_first
-    categories_levels[column_category_second] = levels_category_second
+    categories_levels[translation_category_first] = levels_category_first
+    categories_levels[translation_category_second] = levels_category_second
     sets_samples = extract_sample_sets_by_two_categories_two_levels(
         categories_levels=categories_levels,
         column_sample_identifier=column_sample_identifier,
@@ -455,6 +573,7 @@ def create_table_interaction_by_two_categories_two_levels(
         elements=samples_all,
     )
 
+    # Prepare signal table.
     # Prepare information in table of values of signal intensity for genes
     # across samples.
     # Filter rows in signal table to keep only relevant genes.
@@ -486,7 +605,7 @@ def create_table_interaction_by_two_categories_two_levels(
     for identifier_gene in identifiers_gene:
         # Collect information.
         record = dict()
-        record["gene_identifier"] = identifier_gene
+        record[column_gene_identifier] = identifier_gene
         # Extract information about gene.
         for column_gene in columns_gene:
             record[column_gene] = str(
@@ -540,26 +659,227 @@ def create_table_interaction_by_two_categories_two_levels(
         columns_gene=columns_gene,
         names_sets=names_sets,
     )
-    columns_sequence.insert(0, "gene_identifier")
+    columns_sequence.insert(0, column_gene_identifier)
     table = porg.filter_sort_table_columns(
         table=table,
         columns_sequence=columns_sequence,
         report=report,
     )
-
-    print(table)
-
-
-    # TODO: TCW; 2 October 2024
-    # 1. include parameters for translation abbreviations of the category names
-    # 2. write the table to file.
-    # 3. create heatmap
-
+    # Organize indices in table.
+    table.set_index(
+        [column_gene_identifier],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
 
 
-    pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.interaction.py")
+        function = "create_table_interaction_by_two_categories_two_levels()"
+        print("function: " + function)
+        putly.print_terminal_partition(level=4)
+        print(table)
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return table
 
 
+
+##########
+# Plot and write to file a heatmap chart to represent values of signal
+# intensity for gene features across groups of sample observations.
+
+
+def organize_table_for_plot(
+    table=None,
+    column_identifier=None,
+    column_name=None,
+    match_columns_signal=None,
+    report=None,
+):
+    """
+    Organize and prepare information in table for plot.
+
+    arguments:
+        table (object): Pandas data-frame table of values of signal intensity
+            for features in rows across sample observations or groups of
+            sample observations in columns
+        column_identifier (str): name of column in table for identifiers that
+            correspond to features in rows with values of signal intensity
+            across sample observations or groups of sample observations in
+            columns
+        column_name (str): name of column in table for names that
+            correspond to features in rows with values of signal intensity
+            across sample observations or groups of sample observations in
+            columns
+        match_columns_signal (str): query in names of columns corresponding to
+            values of signal intensity for representation in plot
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    # Organize indices in table.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    table.set_index(
+        [column_name],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    # Extract names of columns corresponding to values of signal intensity for
+    # representation in plot.
+    columns = copy.deepcopy(table.columns.to_list())
+    columns_signal = list(filter(
+        lambda column: (str(match_columns_signal) in column),
+        list(columns)
+    ))
+    # Filter and sort columns within table.
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_signal,
+        report=report,
+    )
+    # Translate names of columns.
+    translations = dict()
+    for column in columns_signal:
+        translations[column] = str(column).replace(match_columns_signal, "")
+        pass
+    table.rename(
+        columns=translations,
+        inplace=True,
+    )
+    # Organize indices in table.
+    table = porg.change_names_table_indices_columns_rows(
+        table=table,
+        name_columns_novel="observations",
+        name_rows_original=column_name,
+        name_rows_novel="features",
+        report=False,
+    )
+    # Return information.
+    return table
+
+
+def plot_write_heatmap_chart_feature_signal_observations(
+    name=None,
+    table=None,
+    column_identifier=None,
+    column_name=None,
+    path_directory=None,
+    report=None,
+):
+    """
+    Plot and write to file a heatmap chart representation of values of signal
+    intensity for features across sample observations or groups of sample
+    observations.
+
+    arguments:
+        name (str): name for instance set of information and parameters
+            corresponding to the chart
+        table (object): Pandas data-frame table of values of signal intensity
+            for features in rows across sample observations or groups of
+            sample observations in columns
+        column_identifier (str): name of column in table for identifiers that
+            correspond to features in rows with values of signal intensity
+            across sample observations or groups of sample observations in
+            columns
+        column_name (str): name of column in table for names that
+            correspond to features in rows with values of signal intensity
+            across sample observations or groups of sample observations in
+            columns
+        path_directory (str): path to directory to which to write product plots
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    # Organize parameters.
+    name_figure = str(name)
+
+    # Extract minimal and maximal values of signal intensity.
+    matrix = numpy.copy(table.to_numpy())
+    value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
+    value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+
+    # Create figure.
+    figure = pplot.plot_heat_map_signal_label_features_observations(
+        table=table,
+        transpose_table=False,
+        index_group_columns="observations",
+        index_group_rows="features",
+        fill_missing=True,
+        value_missing_fill=0.0,
+        constrain_signal_values=True,
+        value_minimum=value_minimum,
+        value_maximum=value_maximum,
+        show_scale_bar=True, # whether to show scale bar on individual figures
+        labels_ordinate_categories=[""],
+        labels_abscissa_categories=[""],
+        title_ordinate="",
+        title_abscissa="",
+        title_bar="gene signal (z-score)",
+        size_title_ordinate="eight", # ten
+        size_title_abscissa="eight", # ten
+        size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
+        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
+        size_title_bar="twelve", # twelve
+        size_label_bar="thirteen", # thirteen for whole; five for bar itself
+        aspect="square", # square, portrait, landscape, ...
+        fonts=fonts,
+        colors=colors,
+        report=report,
+    )
+    # Write figure to file.
+    pplot.write_product_plot_figure(
+        figure=figure,
+        format="jpg", # jpg, png, svg
+        resolution=150,
+        name_file=name_figure,
+        path_directory=path_directory,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.interaction.py")
+        function = "plot_write_heatmap_chart_feature_signal_observations()"
+        print("function: " + function)
+        putly.print_terminal_partition(level=4)
+        print("table:")
+        print(table)
+        putly.print_terminal_partition(level=4)
+        print(str("value minimum: " + str(value_minimum)))
+        print(str("value maximum: " + str(value_maximum)))
+        putly.print_terminal_partition(level=4)
+    # Return information.
+    return figure
 
 
 
@@ -572,6 +892,193 @@ def create_table_interaction_by_two_categories_two_levels(
 # Control procedure within branch for parallelization.
 
 
+def control_procedure_part_branch(
+    name_instance=None,
+    identifiers_gene=None,
+    column_category_first=None,
+    column_category_second=None,
+    column_sample_identifier=None,
+    column_gene_identifier=None,
+    columns_gene=None,
+    column_interaction_pvalue=None,
+    column_interaction_qvalue=None,
+    levels_category_first=None,
+    levels_category_second=None,
+    translation_category_first=None,
+    translation_category_second=None,
+    z_score=None,
+    method_signal_aggregation=None,
+    path_file_source_table_sample=None,
+    path_file_source_table_gene=None,
+    path_file_source_table_signal=None,
+    path_file_source_table_interaction=None,
+    path_directory_product_data=None,
+    path_directory_product_plot=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        name_instance (str): name for instance set of genes parameters for
+            summary
+        identifiers_gene (list<str>): identifiers of genes
+        column_category_first (str): name of column in sample table for first
+            categorical variable
+        column_category_second (str): name of column in sample table for second
+            categorical variable
+        column_sample_identifier (str): name of column in tables for
+            identifiers that correspond to samples and their signals
+        column_gene_identifier (str): name of column in tables for
+            identifiers that correspond to genes and their signals
+        columns_gene (list<str>): names of columns in gene table to transfer
+        column_interaction_pvalue (str): name of column in interaction table
+            for p-value corresponding to interaction between levels of the
+            first and second categorical variables
+        column_interaction_qvalue (str): name of column in interaction table
+            for q-value corresponding to interaction between levels of the
+            first and second categorical variables
+        levels_category_first (list<str>): levels, names, or values of first
+            categorical variable
+        levels_category_second (list<str>): levels, names, or values of second
+            categorical variable
+        translation_category_first (str): translation name of first categorical
+            variable, such as an abbreviation
+        translation_category_second (str): translation name of second
+            categorical variable, such as an abbreviation
+        z_score (bool): whether to transform to z-scores to standardize
+            distribution of values of signal intensity for each gene across
+            samples
+        method_signal_aggregation (str): method for the aggregation of values
+            of signal for each gene across samples in each group or set; either
+            'mean' or 'median'
+        path_file_source_table_sample (str): path to file for source table of
+            properties or attributes of samples
+        path_file_source_table_gene (str): path to file for source table of
+            properties or attributes of genes
+        path_file_source_table_signal (str): path to file for source table of
+            values of signal intensity for genes across samples
+        path_file_source_table_interaction (str): path to file for source table
+            of statistics describing interaction in a single gene's signals
+            between sets of samples corresponding to the same level values of
+            categorical variables
+        path_directory_product_data (str): path to directory for procedure's
+            product data
+        path_directory_product_plot (str): path to directory for procedure's
+            product plots
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+
+    ##########
+    # 2.
+
+    ##########
+    # 3.
+
+    # Read source files.
+    table_sample = pandas.read_pickle(
+        path_file_source_table_sample,
+    )
+    table_gene = pandas.read_pickle(
+        path_file_source_table_gene,
+    )
+    table_signal = pandas.read_pickle(
+        path_file_source_table_signal,
+    )
+    table_interaction = pandas.read_pickle(
+        path_file_source_table_interaction,
+    )
+
+
+    ##########
+    # Filter rows in sample table by inclusion and by tissue.
+    # This step is unnecessary when using the specific version of the sample
+    # table after stratification for analysis.
+    if False:
+        tissue = "adipose"
+        table_sample["inclusion"] = table_sample["inclusion"].astype("str")
+        table_sample = table_sample.loc[
+            (table_sample["inclusion"] == "1"), :
+        ].copy(deep=True)
+        table_sample = table_sample.loc[
+            (table_sample["tissue"] == tissue), :
+        ].copy(deep=True)
+
+
+    ##########
+    # Create table to summarize interactions between sets of samples.
+    table_summary = create_table_interaction_by_two_categories_two_levels(
+        name_instance=name_instance,
+        identifiers_gene=identifiers_gene,
+        column_category_first=column_category_first,
+        column_category_second=column_category_second,
+        column_sample_identifier=column_sample_identifier,
+        column_gene_identifier=column_gene_identifier,
+        columns_gene=columns_gene,
+        column_interaction_pvalue=column_interaction_pvalue,
+        column_interaction_qvalue=column_interaction_qvalue,
+        levels_category_first=levels_category_first,
+        levels_category_second=levels_category_second,
+        translation_category_first=translation_category_first,
+        translation_category_second=translation_category_second,
+        z_score=z_score,
+        method_signal_aggregation=method_signal_aggregation,
+        table_sample=table_sample,
+        table_gene=table_gene,
+        table_signal=table_signal,
+        table_interaction=table_interaction,
+        report=report,
+    )
+
+    # Create and write to file charts to represent distribution of
+    # signals.
+    table_plot = organize_table_for_plot(
+        table=table_summary,
+        column_identifier="identifier_gene",
+        column_name="gene_name",
+        match_columns_signal="_mean",
+        report=report,
+    )
+    plot_write_heatmap_chart_feature_signal_observations(
+        name=name_instance,
+        table=table_plot,
+        path_directory=path_directory_product_plot,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_data = dict()
+    pail_write_data[str("table_summary")] = (
+        table_summary
+    )
+
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=path_directory_product_data,
+        reset_index=False,
+        write_index=True,
+        type="text",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=path_directory_product_data,
+        reset_index=False,
+        write_index=True,
+        type="pickle",
+    )
+
+
+    pass
 
 
 
@@ -616,13 +1123,27 @@ def execute_procedure(
         putly.print_terminal_partition(level=5)
         pass
 
-    # TODO: TCW; 1 October 2024
-    # Begin with demonstration use case...
+    ##########
+    # 1. Initialize directories for read of source and write of product files.
+    paths = initialize_directories(
+        project=project,
+        routine=routine,
+        procedure=procedure,
+        path_directory_dock=path_directory_dock,
+        restore=True,
+        report=report,
+    )
+
+    # TODO: Follow pattern of "organize_signal" by having a series of functions
+    # to read and organize the instances from source file.
+    # In the parameter table, the 'paths' will be comma-delimited lists.
+    # 1. parse to lists
+    # 2. use 'os.path.join' to assemble the paths
 
     # Define path to file for table of information about samples.
     file_sample = "table_sample.pickle"
-    path_file_source_sample = os.path.join(
-        path_directory_dock,
+    path_file_source_table_sample = os.path.join(
+        paths["dock"],
         "out_exercise",
         "transcriptomics",
         "organize_signal",
@@ -635,8 +1156,8 @@ def execute_procedure(
     # Define path to files for tables of information about genes and signals.
     file_gene = "table_gene_adipose.pickle"
     file_signal = "table_signal_adipose.pickle"
-    path_file_source_gene = os.path.join(
-        path_directory_dock,
+    path_file_source_table_gene = os.path.join(
+        paths["dock"],
         "out_exercise",
         "transcriptomics",
         "organize_signal",
@@ -644,8 +1165,8 @@ def execute_procedure(
         "preparation",
         file_gene,
     )
-    path_file_source_signal = os.path.join(
-        path_directory_dock,
+    path_file_source_table_signal = os.path.join(
+        paths["dock"],
         "out_exercise",
         "transcriptomics",
         "organize_signal",
@@ -655,8 +1176,8 @@ def execute_procedure(
     )
     # Define path to file for table of interaction statistics.
     file_interaction = "table_adipose_5_visit-first_interaction-age-sex.pickle"
-    path_file_source_interaction = os.path.join(
-        path_directory_dock,
+    path_file_source_table_interaction = os.path.join(
+        paths["dock"],
         "out_exercise",
         "transcriptomics",
         "select_gene_sets",
@@ -665,52 +1186,7 @@ def execute_procedure(
         file_interaction,
     )
 
-
-    #path_file_source_sample (str): path to file for source table of
-    #    information about samples and their properties or attributes
-    #path_file_source_gene (str): path to file for source table of
-    #    information about genes and their properties or attributes
-    #path_file_source_signal (str): path to file for source table of
-    #    values of signal for genes across samples
-    #path_file_source_interaction (str): path to file for source table of
-    #    statistics describing interaction in a gene's signals between
-    #    samples with the same level values of the categorical variables
-    #path_file_product (str): path to file for product table
-
-    # TODO: TCW; 2 October 2024
-    # TODO: need to write the interaction tables to 'pickle' format.
-
-    # Read source files.
-    table_sample = pandas.read_pickle(
-        path_file_source_sample,
-    )
-    table_gene = pandas.read_pickle(
-        path_file_source_gene,
-    )
-    table_signal = pandas.read_pickle(
-        path_file_source_signal,
-    )
-    table_interaction = pandas.read_pickle(
-        path_file_source_interaction,
-    )
-
-    ##########
-    # Filter rows in sample table by inclusion and by tissue.
-    # This step is unnecessary when using the specific version of the sample
-    # table after stratification for analysis.
-    if False:
-        tissue = "adipose"
-        table_sample["inclusion"] = table_sample["inclusion"].astype("str")
-        table_sample = table_sample.loc[
-            (table_sample["inclusion"] == "1"), :
-        ].copy(deep=True)
-        table_sample = table_sample.loc[
-            (table_sample["tissue"] == tissue), :
-        ].copy(deep=True)
-
-    ##########
-    # Create table to summarize interactions between sets of samples.
-    table_summary = create_table_interaction_by_two_categories_two_levels(
+    control_procedure_part_branch(
         name_instance="test_adipose_5_visit-first_interaction-age-sex",
         identifiers_gene=[
             "ENSG00000101405",
@@ -725,21 +1201,30 @@ def execute_procedure(
             "ENSG00000099337",
             "ENSG00000114737",
         ],
-        column_category_first="cohort_age_text",
-        column_category_second="sex_text",
+        column_category_first="sex_text",
+        column_category_second="cohort_age_text",
         column_sample_identifier="identifier_signal",
         column_gene_identifier="identifier_gene",
-        columns_gene=["gene_name", "gene_type", "gene_chromosome",],
+        columns_gene=[
+            "gene_identifier",
+            "gene_name",
+            "gene_type",
+            "gene_chromosome",
+        ],
         column_interaction_pvalue="p_value_fill",
         column_interaction_qvalue="q_value_fill",
-        levels_category_first=["elder", "younger",],
-        levels_category_second=["male", "female",],
+        levels_category_first=["female", "male",],
+        levels_category_second=["younger", "elder",],
+        translation_category_first="sex",
+        translation_category_second="age",
         z_score=True,
         method_signal_aggregation="mean", # "mean" or "median"
-        table_sample=table_sample,
-        table_gene=table_gene,
-        table_signal=table_signal,
-        table_interaction=table_interaction,
+        path_file_source_table_sample=path_file_source_table_sample,
+        path_file_source_table_gene=path_file_source_table_gene,
+        path_file_source_table_signal=path_file_source_table_signal,
+        path_file_source_table_interaction=path_file_source_table_interaction,
+        path_directory_product_data=paths["out_data"],
+        path_directory_product_plot=paths["out_plot"],
         report=report,
     )
 
