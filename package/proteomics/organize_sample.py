@@ -494,6 +494,8 @@ def define_interaction_combination_categorical_factor():
     # Specify sequence of columns within table.
     columns_sequence = dict()
     columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
+    columns_sequence["exercise_time_point_by_sex_text"] = "3_hour_by_male"
+    columns_sequence["intervention_text_by_sex_text"] = "active_by_male"
     # Return information.
     return columns_sequence
 

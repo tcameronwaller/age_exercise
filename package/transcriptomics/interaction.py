@@ -1155,7 +1155,7 @@ def execute_procedure(
     )
     # Define path to files for tables of information about genes and signals.
     file_gene = "table_gene_adipose.pickle"
-    file_signal = "table_signal_adipose.pickle"
+    file_signal = "table_signal_scale_adipose.pickle"
     path_file_source_table_gene = os.path.join(
         paths["dock"],
         "out_exercise",
