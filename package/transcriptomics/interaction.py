@@ -173,7 +173,7 @@ def initialize_directories(
     return paths
 
 
-
+# This function still could be adapted for more general utility.
 def extract_sample_sets_by_two_categories_two_levels(
     categories_levels=None,
     column_sample_identifier=None,
@@ -280,6 +280,9 @@ def extract_sample_sets_by_two_categories_two_levels(
     return records_sets
 
 
+
+# TODO: use functionality from this function for a generic function to
+# extract values for specific row ID and column IDs and generate and return descriptive statistics
 def extract_gene_signal_sets_by_two_categories_two_levels(
     identifier_gene=None,
     column_gene_identifier=None,
@@ -533,7 +536,11 @@ def create_table_interaction_by_two_categories_two_levels(
     # Copy other information.
     columns_gene = copy.deepcopy(columns_gene)
 
-    # Prepare sample table.
+    ##########
+
+
+    ##########
+    # Prepare information about samples.
     # Filter columns in table.
     table_sample = table_sample.filter(
         items=[
@@ -543,7 +550,6 @@ def create_table_interaction_by_two_categories_two_levels(
         ],
         axis="columns",
     )
-
     # Translate names of columns.
     translations = dict()
     translations[column_category_first] = translation_category_first
@@ -552,7 +558,6 @@ def create_table_interaction_by_two_categories_two_levels(
         columns=translations,
         inplace=True,
     )
-
     # Extract identifiers of samples in sets corresponding to all unique
     # combinations of level values of categorical variables.
     categories_levels = dict()
@@ -564,45 +569,24 @@ def create_table_interaction_by_two_categories_two_levels(
         table=table_sample,
         report=report,
     )
-    # Collect unique identifiers of samples in all sets.
-    samples_all = list()
-    for set in sets_samples:
-        samples_all.extend(copy.deepcopy(set["samples"]))
-        pass
-    samples_all_unique = putly.collect_unique_elements(
-        elements=samples_all,
-    )
 
-    # Prepare signal table.
+    ##########
+    # Prepare information about signals.
     # Prepare information in table of values of signal intensity for genes
     # across samples.
-    # Filter rows in signal table to keep only relevant genes.
-    table_signal = table_signal.loc[
-        table_signal.index.isin(identifiers_gene), :
-    ].copy(deep=True)
-    # Filter columns in signal table to keep only relevant samples.
-    # Signal table must have column "identifier_gene" set as index.
-    #table_signal = table_signal.loc[
-    #    :, table_signal.columns.isin(samples_all_unique)
-    #].copy(deep=True)
-    table_signal = table_signal.filter(
-        items=samples_all_unique,
-        axis="columns",
-    )
-    # Determine whether to transform to z-scores to standardize distribution of
-    # values of signal intensity for each gene across samples.
-    if z_score:
-        # Calculate the standard z-score of signal intensity values for each
-        # gene across samples.
-        table_signal = pscl.transform_standard_z_score_by_table_rows(
-            table=table_signal,
-            report=report,
-        )
+
+    print("!!!!!!!!!!!!!!")
+    print("before cluster")
+    print(table_signal_transpose_group)
+
+    print("!!!!!!!!!!!!!!")
+    print("after cluster")
+    print(table_signal_transpose_group_cluster)
 
     # Collect records of information, which will become rows in table.
     records = list()
     # Iterate on genes.
-    for identifier_gene in identifiers_gene:
+    for identifier_gene in genes_selection:
         # Collect information.
         record = dict()
         record[column_gene_identifier] = identifier_gene
@@ -653,26 +637,33 @@ def create_table_interaction_by_two_categories_two_levels(
         pass
 
     # Organize information in a table.
-    table = pandas.DataFrame(data=records)
+    table_summary = pandas.DataFrame(data=records)
     # Filter and sort columns within table.
     columns_sequence = define_sequence_columns_table_interaction(
         columns_gene=columns_gene,
         names_sets=names_sets,
     )
     columns_sequence.insert(0, column_gene_identifier)
-    table = porg.filter_sort_table_columns(
-        table=table,
+    table_summary = porg.filter_sort_table_columns(
+        table=table_summary,
         columns_sequence=columns_sequence,
-        report=report,
+        report=False,
     )
     # Organize indices in table.
-    table.set_index(
+    table_summary.set_index(
         [column_gene_identifier],
         append=False,
         drop=True,
         inplace=True,
     )
 
+    # Collect information.
+    pail = dict()
+    pail["table_signal"] = table_signal
+    pail["table_signal_transpose"] = table_signal_transpose
+    pail["table_signal_transpose_group"] = table_signal_transpose_group
+    pail["table_signal_transpose_group_cluster"] = table_signal_transpose_group_cluster
+    pail["table_summary"] = table_summary
 
     # Report.
     if report:
@@ -681,11 +672,15 @@ def create_table_interaction_by_two_categories_two_levels(
         function = "create_table_interaction_by_two_categories_two_levels()"
         print("function: " + function)
         putly.print_terminal_partition(level=4)
-        print(table)
+        print(pail["table_signal"])
         putly.print_terminal_partition(level=4)
-    # Return information.
-    return table
+        print(pail["table_signal_transpose"])
+        putly.print_terminal_partition(level=4)
+        print(pail["table_summary"])
+        putly.print_terminal_partition(level=4)
 
+    # Return information.
+    return pail
 
 
 ##########
@@ -1013,7 +1008,7 @@ def control_procedure_part_branch(
 
     ##########
     # Create table to summarize interactions between sets of samples.
-    table_summary = create_table_interaction_by_two_categories_two_levels(
+    pail = create_table_interaction_by_two_categories_two_levels(
         name_instance=name_instance,
         identifiers_gene=identifiers_gene,
         column_category_first=column_category_first,
@@ -1039,7 +1034,7 @@ def control_procedure_part_branch(
     # Create and write to file charts to represent distribution of
     # signals.
     table_plot = organize_table_for_plot(
-        table=table_summary,
+        table=pail["table_summary"],
         column_identifier="identifier_gene",
         column_name="gene_name",
         match_columns_signal="_mean",
@@ -1056,8 +1051,20 @@ def control_procedure_part_branch(
     # Collect information.
     # Collections of files.
     pail_write_data = dict()
+    pail_write_data[str("table_signal")] = (
+        pail["table_signal"]
+    )
+    pail_write_data[str("table_signal_transpose")] = (
+        pail["table_signal_transpose"]
+    )
+    pail_write_data[str("table_signal_transpose_group")] = (
+        pail["table_signal_transpose_group"]
+    )
+    pail_write_data[str("table_signal_transpose_group_cluster")] = (
+        pail["table_signal_transpose_group_cluster"]
+    )
     pail_write_data[str("table_summary")] = (
-        table_summary
+        pail["table_summary"]
     )
 
     ##########

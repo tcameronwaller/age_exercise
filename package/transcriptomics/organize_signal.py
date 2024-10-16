@@ -37,6 +37,12 @@ License:
 ###############################################################################
 # Notes
 
+# TODO: TCW; 15 October 2024
+# TODO: simplify this process of organizing the signal information
+# TODO: It might help to separate the preparation of the overall signal table
+# TODO: from the stratified signal tables for individual analyses.
+
+
 
 ###############################################################################
 # Installation and importation
@@ -486,6 +492,8 @@ def define_column_types_table_parameter_instances():
     # Return information.
     return types_columns
 
+# TODO: TCW; 16 October 2024
+# use putly.parse_extract_text_keys_values_semicolon_colon_comma()
 
 def read_organize_source_parameter_instances(
     paths=None,
@@ -998,7 +1006,8 @@ def read_organize_write_summary_instances_tissue(
 ##########
 # 3. Select set of samples for specific analyses.
 
-
+# TODO: TCW; 16 October 2024
+# use porg.filter_extract_table_row_identifiers_by_columns_categories()
 def select_sets_identifier_table_sample(
     table_sample=None,
     name_instance=None,
@@ -2317,11 +2326,11 @@ def scale_normalize_values_intensity_signal_table(
     # Copy information in table.
     table = table.copy(deep=True)
     # Organize indices in table.
-    table = porg.change_names_table_indices_columns_rows(
+    table = porg.translate_names_table_indices_columns_rows(
         table=table,
-        name_columns_novel="observations",
-        name_rows_original="identifier_gene",
-        name_rows_novel="features",
+        index_columns_product="observations",
+        index_rows_source="identifier_gene",
+        index_rows_product="features",
         report=False,
     )
     # Determine method for scaling.
@@ -2334,11 +2343,11 @@ def scale_normalize_values_intensity_signal_table(
                 report=report,
         ))
     # Organize indices in table.
-    table_scale = porg.change_names_table_indices_columns_rows(
+    table_scale = porg.translate_names_table_indices_columns_rows(
         table=table_scale,
-        name_columns_novel="identifier_signal",
-        name_rows_original="features",
-        name_rows_novel="identifier_gene",
+        index_columns_product="identifier_signal",
+        index_rows_source="features",
+        index_rows_product="identifier_gene",
         report=False,
     )
     # Calculate the natural logarithm of signal intensity values.

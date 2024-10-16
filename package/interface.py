@@ -46,6 +46,7 @@ import textwrap
 
 # Custom.
 
+import exercise.scratch
 import exercise.transcriptomics.organize_sample
 import exercise.transcriptomics.organize_signal
 import exercise.transcriptomics.select_gene_sets
@@ -84,6 +85,11 @@ def define_interface_parsers():
     )
     subparsers = parser.add_subparsers(title="procedures")
     #parser_main = define_main_subparser(subparsers=subparsers)
+    parser_main = define_subparser_main(
+        project="exercise",
+        routine="main",
+        subparsers=subparsers,
+    )
     parser_transcriptomics = define_subparser_transcriptomics(
         project="exercise",
         routine="transcriptomics",
@@ -153,6 +159,63 @@ def define_main_epilog():
     return epilog
 
 
+def define_subparser_main(
+    project=None,
+    routine=None,
+    subparsers=None,
+):
+    """
+    Defines subparser for a specific routine of procedures.
+
+    arguments:
+        project (str): name of project
+        routine (str): name of routine
+        subparsers (object): reference to subparsers' container
+
+    raises:
+
+    returns:
+        (object): reference to parser
+
+    """
+
+    # Define description.
+    description = define_routine_description()
+    # Define epilog.
+    epilog = define_routine_epilog()
+    # Define parser.
+    parser_routine = subparsers.add_parser(
+        name=routine,
+        description=description,
+        epilog=epilog,
+        help="Help for main routine.",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    # Define arguments.
+    parser_routine.add_argument(
+        "-path_directory_dock", "--path_directory_dock",
+        dest="path_directory_dock", type=str, required=True,
+        help=(
+            "Path to dock directory for source and product " +
+            "directories and files."
+        )
+    )
+    parser_routine.add_argument(
+        "-scratch",
+        "--scratch",
+        dest="scratch",
+        action="store_true",
+        help=(
+            "Test implementation of new functionality."
+        )
+    )
+
+    # Define behavior.
+    parser_routine.set_defaults(func=evaluate_parameters_main)
+    # Return parser.
+    return parser_routine
+
+
 def define_subparser_transcriptomics(
     project=None,
     routine=None,
@@ -179,7 +242,7 @@ def define_subparser_transcriptomics(
     epilog = define_routine_epilog()
     # Define parser.
     parser_routine = subparsers.add_parser(
-        name="transcriptomics",
+        name=routine,
         description=description,
         epilog=epilog,
         help="Help for transcriptomics routine.",
@@ -263,7 +326,7 @@ def define_subparser_proteomics(
     epilog = define_routine_epilog()
     # Define parser.
     parser_routine = subparsers.add_parser(
-        name="proteomics",
+        name=routine,
         description=description,
         epilog=epilog,
         help="Help for proteomics routine.",
@@ -363,6 +426,36 @@ def define_routine_epilog(
         routine=routine,
     )
     return epilog
+
+
+def evaluate_parameters_main(arguments):
+    """
+    Evaluates parameters for routine.
+
+    arguments:
+        arguments (object): arguments from terminal
+
+    raises:
+
+    returns:
+
+    """
+
+    print("--------------------------------------------------")
+    print("... call to main routine ...")
+    # Execute procedure.
+    if arguments.scratch:
+        # Report status.
+        print(
+           "... executing exercise.scratch " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        exercise.scratch.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+
+    pass
 
 
 def evaluate_parameters_transcriptomics(arguments):
