@@ -451,6 +451,7 @@ def create_plot_chart_box(
     table=None,
     column_feature=None,
     column_group=None,
+    report=None,
 ):
     """
     Create and plot a chart of the box type.
@@ -465,7 +466,8 @@ def create_plot_chart_box(
             continuous interval or ratio scales of measurement
         column_feature (str): name of column for values corresponding to a
             specific feature
-        column_group (str): name of column to use for groups
+        column_group (str): name of column in table to use for groups
+        report (bool): whether to print reports
 
     raises:
 
@@ -479,6 +481,14 @@ def create_plot_chart_box(
 
     # Copy information in table.
     table = table.copy(deep=True)
+    # Extract names and indices of groups to preserve their original sequence.
+    groups_sequence = copy.deepcopy(table[column_group].unique().tolist())
+    sequence_groups = dict()
+    index = 0
+    for name in groups_sequence:
+        sequence_groups[name] = index
+        index += 1
+        pass
     # Organize indices in table.
     table.reset_index(
         level=None,
@@ -512,6 +522,17 @@ def create_plot_chart_box(
         names_groups.append(name_group)
         values_groups.append(values)
         pass
+    # Sort information for groups and values.
+    sequence_sort = list()
+    for name in names_groups:
+        sequence_sort.append(sequence_groups[name])
+        pass
+    names_groups_sort = [
+        y for _,y in sorted(zip(sequence_sort, names_groups))
+    ]
+    values_groups_sort = [
+        y for _,y in sorted(zip(sequence_sort, values_groups))
+    ]
 
     ##########
     # Create plot chart.
@@ -521,10 +542,10 @@ def create_plot_chart_box(
     colors = pplot.define_color_properties()
     # Create figure.
     figure = pplot.plot_boxes_groups(
-        values_groups=values_groups,
+        values_groups=values_groups_sort,
         title_ordinate="scale-normal(gene signal)",
         title_abscissa="",
-        titles_abscissa_groups=names_groups,
+        titles_abscissa_groups=names_groups_sort,
         colors_groups=None,
         label_top_center="",
         label_top_left="",
@@ -534,13 +555,212 @@ def create_plot_chart_box(
         axis_linear_minimum=0.0,
         fonts=fonts,
         colors=colors,
+        report=report,
     )
 
     # Return information.
     return figure
 
 
+def create_plot_chart_heatmap_individual(
+    table=None,
+    index_columns=None,
+    index_rows=None,
+    column_group=None,
+    report=None,
+):
+    """
+    Create and plot a chart of the heatmap type.
 
+    Original source table must not have an explicitly defined index across
+    rows.
+
+    Review: TCW; 17 October 2024
+
+    arguments:
+        table (object): Pandas data-frame table of floating-point values of a
+            single, specific type of descriptive statistics (usually either
+            mean or median) corresponding to groups of observations across
+            columns and features across rows
+        index_columns (str): name to define an index corresponding to
+            information across columns in source table
+        index_rows (str): name of a column in source table which defines an
+            index corresponding to information across rows
+        column_group (str): name of column in table to use for groups
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    ##########
+    # Organize information for plot.
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    table_extract = table.copy(deep=True)
+    # Organize indices in table.
+    table_extract.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_extract.columns.rename(
+        index_columns,
+        inplace=True,
+    ) # single-dimensional index
+    table_extract.set_index(
+        [index_rows, column_group,],
+        append=False,
+        drop=True,
+        inplace=True
+    )
+    # Extract minimal and maximal values of signal intensity.
+    matrix = numpy.copy(table_extract.to_numpy())
+    value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
+    value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Create figure.
+    figure = pcplot.plot_heatmap_signal_label_features_groups_of_observations(
+        table=table,
+        format_table=2, # 2: features in columns; observations, groups in rows
+        index_columns=index_columns,
+        index_rows=index_rows,
+        column_group=column_group,
+        transpose_table=True,
+        fill_missing=True,
+        value_missing_fill=0.0,
+        constrain_signal_values=True,
+        value_minimum=value_minimum,
+        value_maximum=value_maximum,
+        labels_ordinate_categories=None,
+        labels_abscissa_categories=None,
+        show_scale_bar=True, # whether to show scale bar on individual figures
+        title_ordinate="",
+        title_abscissa="",
+        title_bar="gene signal (z-score)",
+        size_title_ordinate="eight", # ten
+        size_title_abscissa="eight", # ten
+        size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
+        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
+        size_title_bar="twelve", # twelve
+        size_label_bar="thirteen", # thirteen for whole; five for bar itself
+        aspect="landscape", # square, portrait, landscape, ...
+        fonts=fonts,
+        colors=colors,
+        report=report,
+    )
+
+    # Return information.
+    return figure
+
+
+def create_plot_chart_heatmap_mean(
+    table=None,
+    index_columns=None,
+    index_rows=None,
+    report=None,
+):
+    """
+    Create and plot a chart of the heatmap type.
+
+    Original source table must not have an explicitly defined index across
+    rows.
+
+    Review: TCW; 17 October 2024
+
+    arguments:
+        table (object): Pandas data-frame table of floating-point values of a
+            single, specific type of descriptive statistics (usually either
+            mean or median) corresponding to groups of observations across
+            columns and features across rows
+        index_columns (str): name to define an index corresponding to
+            information across columns in source table
+        index_rows (str): name of a column in source table which defines an
+            index corresponding to information across rows
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    ##########
+    # Organize information for plot.
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    table_extract = table.copy(deep=True)
+    # Organize indices in table.
+    table_extract.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_extract.columns.rename(
+        index_columns,
+        inplace=True,
+    ) # single-dimensional index
+    table_extract.set_index(
+        [index_rows],
+        append=False,
+        drop=True,
+        inplace=True
+    )
+    # Extract minimal and maximal values of signal intensity.
+    matrix = numpy.copy(table_extract.to_numpy())
+    value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
+    value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Create figure.
+    figure = pplot.plot_heatmap_signal_label_features_observations(
+        table=table,
+        format_table=1, # 1: features in rows, observations in columns
+        index_columns=index_columns,
+        index_rows=index_rows,
+        transpose_table=False,
+        fill_missing=True,
+        value_missing_fill=0.0,
+        constrain_signal_values=True,
+        value_minimum=value_minimum,
+        value_maximum=value_maximum,
+        labels_ordinate_categories=None,
+        labels_abscissa_categories=None,
+        show_scale_bar=True, # whether to show scale bar on individual figures
+        title_ordinate="",
+        title_abscissa="",
+        title_bar="gene signal (z-score)",
+        size_title_ordinate="eight", # ten
+        size_title_abscissa="eight", # ten
+        size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
+        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
+        size_title_bar="twelve", # twelve
+        size_label_bar="thirteen", # thirteen for whole; five for bar itself
+        aspect="square", # square, portrait, landscape, ...
+        fonts=fonts,
+        colors=colors,
+        report=report,
+    )
+
+    # Return information.
+    return figure
 
 
 def manage_plot_charts(
@@ -604,6 +824,7 @@ def manage_plot_charts(
                 table=table_box,
                 column_feature=feature,
                 column_group="group",
+                report=False,
             )
             figures_box.append(record_box)
             pass
@@ -615,7 +836,13 @@ def manage_plot_charts(
     ##########
     # Heatmap Individual
     if heatmap_individual:
-        figure_heatmap_individual = None
+        figure_heatmap_individual = create_plot_chart_heatmap_individual(
+            table=table_heatmap_individual,
+            index_columns="identifier_gene",
+            index_rows="identifier_sample",
+            column_group="group",
+            report=report,
+        )
     else:
         figure_heatmap_individual = None
         pass
@@ -624,7 +851,12 @@ def manage_plot_charts(
     ##########
     # Heatmap Mean
     if heatmap_mean:
-        figure_heatmap_mean = None
+        figure_heatmap_mean = create_plot_chart_heatmap_mean(
+            table=table_heatmap_mean,
+            index_columns="group_observations",
+            index_rows="feature",
+            report=False,
+        )
     else:
         figure_heatmap_mean = None
         pass
@@ -660,8 +892,8 @@ def manage_plot_charts(
 ##########
 # Execute main procedure.
 
+
 # TODO: TCW; 16 October 2024
-# NEXT!!!
 # 1. Organize new high-level driver function
 # 2. organize a few new mid-level functions to organize necessary operations
 #    - reading in parameters for groups of observations
@@ -670,20 +902,10 @@ def manage_plot_charts(
 #3. write tables to file
 #_. write plots to file
 
-# WORK ON THE PLOTS FIRST!!! PRIORITY!!! SOMETHING TO SHOW
-# 2. new low-level driver function
-#    use information from the tables above to prepare plot charts
-#    1. box plots (clustered table 3)
-#    2. heat map for the summary information (table 6, I think)
-#    3. heat map with group bar for clustered individual signals (clustered table 3)
-#  arguments:
-#    table_box=table_2
-#    table_heatmap_individual=table_3
-#    table_heatmap_mean=table_6
-#    box_chart: True/False
-#    heatmap_mean: True/False
-#    heatmap_individual: True/False
-#    report: True/False
+# TODO: TCW; 17 October 2024
+# 1. Create legend on the chart for the heatmap with groups
+# 2. Create a new table that is clustered across all rows without restriction by group
+# 3. Plot that new clustered table in a heatmap.
 
 
 
@@ -771,11 +993,11 @@ def execute_procedure(
     identifiers_genes = [
         "ENSG00000101405",
         "ENSG00000100344",
-        "ENSG00000146674",
         "ENSG00000164530",
+        "ENSG00000146674",
         "ENSG00000183785",
-        "ENSG00000196169",
         "ENSG00000183671",
+        "ENSG00000196169",
         "ENSG00000176387",
         "ENSG00000196208",
         "ENSG00000099337",
@@ -875,14 +1097,20 @@ def execute_procedure(
     ###################
     # Cluster table for heatmap of individual signals
 
-#  arguments:
-#    table_box=table_2
-#    table_heatmap_individual=table_3
-#    table_heatmap_mean=table_6
-#    box_chart: True/False
-#    heatmap_mean: True/False
-#    heatmap_individual: True/False
-#    report: True/False
+    #  arguments:
+    #    table_box=table_2
+    #    table_heatmap_individual=table_3
+    #    table_heatmap_mean=table_6
+    #    box_chart: True/False
+    #    heatmap_mean: True/False
+    #    heatmap_individual: True/False
+    #    report: True/False
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_3!!!!!!!!!!!!!!!!!!!")
+    print(pail_tables["table_3"])
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_6!!!!!!!!!!!!!!!!!!!")
+    print(pail_tables["table_6"])
 
 
     ##################
@@ -891,10 +1119,22 @@ def execute_procedure(
         table_box=pail_tables["table_2"],
         table_heatmap_individual=pail_tables["table_3"],
         table_heatmap_mean=pail_tables["table_6"],
-        box_features=["OXT",],
+        box_features=[
+            "OXT",
+            "PNPLA3",
+            "PI16",
+            "IGFBP3",
+            "TUBA8",
+            #"CMKLR2", # unavailable in signal table?
+            "KIF19",
+            "HSD11B2",
+            "GREB1",
+            "KCNK6",
+            "CISH",
+        ],
         box=True,
-        heatmap_individual=False,
-        heatmap_mean=False,
+        heatmap_individual=True,
+        heatmap_mean=True,
         report=report,
     )
     #pail["heatmap_mean"]
@@ -907,8 +1147,8 @@ def execute_procedure(
             pail_write_plot[record_box["name"]] = record_box["figure"]
             pass
         pass
-    #pail_write_plot["heatmap_individual"] = pail_plot["heatmap_individual"]
-    #pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
+    pail_write_plot["heatmap_individual"] = pail_plot["heatmap_individual"]
+    pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
 
     ##########
     # _. Write product information to file.
