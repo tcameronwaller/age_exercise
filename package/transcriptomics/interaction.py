@@ -688,87 +688,6 @@ def create_table_interaction_by_two_categories_two_levels(
 # intensity for gene features across groups of sample observations.
 
 
-def organize_table_for_plot(
-    table=None,
-    column_identifier=None,
-    column_name=None,
-    match_columns_signal=None,
-    report=None,
-):
-    """
-    Organize and prepare information in table for plot.
-
-    arguments:
-        table (object): Pandas data-frame table of values of signal intensity
-            for features in rows across sample observations or groups of
-            sample observations in columns
-        column_identifier (str): name of column in table for identifiers that
-            correspond to features in rows with values of signal intensity
-            across sample observations or groups of sample observations in
-            columns
-        column_name (str): name of column in table for names that
-            correspond to features in rows with values of signal intensity
-            across sample observations or groups of sample observations in
-            columns
-        match_columns_signal (str): query in names of columns corresponding to
-            values of signal intensity for representation in plot
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table
-
-    """
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-
-    # Organize indices in table.
-    table.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
-    table.set_index(
-        [column_name],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    # Extract names of columns corresponding to values of signal intensity for
-    # representation in plot.
-    columns = copy.deepcopy(table.columns.to_list())
-    columns_signal = list(filter(
-        lambda column: (str(match_columns_signal) in column),
-        list(columns)
-    ))
-    # Filter and sort columns within table.
-    table = porg.filter_sort_table_columns(
-        table=table,
-        columns_sequence=columns_signal,
-        report=report,
-    )
-    # Translate names of columns.
-    translations = dict()
-    for column in columns_signal:
-        translations[column] = str(column).replace(match_columns_signal, "")
-        pass
-    table.rename(
-        columns=translations,
-        inplace=True,
-    )
-    # Organize indices in table.
-    table = porg.change_names_table_indices_columns_rows(
-        table=table,
-        name_columns_novel="observations",
-        name_rows_original=column_name,
-        name_rows_novel="features",
-        report=False,
-    )
-    # Return information.
-    return table
-
 
 def plot_write_heatmap_chart_feature_signal_observations(
     name=None,
@@ -1033,13 +952,6 @@ def control_procedure_part_branch(
 
     # Create and write to file charts to represent distribution of
     # signals.
-    table_plot = organize_table_for_plot(
-        table=pail["table_summary"],
-        column_identifier="identifier_gene",
-        column_name="gene_name",
-        match_columns_signal="_mean",
-        report=report,
-    )
     plot_write_heatmap_chart_feature_signal_observations(
         name=name_instance,
         table=table_plot,

@@ -2870,6 +2870,8 @@ def create_write_chart_feature_signal_observations_distribution(
             names_groups.append(name_group)
             values_groups.append(values)
         pass
+    # Specify colors.
+
     # Create figure.
     figure = pplot.plot_boxes_groups(
         values_groups=values_groups,

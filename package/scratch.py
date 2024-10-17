@@ -443,6 +443,216 @@ def read_organize_source_parameter_instances(
 
 
 
+##########
+# Plot charts.
+
+
+def create_plot_chart_box(
+    table=None,
+    column_feature=None,
+    column_group=None,
+):
+    """
+    Create and plot a chart of the box type.
+
+    Original source table must not have an explicitly defined index across
+    rows.
+
+    Review: TCW; 16 October 2024
+
+    arguments:
+        table (object): Pandas data-frame table of floating-point values on
+            continuous interval or ratio scales of measurement
+        column_feature (str): name of column for values corresponding to a
+            specific feature
+        column_group (str): name of column to use for groups
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    ##########
+    # Organize information for plot.
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Organize indices in table.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table.set_index(
+        [column_group],
+        append=False,
+        drop=True,
+        inplace=True
+    )
+    # Split rows within table by factor columns.
+    groups = table.groupby(
+        level=column_group,
+    )
+    # Collect information.
+    names_groups = list()
+    values_groups = list()
+    # Iterate on groups, apply operations, and collect information from each.
+    for name_group, table_group in groups:
+        # Copy information in table.
+        table_group = table_group.copy(deep=True)
+        # Extract information.
+        values = table_group[column_feature].dropna().to_numpy(
+            dtype="float64",
+            na_value=numpy.nan,
+            copy=True,
+        )
+        # Collect information.
+        names_groups.append(name_group)
+        values_groups.append(values)
+        pass
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Create figure.
+    figure = pplot.plot_boxes_groups(
+        values_groups=values_groups,
+        title_ordinate="scale-normal(gene signal)",
+        title_abscissa="",
+        titles_abscissa_groups=names_groups,
+        colors_groups=None,
+        label_top_center="",
+        label_top_left="",
+        label_top_right="",
+        aspect="landscape",
+        orientation_box="vertical",
+        axis_linear_minimum=0.0,
+        fonts=fonts,
+        colors=colors,
+    )
+
+    # Return information.
+    return figure
+
+
+
+
+
+def manage_plot_charts(
+    table_box=None,
+    table_heatmap_individual=None,
+    table_heatmap_mean=None,
+    box_features=None,
+    box=None,
+    heatmap_individual=None,
+    heatmap_mean=None,
+    report=None,
+):
+    """
+    Plot chart representations of values of signal intensity for features
+    across sample observations or groups of sample observations.
+
+    arguments:
+        name (str): name for instance set of information and parameters
+            corresponding to the chart
+        table_box (object): Pandas data-frame table of values of signal
+            intensity for features across columns and sample observations
+            in groups across rows
+        table_heatmap_individual (object): Pandas data-frame table of values of
+            signal intensity for features across columns and sample
+            observations in groups across rows
+        table_heatmap_mean (object): Pandas data-frame table of descriptive
+            statistics for values of signal intensity for features across
+            rows and groups of sample observations across columns
+        box_features (list<str>): identifiers of features for which to create
+            box charts
+        box (bool): whether to create box charts
+        heatmap_individual (bool): whether to create heatmap chart for
+            individual values of signal intensity
+        heatmap_mean (bool): whether to create heatmap chart for means of
+            signal intensity
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of figure objects from MatPlotLib
+
+    """
+
+    # Copy information in table.
+    table_box = table_box.copy(deep=True)
+    table_heatmap_individual = table_heatmap_individual.copy(deep=True)
+    table_heatmap_mean = table_heatmap_mean.copy(deep=True)
+    # Copy other information.
+    box_features = copy.deepcopy(box_features)
+
+    ##########
+    # Box
+    if box:
+        figures_box = list()
+        for feature in box_features:
+            record_box = dict()
+            record_box["feature"] = feature
+            record_box["name"] = str("box_" + feature)
+            record_box["figure"] = create_plot_chart_box(
+                table=table_box,
+                column_feature=feature,
+                column_group="group",
+            )
+            figures_box.append(record_box)
+            pass
+    else:
+        figures_box = None
+        pass
+
+
+    ##########
+    # Heatmap Individual
+    if heatmap_individual:
+        figure_heatmap_individual = None
+    else:
+        figure_heatmap_individual = None
+        pass
+
+
+    ##########
+    # Heatmap Mean
+    if heatmap_mean:
+        figure_heatmap_mean = None
+    else:
+        figure_heatmap_mean = None
+        pass
+
+    ##########
+    # Collect information.
+    pail = dict()
+    pail["box"] = figures_box
+    pail["heatmap_individual"] = figure_heatmap_individual
+    pail["heatmap_mean"] = figure_heatmap_mean
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: partner.description.py")
+        function = str(
+            "manage_plot_charts" +
+            "()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=4)
+
+    # Return information.
+    return pail
+
+
+
+
 ###############################################################################
 # Procedure
 
@@ -460,16 +670,19 @@ def read_organize_source_parameter_instances(
 #3. write tables to file
 #_. write plots to file
 
+# WORK ON THE PLOTS FIRST!!! PRIORITY!!! SOMETHING TO SHOW
 # 2. new low-level driver function
 #    use information from the tables above to prepare plot charts
-#    1. box plots
+#    1. box plots (clustered table 3)
 #    2. heat map for the summary information (table 6, I think)
 #    3. heat map with group bar for clustered individual signals (clustered table 3)
 #  arguments:
-#    bar_chart: True/False
+#    table_box=table_2
+#    table_heatmap_individual=table_3
+#    table_heatmap_mean=table_6
+#    box_chart: True/False
 #    heatmap_mean: True/False
-#    heatmap_median: True/False
-#    heatmap_groups_individuals: True/False
+#    heatmap_individual: True/False
 #    report: True/False
 
 
@@ -645,64 +858,70 @@ def execute_procedure(
 
     ##################
     # Prepare basic tables.
-    pail = pdesc.extract_describe_signals_for_features_in_observations_groups(
-        table=pail_source["table_signal"],
-        index_features="identifier_gene",
-        index_observations="identifier_sample", # assigned in new tables
-        features=identifiers_genes_available,
-        groups_observations=collections_groups_observations[0],
-        translations_features=translations_gene,
-        translations_observations=None,
-        report=report,
-    )
+    pail_tables = (
+        pdesc.extract_describe_signals_for_features_in_observations_groups(
+            table=pail_source["table_signal"],
+            index_features="identifier_gene",
+            index_observations="identifier_sample", # assigned in new tables
+            features=identifiers_genes_available,
+            groups_observations=collections_groups_observations[0],
+            translations_features=translations_gene,
+            translations_observations=None,
+            report=report,
+    ))
     #pail["table_3"] <-- clustered heatmap of individual signals
     #pail["table_6"] <-- simple heatmap of means
 
     ###################
     # Cluster table for heatmap of individual signals
 
-    # Cluster rows in table within groups.
-    table_3_cluster = porg.cluster_table_rows_by_group(
-        table=pail["table_3"],
-        index_rows="identifier_sample",
-        column_group="group",
-    )
-    # Organize indices in table.
-    table_3_cluster.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
-    table_3_cluster.set_index(
-        ["identifier_sample", "group"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    # Cluster columns in table.
-    table_3_cluster = porg.cluster_table_columns(
-        table=table_3_cluster,
-    )
-    table_3_cluster.index = pandas.MultiIndex.from_tuples(
-        table_3_cluster.index,
-        names=["identifier_sample", "group"]
-    )
-    # Organize indices in table.
-    table_3_cluster.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
+#  arguments:
+#    table_box=table_2
+#    table_heatmap_individual=table_3
+#    table_heatmap_mean=table_6
+#    box_chart: True/False
+#    heatmap_mean: True/False
+#    heatmap_individual: True/False
+#    report: True/False
 
-    print("!!!!!!!!!!!!!!!!!!!!!!!!! table after cluster !!!!!!!!!!!!!!!!!")
-    print(table_3_cluster)
 
+    ##################
+    # Plot charts.
+    pail_plot = manage_plot_charts(
+        table_box=pail_tables["table_2"],
+        table_heatmap_individual=pail_tables["table_3"],
+        table_heatmap_mean=pail_tables["table_6"],
+        box_features=["OXT",],
+        box=True,
+        heatmap_individual=False,
+        heatmap_mean=False,
+        report=report,
+    )
+    #pail["heatmap_mean"]
+
+    ##########
+    # Collect information.
+    pail_write_plot = dict()
+    if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
+        for record_box in pail_plot["box"]:
+            pail_write_plot[record_box["name"]] = record_box["figure"]
+            pass
+        pass
+    #pail_write_plot["heatmap_individual"] = pail_plot["heatmap_individual"]
+    #pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
 
     ##########
     # _. Write product information to file.
     #paths["out_data"]
     #paths["out_plot"]
 
+    # Write figures to file.
+    pplot.write_product_plots_parent_directory(
+    pail_write=pail_write_plot,
+    format="jpg", # jpg, png, svg
+    resolution=150,
+    path_directory=paths["out_plot"],
+)
 
     pass
 
