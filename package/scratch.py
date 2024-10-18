@@ -765,7 +765,8 @@ def create_plot_chart_heatmap_mean(
 
 def manage_plot_charts(
     table_box=None,
-    table_heatmap_individual=None,
+    table_heatmap_individual_1=None,
+    table_heatmap_individual_2=None,
     table_heatmap_mean=None,
     box_features=None,
     box=None,
@@ -783,8 +784,11 @@ def manage_plot_charts(
         table_box (object): Pandas data-frame table of values of signal
             intensity for features across columns and sample observations
             in groups across rows
-        table_heatmap_individual (object): Pandas data-frame table of values of
-            signal intensity for features across columns and sample
+        table_heatmap_individual_1 (object): Pandas data-frame table of values
+            of signal intensity for features across columns and sample
+            observations in groups across rows
+        table_heatmap_individual_2 (object): Pandas data-frame table of values
+            of signal intensity for features across columns and sample
             observations in groups across rows
         table_heatmap_mean (object): Pandas data-frame table of descriptive
             statistics for values of signal intensity for features across
@@ -807,7 +811,8 @@ def manage_plot_charts(
 
     # Copy information in table.
     table_box = table_box.copy(deep=True)
-    table_heatmap_individual = table_heatmap_individual.copy(deep=True)
+    table_heatmap_individual_1 = table_heatmap_individual_1.copy(deep=True)
+    table_heatmap_individual_2 = table_heatmap_individual_2.copy(deep=True)
     table_heatmap_mean = table_heatmap_mean.copy(deep=True)
     # Copy other information.
     box_features = copy.deepcopy(box_features)
@@ -836,15 +841,23 @@ def manage_plot_charts(
     ##########
     # Heatmap Individual
     if heatmap_individual:
-        figure_heatmap_individual = create_plot_chart_heatmap_individual(
-            table=table_heatmap_individual,
+        figure_heatmap_individual_1 = create_plot_chart_heatmap_individual(
+            table=table_heatmap_individual_1,
+            index_columns="identifier_gene",
+            index_rows="identifier_sample",
+            column_group="group",
+            report=report,
+        )
+        figure_heatmap_individual_2 = create_plot_chart_heatmap_individual(
+            table=table_heatmap_individual_2,
             index_columns="identifier_gene",
             index_rows="identifier_sample",
             column_group="group",
             report=report,
         )
     else:
-        figure_heatmap_individual = None
+        figure_heatmap_individual_1 = None
+        figure_heatmap_individual_2 = None
         pass
 
 
@@ -865,7 +878,8 @@ def manage_plot_charts(
     # Collect information.
     pail = dict()
     pail["box"] = figures_box
-    pail["heatmap_individual"] = figure_heatmap_individual
+    pail["heatmap_individual_1"] = figure_heatmap_individual_1
+    pail["heatmap_individual_2"] = figure_heatmap_individual_2
     pail["heatmap_mean"] = figure_heatmap_mean
 
     # Report.
@@ -1091,8 +1105,6 @@ def execute_procedure(
             translations_observations=None,
             report=report,
     ))
-    #pail["table_3"] <-- clustered heatmap of individual signals
-    #pail["table_6"] <-- simple heatmap of means
 
     ###################
     # Cluster table for heatmap of individual signals
@@ -1109,16 +1121,20 @@ def execute_procedure(
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_3!!!!!!!!!!!!!!!!!!!")
     print(pail_tables["table_3"])
 
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_6!!!!!!!!!!!!!!!!!!!")
-    print(pail_tables["table_6"])
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_4!!!!!!!!!!!!!!!!!!!")
+    print(pail_tables["table_4"])
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_7!!!!!!!!!!!!!!!!!!!")
+    print(pail_tables["table_7"])
 
 
     ##################
     # Plot charts.
     pail_plot = manage_plot_charts(
         table_box=pail_tables["table_2"],
-        table_heatmap_individual=pail_tables["table_3"],
-        table_heatmap_mean=pail_tables["table_6"],
+        table_heatmap_individual_1=pail_tables["table_3"],
+        table_heatmap_individual_2=pail_tables["table_4"],
+        table_heatmap_mean=pail_tables["table_7"],
         box_features=[
             "OXT",
             "PNPLA3",
@@ -1147,7 +1163,8 @@ def execute_procedure(
             pail_write_plot[record_box["name"]] = record_box["figure"]
             pass
         pass
-    pail_write_plot["heatmap_individual"] = pail_plot["heatmap_individual"]
+    pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
+    pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
     pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
 
     ##########

@@ -1770,11 +1770,95 @@ def define_keep_types_gene_narrow():
     return types_gene
 
 
+def define_keep_gene_chromosomes(
+    remove_sex_chromosomes=None,
+):
+    """
+    Defines the categorical types of genes for which to keep rows in the main
+    table.
+
+    Reference:
+    https://www.gencodegenes.org/pages/biotypes.html
+
+    arguments:
+        remove_sex_chromosomes (bool): whether to remove all genes on sex
+            chromosomes
+
+    raises:
+
+    returns:
+        (list<str>): identifiers of chromosomes for which to keep genes
+
+    """
+
+    # Specify categorical types.
+    if remove_sex_chromosomes:
+        chromosomes = [
+            "chr1",
+            "chr2",
+            "chr3",
+            "chr4",
+            "chr5",
+            "chr6",
+            "chr7",
+            "chr8",
+            "chr9",
+            "chr10",
+            "chr11",
+            "chr12",
+            "chr13",
+            "chr14",
+            "chr15",
+            "chr16",
+            "chr17",
+            "chr18",
+            "chr19",
+            "chr20",
+            "chr21",
+            "chr22",
+            #"chrX",
+            #"chrY",
+            "chrM",
+        ]
+    else:
+        chromosomes = [
+            "chr1",
+            "chr2",
+            "chr3",
+            "chr4",
+            "chr5",
+            "chr6",
+            "chr7",
+            "chr8",
+            "chr9",
+            "chr10",
+            "chr11",
+            "chr12",
+            "chr13",
+            "chr14",
+            "chr15",
+            "chr16",
+            "chr17",
+            "chr18",
+            "chr19",
+            "chr20",
+            "chr21",
+            "chr22",
+            "chrX",
+            "chrY",
+            "chrM",
+        ]
+    # Return information.
+    return chromosomes
+
+
 def determine_keep_series_by_identity(
     row_identifier=None,
     row_type=None,
+    row_chromosome=None,
     identifier_prefix=None,
     types_gene=None,
+    chromosomes=None,
 ):
     """
     Determines whether to keep a row from a table.
@@ -1782,8 +1866,11 @@ def determine_keep_series_by_identity(
     arguments:
         row_identifier (str): current row's identifier of gene
         row_type (str): current row's type of gene
+        row_chromosome (str): identifier of chromosome of gene
         identifier_prefix (str): prefix in identifier of gene to keep
         types_gene (list<str>): types of gene to keep
+        chromosomes (list<str>): identifiers of chromosomes for which to keep
+            genes
 
     raises:
 
@@ -1798,7 +1885,8 @@ def determine_keep_series_by_identity(
         (pandas.notna(row_identifier)) and
         (len(str(row_identifier)) > 0) and
         (str(identifier_prefix) in str(row_identifier)) and
-        (str(row_type) in types_gene)
+        (str(row_type) in types_gene) and
+        (str(row_chromosome) in chromosomes)
     ):
         indicator = 1
     else:
@@ -1974,6 +2062,7 @@ def filter_table_main(
     samples_control=None,
     samples_intervention=None,
     filter_rows_identity=None,
+    remove_sex_chromosomes=None,
     filter_rows_signal=None,
     filter_rows_signal_by_condition=None,
     threshold_signal_low=None,
@@ -2013,6 +2102,8 @@ def filter_table_main(
             intervention experimental condition corresponding to names of
             columns for measurement values of signal intensity across features
         filter_rows_identity (bool): whether to filter rows by identity
+        remove_sex_chromosomes (bool): whether to remove all genes on sex
+            chromosomes
         filter_rows_signal (bool): whether to filter rows by signal
         filter_rows_signal_by_condition (bool): whether to filter rows by
             signal with separate consideration of columns for different
@@ -2058,13 +2149,18 @@ def filter_table_main(
     # Filter rows within table on basis of gene feature identity.
     if filter_rows_identity:
         types_gene = define_keep_types_gene_narrow()
+        chromosomes = define_keep_gene_chromosomes(
+            remove_sex_chromosomes=remove_sex_chromosomes,
+        )
         table_filter["match_keep_identity"] = table_filter.apply(
             lambda row:
                 determine_keep_series_by_identity(
                     row_identifier=row["identifier_gene"],
                     row_type=row["gene_type"],
+                    row_chromosome=row["gene_chromosome"],
                     identifier_prefix="ENSG",
                     types_gene=types_gene,
+                    chromosomes=chromosomes,
                 ),
             axis="columns", # apply function to each row
         )
@@ -2139,6 +2235,11 @@ def filter_table_main(
             "counts of genes with each unique categorical value of "
             + "gene type:")
         print(table_filter["gene_type"].value_counts(dropna=False))
+        putly.print_terminal_partition(level=5)
+        print(
+            "counts of genes with each unique categorical value of "
+            + "gene chromosome:")
+        print(table_filter["gene_chromosome"].value_counts(dropna=False))
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -3314,11 +3415,12 @@ def control_procedure_part_branch_signal(
         samples_control=[],
         samples_intervention=[],
         filter_rows_identity=True,
+        remove_sex_chromosomes=True,
         filter_rows_signal=True,
-        filter_rows_signal_by_condition=False,
+        filter_rows_signal_by_condition=False, # separate cases from controls
         threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
         threshold_signal_high=None,
-        proportion_signal_all=0.5, # proportion of smaller condition to total
+        proportion_signal_all=0.33, # proportion of smaller condition to total
         proportion_signal_control=0.5, # inactive
         proportion_signal_intervention=0.5, # inactive
         tissue=tissue,
