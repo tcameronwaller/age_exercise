@@ -3415,7 +3415,7 @@ def control_procedure_part_branch_signal(
         samples_control=[],
         samples_intervention=[],
         filter_rows_identity=True,
-        remove_sex_chromosomes=True,
+        remove_sex_chromosomes=True, # exclude chromosomes X and Y
         filter_rows_signal=True,
         filter_rows_signal_by_condition=False, # separate cases from controls
         threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
