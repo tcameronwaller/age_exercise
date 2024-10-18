@@ -469,7 +469,6 @@ def define_sequence_columns_novel_sample_feature():
         #"tertiles_body_fat_percent",
         #"tertiles_insulin_sensitivity",
         #"tertiles_activity_steps",
-        "cohort_age_text_by_sex_text",
     ]
     # Return information.
     return columns_sequence
@@ -762,7 +761,6 @@ def organize_table_sample_attribute(
     table=None,
     translations_column=None,
     columns_original=None,
-    columns_interaction=None,
     columns_novel=None,
     report=None,
 ):
@@ -779,9 +777,6 @@ def organize_table_sample_attribute(
             table
         columns_original (list<str>): names of original columns in sequence by
             which to filter and sort columns in table
-        columns_interaction (dict<str>): names of columns for interaction
-            combinations of categorical factor variables and their specific
-            single values for designation as not 'other'
         columns_novel (list<str>): names of original columns in sequence by
             which to filter and sort columns in table
         report (bool): whether to print reports
@@ -798,7 +793,6 @@ def organize_table_sample_attribute(
     # Copy other information.
     translations_column = copy.deepcopy(translations_column)
     columns_original = copy.deepcopy(columns_original)
-    columns_interaction = copy.deepcopy(columns_interaction)
     columns_novel = copy.deepcopy(columns_novel)
 
     # Translate names of columns to remove white space.
@@ -890,6 +884,85 @@ def organize_table_sample_attribute(
         value=pandas.NA,
     )
 
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "cohort_age",
+            "intervention",
+            "identifier_subject_attribute",
+            "study_clinic_visit_relative",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
+    # Filter and sort columns within table.
+    #columns_sequence.insert(0, column_index)
+    columns_sequence = copy.deepcopy(columns_original)
+    columns_sequence.extend(columns_novel)
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+
+    # Collect information.
+    pail = dict()
+    pail["columns_sequence"] = columns_sequence
+    pail["table"] = table
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.proteomics.organize_sample_olink.py")
+        print("function: organize_table_sample_attribute()")
+        putly.print_terminal_partition(level=5)
+        print("table of attributes for samples: ")
+        print(pail["table"].iloc[0:10, 0:])
+        print(pail["table"])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
+
+
+# TODO: TCW; 18 October 2024
+# This function could additionally prepare binary "dummies" for categories
+# and then calculate the product combinations for interaction effects.
+
+
+def organize_table_sample_interaction_combinations(
+    table=None,
+    columns_interaction=None,
+    report=None,
+):
+    """
+    Organizes information in table that provides attributes of samples.
+
+    This function prepares combinations of categorical features for analysis of
+    interaction effects.
+
+    arguments:
+        table (object): Pandas data-frame table of subjects, samples, and their
+            attribute features
+        columns_interaction (dict<str>): names of columns for interaction
+            combinations of categorical factor variables and their specific
+            single values for designation as not 'other'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    columns_interaction = copy.deepcopy(columns_interaction)
+
     # Define interaction combinations of categorical factor variables.
     #interactions = define_interaction_combination_categorical_factor()
     for interaction in columns_interaction.keys():
@@ -914,41 +987,33 @@ def organize_table_sample_attribute(
         )
         pass
 
-    # Sort rows within table.
-    table.sort_values(
-        by=[
-            "cohort_age",
-            "intervention",
-            "identifier_subject_attribute",
-            "study_clinic_visit_relative",
-        ],
-        axis="index",
-        ascending=True,
-        na_position="last",
-        inplace=True,
-    )
     # Filter and sort columns within table.
-    #columns_sequence.insert(0, column_index)
-    columns_sequence = copy.deepcopy(columns_original)
-    columns_sequence.extend(columns_novel)
-    table = porg.filter_sort_table_columns(
-        table=table,
-        columns_sequence=columns_sequence,
-        report=report,
-    )
+    # TODO: TCW; 18 October 2024
+    # Consider whether to filter columns again at this point.
+
+    # Collect information.
+    pail = dict()
+    pail["columns_interaction"] = columns_interaction
+    pail["table"] = table
+
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.proteomics.organize_sample_olink.py")
-        print("function: organize_table_sample_attribute()")
+        print("function: organize_table_sample_interaction_combinations()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
-        print(table.iloc[0:10, 0:])
-        print(table)
+        print(pail["table"].iloc[0:10, 0:])
+        print(pail["table"])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
-    return table
+    return pail
+
+
+
+
+
 
 
 # TODO: TCW; 2024-08-27

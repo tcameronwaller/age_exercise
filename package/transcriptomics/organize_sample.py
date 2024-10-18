@@ -1133,18 +1133,15 @@ def execute_procedure(
         report=report,
     )
     columns_original = pail_parse["columns_all"]
-    columns_interaction = (
-        expr_sample.define_interaction_combination_categorical_factor()
-    )
     columns_novel = expr_sample.define_sequence_columns_novel_sample_feature()
-    table_sample_attribute = expr_sample.organize_table_sample_attribute(
+    pail_sample_attribute = expr_sample.organize_table_sample_attribute(
         table=pail_source["table_sample_attribute"],
         translations_column=pail_parse["translations_column"],
         columns_original=columns_original,
-        columns_interaction=columns_interaction,
         columns_novel=columns_novel,
         report=report,
     )
+    table_sample_attribute = pail_sample_attribute["table"]
 
     ##########
     # 4. Organize table of matches between samples and files.
@@ -1164,7 +1161,7 @@ def execute_procedure(
     columns_transfer = copy.deepcopy(columns_original)
     columns_transfer.extend(columns_novel)
     columns_transfer.remove("match_sample_attribute_file_transcriptomics")
-    table_sample = combine_table_sample_file_attribute(
+    table_sample_merge = combine_table_sample_file_attribute(
         table_sample_file=table_sample_file,
         table_sample_attribute=table_sample_attribute,
         columns_transfer=columns_transfer,
@@ -1172,9 +1169,21 @@ def execute_procedure(
     )
 
     ##########
+    # 6. Prepare combinations of variables for analyses of interaction.
+    columns_interaction = (
+        expr_sample.define_interaction_combination_categorical_factor()
+    )
+    pail_interaction = (
+        expr_sample.organize_table_sample_interaction_combinations(
+            table=table_sample_merge,
+            columns_interaction=columns_interaction,
+            report=report,
+    ))
+
+    ##########
     # 6. Describe factors in table of samples.
     describe_table_sample_factors(
-        table_sample=table_sample,
+        table_sample=pail_interaction["table"],
         report=report,
     )
 
@@ -1183,7 +1192,7 @@ def execute_procedure(
     if False:
         selections = define_selections_sample_set()
         describe_table_sample_sets(
-            table_sample=table_sample,
+            table_sample=pail_interaction["table"],
             selections=selections,
             report=report,
         )
@@ -1192,7 +1201,7 @@ def execute_procedure(
     # Collect information.
     # Collections of files.
     pail_write_tables = dict()
-    pail_write_tables[str("table_sample")] = table_sample
+    pail_write_tables[str("table_sample")] = pail_interaction["table"]
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
 
