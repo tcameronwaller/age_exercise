@@ -916,12 +916,8 @@ def manage_plot_charts(
 #3. write tables to file
 #_. write plots to file
 
-# TODO: TCW; 17 October 2024
-# 1. Create legend on the chart for the heatmap with groups
-# 2. Create a new table that is clustered across all rows without restriction by group
-# 3. Plot that new clustered table in a heatmap.
-
-
+# TODO: TCW; 18 October 2024
+# plan to pass in the parameter table the name of a text file in a directory for lists of genes
 
 
 def execute_procedure(
@@ -1004,19 +1000,87 @@ def execute_procedure(
     ################################
     # Parameters for future function...
     index_genes = "identifier_gene"
-    identifiers_genes = [
-        "ENSG00000101405",
-        "ENSG00000100344",
-        "ENSG00000164530",
-        "ENSG00000146674",
-        "ENSG00000183785",
-        "ENSG00000183671",
-        "ENSG00000196169",
-        "ENSG00000176387",
-        "ENSG00000196208",
-        "ENSG00000099337",
-        "ENSG00000114737",
-    ]
+    if True: # genes for age*sex interaction
+        identifiers_genes = [
+            "ENSG00000101405",
+            "ENSG00000100344",
+            "ENSG00000164530",
+            "ENSG00000146674",
+            "ENSG00000183785",
+            "ENSG00000183671",
+            "ENSG00000196169",
+            "ENSG00000176387",
+            "ENSG00000196208",
+            "ENSG00000099337",
+            "ENSG00000114737",
+        ]
+    if False: # genes for age*sex interaction
+        identifiers_genes = [
+            "ENSG00000171864",
+            "ENSG00000101251",
+            "ENSG00000165731",
+            "ENSG00000012223",
+            "ENSG00000186832",
+            "ENSG00000164488",
+            "ENSG00000170476",
+            "ENSG00000135480",
+            "ENSG00000138722",
+            "ENSG00000254709",
+            "ENSG00000166923",
+            "ENSG00000087495",
+            "ENSG00000129354",
+            "ENSG00000181374",
+            "ENSG00000164530",
+            "ENSG00000175084",
+            "ENSG00000132465",
+            "ENSG00000144331",
+            "ENSG00000112319",
+            "ENSG00000105664",
+            "ENSG00000159307",
+            "ENSG00000188338",
+            "ENSG00000186439",
+            "ENSG00000176204",
+            "ENSG00000106078",
+            "ENSG00000126545",
+            "ENSG00000060718",
+            "ENSG00000187889",
+            "ENSG00000172367",
+            "ENSG00000196208",
+            "ENSG00000180777",
+            "ENSG00000255501",
+            "ENSG00000206384",
+            "ENSG00000183463",
+            "ENSG00000197891",
+            "ENSG00000130226",
+            "ENSG00000119283",
+            "ENSG00000118785",
+            "ENSG00000064886",
+            "ENSG00000216921",
+            "ENSG00000103460",
+            "ENSG00000215218",
+            "ENSG00000100346",
+            "ENSG00000181656",
+            "ENSG00000103034",
+            "ENSG00000198650",
+            "ENSG00000012223",
+            "ENSG00000169218",
+            "ENSG00000172379",
+            "ENSG00000115041",
+            "ENSG00000168913",
+            "ENSG00000159212",
+            "ENSG00000115112",
+            "ENSG00000160111",
+            "ENSG00000198734",
+            "ENSG00000073734",
+            "ENSG00000185053",
+        ]
+
+    # Collect unique names of features.
+    identifiers_genes = putly.collect_unique_elements(
+        elements=identifiers_genes,
+    )
+
+
     #collections_groups_observations[0] <-- argument to new function... determine separately
     # translations_gene <-- argument to new function... determine separately
 
@@ -1176,7 +1240,7 @@ def execute_procedure(
     pplot.write_product_plots_parent_directory(
     pail_write=pail_write_plot,
     format="jpg", # jpg, png, svg
-    resolution=150,
+    resolution=300,
     path_directory=paths["out_plot"],
 )
 
