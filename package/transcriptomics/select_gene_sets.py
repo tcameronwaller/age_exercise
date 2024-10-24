@@ -392,10 +392,11 @@ def read_source(
         paths["out_routine"], "deseq2", tissue, group,
         str("table_result_deseq2_" + name_instance + ".tsv"),
     )
-    path_file_table_gene_emphasis = os.path.join(
-        paths["in_parameters_private"], "gene_sets_emphasis",
-        "table_gene_reference_adipose.tsv",
-    )
+    if False:
+        path_file_table_gene_emphasis = os.path.join(
+            paths["in_parameters_private"], "gene_sets_emphasis",
+            "table_gene_reference_adipose.tsv",
+        )
 
     # Collect information.
     pail = dict()
@@ -414,35 +415,36 @@ def read_source(
         encoding="utf-8",
     )
 
-    # Table of information about genes for special emphasis.
-    types_columns = define_column_types_table_gene_emphasis()
-    table_gene_emphasis = pandas.read_csv(
-        path_file_table_gene_emphasis,
-        sep="\t",
-        header=0,
-        dtype=types_columns,
-        na_values=[
-            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
-        ],
-        encoding="utf-8",
-    )
     if False:
-        pail["table_gene_emphasis"] = table_gene_emphasis.loc[
-            (
-                (table_gene_emphasis["aerobic_acute"] == 1) |
-                (table_gene_emphasis["aerobic_chronic"] == 1) |
-                (table_gene_emphasis["resistance_acute"] == 1) |
-                (table_gene_emphasis["resistance_chronic"] == 1) |
-                (table_gene_emphasis["inactivity"] == 1)
-            ), :
-        ]
-    if True:
-        set = "inclusion"
-        pail["table_gene_emphasis"] = table_gene_emphasis.loc[
-            (
-                (table_gene_emphasis[set] == 1)
-            ), :
-        ]
+        # Table of information about genes for special emphasis.
+        types_columns = define_column_types_table_gene_emphasis()
+        table_gene_emphasis = pandas.read_csv(
+            path_file_table_gene_emphasis,
+            sep="\t",
+            header=0,
+            dtype=types_columns,
+            na_values=[
+                "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+            ],
+            encoding="utf-8",
+        )
+        if False:
+            pail["table_gene_emphasis"] = table_gene_emphasis.loc[
+                (
+                    (table_gene_emphasis["aerobic_acute"] == 1) |
+                    (table_gene_emphasis["aerobic_chronic"] == 1) |
+                    (table_gene_emphasis["resistance_acute"] == 1) |
+                    (table_gene_emphasis["resistance_chronic"] == 1) |
+                    (table_gene_emphasis["inactivity"] == 1)
+                ), :
+            ]
+        if True:
+            set = "inclusion"
+            pail["table_gene_emphasis"] = table_gene_emphasis.loc[
+                (
+                    (table_gene_emphasis[set] == 1)
+                ), :
+            ]
 
     # Report.
     if report:
@@ -461,6 +463,9 @@ def read_source(
         pass
     # Return information.
     return pail
+
+
+
 
 
 ##########
@@ -1032,7 +1037,7 @@ def control_procedure_part_branch(
         column_name="gene_name",
         column_fold_change="fold_change_log2",
         column_significance="q_value_fill",
-        threshold_fold_change=math.log(float(1.0), 2), # base two logarithm
+        threshold_fold_change=math.log(float(2.0), 2), # base two logarithm
         threshold_significance=float(0.05),
         tissue=tissue,
         name_instance=name_instance,
@@ -1055,9 +1060,7 @@ def control_procedure_part_branch(
 
     ##########
     # 6. Create chart to represent fold changes and write to file.
-    identifiers_emphasis = (
-        pail_source["table_gene_emphasis"]["gene_identifier_base"].to_list()
-    )
+    identifiers_emphasis = []
     plot_write_chart_fold_change_volcano(
         table=pail_organization["table"],
         column_identifier="gene_identifier_base",
@@ -1066,7 +1069,7 @@ def control_procedure_part_branch(
         column_plot_p="p_value_negative_log10",
         column_fold_change="fold_change_log2",
         column_significance="q_value_fill",
-        threshold_fold_change=math.log(float(1.0), 2), # base two logarithm
+        threshold_fold_change=math.log(float(2.0), 2), # base two logarithm
         threshold_significance=float(0.05),
         identifiers_emphasis=identifiers_emphasis,
         tissue=tissue,

@@ -70,7 +70,6 @@ import partner.scale as pscl
 import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
-import partner.plot_cluster as pcplot
 import partner.parallelization as prall
 import exercise.transcriptomics.organize_signal as exrosig
 
@@ -317,8 +316,9 @@ def define_column_types_table_parameter_instances():
     types_columns["sort"] = "int32" # "int32"
     types_columns["group"] = "string"
     types_columns["instance"] = "string"
-    types_columns["cohort_selection_primary"] = "string"
-    types_columns["cohort_selection_secondary"] = "string"
+    types_columns["selection_samples_primary"] = "string"
+    types_columns["selection_samples_secondary"] = "string"
+    types_columns["name_set_gene"] = "string"
     types_columns["note"] = "string"
     # Return information.
     return types_columns
@@ -355,7 +355,7 @@ def read_organize_source_parameter_instances(
     # Define paths to child files.
     path_file_table_parameter = os.path.join(
         paths["in_parameters_private"], "transcriptomics",
-        "table_cohort_group_comparison.tsv",
+        "table_comparisons_genes_between_sample_groups.tsv",
     )
 
     # Read information from file.
@@ -388,28 +388,31 @@ def read_organize_source_parameter_instances(
                 str(row["sort"]),
                 str(row["instance"])
             ])
-            pail["cohort_selection_primary"] = (
+            # set: selection_samples_primary
+            pail["selection_samples_primary"] = (
                 putly.parse_extract_text_keys_values_semicolon_colon_comma(
-                    text=row["cohort_selection_primary"],
+                    text=row["selection_samples_primary"],
                 )
             )
-            pail["cohort_selection_secondary"] = (
+            # set: selection_samples_secondary
+            pail["selection_samples_secondary"] = (
                 putly.parse_extract_text_keys_values_semicolon_colon_comma(
-                    text=row["cohort_selection_secondary"],
+                    text=row["selection_samples_secondary"],
                 )
             )
+            pail["name_set_gene"] = str(row["name_set_gene"])
             # Extract names of columns corresponding to feature variables for
             # which to calculate tertiles.
             #columns_tertile = extract_source_columns_for_tertiles(
-            #    cohort_selection=pail["cohort_selection_secondary"],
+            #    selection_samples_set=pail["selection_samples_secondary"],
             #    report=report,
             #)
             # Collect names of unique features or columns relevant to current
             # instance.
             features = list()
             dictionaries = [
-                "cohort_selection_primary",
-                "cohort_selection_secondary",
+                "selection_samples_primary",
+                "selection_samples_secondary",
             ]
             for dictionary in dictionaries:
                 if pail[dictionary] is not None:
@@ -441,6 +444,51 @@ def read_organize_source_parameter_instances(
     # Return information.
     return instances
 
+
+def read_extract_set_genes(
+    name_set=None,
+    path_directory=None,
+    report=None,
+):
+    """
+    Reads and extracts from a source file the identifiers of genes in a set.
+
+    arguments:
+        name_set (str): name for a set of genes that corresponds to the name of
+            a file
+        path_directory (str): path to directory within which to find files of
+            sets of genes
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (list<str>): identifiers of genes from a set
+
+    """
+
+    # Define paths to files.
+    path_file = os.path.join(
+        path_directory, str(name_set + ".txt"),
+    )
+    # Read information from file.
+    genes_set = putly.read_file_text_list(
+        delimiter="\n",
+        path_file=path_file,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.select_gene_sets.py")
+        function = "read_extract_gene_set"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        count_items = len(genes_set)
+        print("count of items in set or list: " + str(count_items))
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return genes_set
 
 
 ##########
@@ -630,7 +678,7 @@ def create_plot_chart_heatmap_individual(
     # Define colors.
     colors = pplot.define_color_properties()
     # Create figure.
-    figure = pcplot.plot_heatmap_signal_label_features_groups_of_observations(
+    figure = pplot.plot_heatmap_signal_label_features_groups_of_observations(
         table=table,
         format_table=2, # 2: features in columns; observations, groups in rows
         index_columns=index_columns,
@@ -642,6 +690,7 @@ def create_plot_chart_heatmap_individual(
         constrain_signal_values=True,
         value_minimum=value_minimum,
         value_maximum=value_maximum,
+        show_labels_ordinate=True,
         labels_ordinate_categories=None,
         labels_abscissa_categories=None,
         show_scale_bar=True, # whether to show scale bar on individual figures
@@ -650,11 +699,11 @@ def create_plot_chart_heatmap_individual(
         title_bar="gene signal (z-score)",
         size_title_ordinate="eight", # ten
         size_title_abscissa="eight", # ten
-        size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
+        size_label_ordinate="seventeen", # multi-panel: ten; individual: twelve
         size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
         size_title_bar="twelve", # twelve
         size_label_bar="thirteen", # thirteen for whole; five for bar itself
-        aspect="landscape", # square, portrait, landscape, ...
+        aspect="portrait", # square, portrait, landscape, ...
         fonts=fonts,
         colors=colors,
         report=report,
@@ -741,6 +790,7 @@ def create_plot_chart_heatmap_mean(
         constrain_signal_values=True,
         value_minimum=value_minimum,
         value_maximum=value_maximum,
+        show_labels_ordinate=True,
         labels_ordinate_categories=None,
         labels_abscissa_categories=None,
         show_scale_bar=True, # whether to show scale bar on individual figures
@@ -764,6 +814,8 @@ def create_plot_chart_heatmap_mean(
 
 
 def manage_plot_charts(
+    index_features=None,
+    index_observations=None,
     table_box=None,
     table_heatmap_individual_1=None,
     table_heatmap_individual_2=None,
@@ -779,8 +831,8 @@ def manage_plot_charts(
     across sample observations or groups of sample observations.
 
     arguments:
-        name (str): name for instance set of information and parameters
-            corresponding to the chart
+        index_features (str): name for index corresponding to features
+        index_observations (str): name for index corresponding to observations
         table_box (object): Pandas data-frame table of values of signal
             intensity for features across columns and sample observations
             in groups across rows
@@ -843,15 +895,15 @@ def manage_plot_charts(
     if heatmap_individual:
         figure_heatmap_individual_1 = create_plot_chart_heatmap_individual(
             table=table_heatmap_individual_1,
-            index_columns="identifier_gene",
-            index_rows="identifier_sample",
+            index_columns=index_features,
+            index_rows=index_observations,
             column_group="group",
             report=report,
         )
         figure_heatmap_individual_2 = create_plot_chart_heatmap_individual(
             table=table_heatmap_individual_2,
-            index_columns="identifier_gene",
-            index_rows="identifier_sample",
+            index_columns=index_features,
+            index_rows=index_observations,
             column_group="group",
             report=report,
         )
@@ -904,20 +956,206 @@ def manage_plot_charts(
 
 
 ##########
+# Control procedure within branch for iteration.
+
+
+def control_procedure_part_branch(
+    name_group_instances=None,
+    instances_parameter=None,
+    table_sample=None,
+    table_gene=None,
+    table_signal=None,
+    index_genes=None,
+    index_samples=None,
+    paths=None,
+    report=None,
+):
+    """
+    Control branch of procedure.
+
+    arguments:
+        name_group_instances (str): name for a group of instances in the
+            collection of parameters
+        instances_parameter (list<dict>): collection of instances of parameters
+        table_sample (object): Pandas data-frame table of information about
+            samples
+        table_gene (object): Pandas data-frame table of information about genes
+        table_signal (object): Pandas data-frame table of values of signal
+            intensity corresponding to genes across rows and samples across
+            columns
+        index_genes (str): name for index corresponding to genes, which
+            is a column in the original source table of signals
+        index_samples (str): name for index corresponding to samples,
+            which is not a column in the original source table of signals but
+            will be in a novel product table
+        paths : (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Organize information.
+    # Copy information in table.
+    table_sample = table_sample.copy(deep=True)
+    table_gene = table_gene.copy(deep=True)
+    table_signal = table_signal.copy(deep=True)
+    # Copy other information.
+    instances_parameter = copy.deepcopy(instances_parameter)
+
+    ##########
+    # Extract parameters for instances in current group.
+    # Filter instances by group.
+    instances_group = list(filter(
+        lambda record: (str(record["group"]) == name_group_instances),
+        instances_parameter
+    ))
+
+    ##########
+    # Prepare information about samples in groups.
+    # Collect information.
+    groups_observations = dict()
+    # Iterate on instances of parameters in current group.
+    for instance in instances_group:
+        # Filter and extract identifiers of cohort sample observations
+        # corresponding to selection criteria for current instance.
+        observations = (
+            porg.filter_extract_table_row_identifiers_by_columns_categories(
+                table=table_sample,
+                column_identifier="identifier_signal",
+                name=instance["instance"], # or "name_instance"
+                columns_categories=instance["selection_samples_primary"],
+                report=report,
+        ))
+        # Collect information.
+        groups_observations[instance["instance"]] = observations
+        pass
+
+    ##########
+    # Prepare information about genes.
+    # Extract name of a set of genes.
+    name_set_gene = instances_group[0]["name_set_gene"]
+    # Read and extract identifiers of genes in set.
+    path_directory_sets_gene = os.path.join(
+        paths["in_parameters_private"], "transcriptomics", "sets_gene",
+    )
+    genes_set = read_extract_set_genes(
+        name_set=name_set_gene,
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    # Collect unique names of genes in set.
+    genes_set_unique = putly.collect_unique_elements(
+        elements=genes_set,
+    )
+    # Ensure that genes in set are in the table of signals.
+    genes_signal = copy.deepcopy(
+        table_signal[index_genes].unique().tolist()
+    )
+    genes_set_available = list(filter(
+        lambda gene: (gene in genes_signal),
+        genes_set_unique
+    ))
+    # Prepare translations for genes
+    table_gene_selection = table_gene.loc[(
+        table_gene["gene_identifier_base"].isin(genes_set_available)
+    ), :].copy(deep=True)
+    # Extract information for translation of names of columns.
+    table_translations = table_gene_selection.filter(
+        items=["gene_identifier_base", "gene_name",],
+        axis="columns",
+    )
+    series_translations = pandas.Series(
+        table_translations["gene_name"].to_list(),
+        index=table_translations["gene_identifier_base"],
+    )
+    translations_gene = series_translations.to_dict()
+    # Translate identifiers of genes in set.
+    genes_set_available_translation = copy.deepcopy(genes_set_available)
+    if (translations_gene is not None):
+        genes_set_available_translation = list(map(
+            lambda feature: (translations_gene[feature]),
+            genes_set_available
+        ))
+        pass
+
+
+    ##########
+    # Prepare basic tables.
+    pail_tables = (
+        pdesc.extract_describe_signals_for_features_in_observations_groups(
+            table=table_signal,
+            index_features=index_genes,
+            index_observations=index_samples, # assigned in new tables
+            features=genes_set_available,
+            groups_observations=groups_observations,
+            translations_features=translations_gene,
+            translations_observations=None,
+            report=report,
+    ))
+
+    count = len(genes_set_available)
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("count of unique and available features: " + str(count))
+    print("!!!!!!!!!!!!!!!!!!!!!!!!")
+
+    ##########
+    # Prepare plot charts.
+    pail_plot = manage_plot_charts(
+        index_features="identifier_gene",
+        index_observations="identifier_sample",
+        table_box=pail_tables["table_2"],
+        table_heatmap_individual_1=pail_tables["table_3"],
+        table_heatmap_individual_2=pail_tables["table_4"],
+        table_heatmap_mean=pail_tables["table_7"],
+        box_features=genes_set_available_translation,
+        box=True,
+        heatmap_individual=True,
+        heatmap_mean=True,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    pail_write_plot = dict()
+    if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
+        for record_box in pail_plot["box"]:
+            pail_write_plot[record_box["name"]] = record_box["figure"]
+            pass
+        pass
+    pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
+    pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
+    pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
+
+    ##########
+    # _. Write product information to file.
+    #paths["out_data"]
+    #paths["out_plot"]
+
+    # Define paths to directories.
+    path_directory_plot_group = os.path.join(
+        paths["out_plot"], str(name_group_instances),
+    )
+    # Create directories.
+    putly.create_directories(
+        path=path_directory_plot_group,
+    )
+    # Write figures to file.
+    pplot.write_product_plots_parent_directory(
+        pail_write=pail_write_plot,
+        format="jpg", # jpg, png, svg
+        resolution=300,
+        path_directory=path_directory_plot_group,
+    )
+    pass
+
+
+##########
 # Execute main procedure.
-
-
-# TODO: TCW; 16 October 2024
-# 1. Organize new high-level driver function
-# 2. organize a few new mid-level functions to organize necessary operations
-#    - reading in parameters for groups of observations
-#    - determining gene translations
-#    - etc
-#3. write tables to file
-#_. write plots to file
-
-# TODO: TCW; 18 October 2024
-# plan to pass in the parameter table the name of a text file in a directory for lists of genes
 
 
 def execute_procedure(
@@ -966,17 +1204,14 @@ def execute_procedure(
     )
 
     ##########
-    # 2. Read source information from file.
+    # 2. Read and organize source information from file.
     pail_source = read_source(
         paths=paths,
         report=report,
     )
-
-
     # Organize table of information about sample observations.
     table_sample = pail_source["table_sample"]
     table_sample["inclusion"] = table_sample["inclusion"].astype("str")
-
     # Organize table of information about signals.
     table_signal = pail_source["table_signal"]
     # Organize indices in table.
@@ -985,7 +1220,6 @@ def execute_procedure(
         inplace=True,
         drop=False, # remove index; do not move to regular columns
     )
-
     # Organize table of information about genes.
     table_gene = pail_source["table_gene"]
     # Organize indices in table.
@@ -995,254 +1229,37 @@ def execute_procedure(
         drop=False, # remove index; do not move to regular columns
     )
 
-
-
-    ################################
-    # Parameters for future function...
-    index_genes = "identifier_gene"
-    if True: # genes for age*sex interaction
-        identifiers_genes = [
-            "ENSG00000101405",
-            "ENSG00000100344",
-            "ENSG00000164530",
-            "ENSG00000146674",
-            "ENSG00000183785",
-            "ENSG00000183671",
-            "ENSG00000196169",
-            "ENSG00000176387",
-            "ENSG00000196208",
-            "ENSG00000099337",
-            "ENSG00000114737",
-        ]
-    if False: # genes for age*sex interaction
-        identifiers_genes = [
-            "ENSG00000171864",
-            "ENSG00000101251",
-            "ENSG00000165731",
-            "ENSG00000012223",
-            "ENSG00000186832",
-            "ENSG00000164488",
-            "ENSG00000170476",
-            "ENSG00000135480",
-            "ENSG00000138722",
-            "ENSG00000254709",
-            "ENSG00000166923",
-            "ENSG00000087495",
-            "ENSG00000129354",
-            "ENSG00000181374",
-            "ENSG00000164530",
-            "ENSG00000175084",
-            "ENSG00000132465",
-            "ENSG00000144331",
-            "ENSG00000112319",
-            "ENSG00000105664",
-            "ENSG00000159307",
-            "ENSG00000188338",
-            "ENSG00000186439",
-            "ENSG00000176204",
-            "ENSG00000106078",
-            "ENSG00000126545",
-            "ENSG00000060718",
-            "ENSG00000187889",
-            "ENSG00000172367",
-            "ENSG00000196208",
-            "ENSG00000180777",
-            "ENSG00000255501",
-            "ENSG00000206384",
-            "ENSG00000183463",
-            "ENSG00000197891",
-            "ENSG00000130226",
-            "ENSG00000119283",
-            "ENSG00000118785",
-            "ENSG00000064886",
-            "ENSG00000216921",
-            "ENSG00000103460",
-            "ENSG00000215218",
-            "ENSG00000100346",
-            "ENSG00000181656",
-            "ENSG00000103034",
-            "ENSG00000198650",
-            "ENSG00000012223",
-            "ENSG00000169218",
-            "ENSG00000172379",
-            "ENSG00000115041",
-            "ENSG00000168913",
-            "ENSG00000159212",
-            "ENSG00000115112",
-            "ENSG00000160111",
-            "ENSG00000198734",
-            "ENSG00000073734",
-            "ENSG00000185053",
-        ]
-
-    # Collect unique names of features.
-    identifiers_genes = putly.collect_unique_elements(
-        elements=identifiers_genes,
-    )
-
-
-    #collections_groups_observations[0] <-- argument to new function... determine separately
-    # translations_gene <-- argument to new function... determine separately
-
-    ############################
-    # Prepare translations for genes
-    # Ensure that all genes are in the table of signals.
-    genes_all = copy.deepcopy(
-        table_signal[index_genes].unique().tolist()
-    )
-    identifiers_genes_available = list(filter(
-        lambda gene: (gene in genes_all),
-        identifiers_genes
-    ))
-    # Prepare information about genes.
-    table_gene_selection = table_gene.loc[(
-        table_gene["gene_identifier_base"].isin(identifiers_genes_available)
-    ), :].copy(deep=True)
-    # Extract information for translation of names of columns.
-    table_translations = table_gene_selection.filter(
-        items=["gene_identifier_base", "gene_name",],
-        axis="columns",
-    )
-    series_translations = pandas.Series(
-        table_translations["gene_name"].to_list(),
-        index=table_translations["gene_identifier_base"],
-    )
-    translations_gene = series_translations.to_dict()
-
-
+    ##########
     # Read and organize information about parameters for instances.
     instances = read_organize_source_parameter_instances(
         paths=paths,
         report=report,
     )
-    collections = list()
+    # Organize information for groups of instances.
+    groups_instances = list()
     for instance in instances:
-        collections.append(instance["group"])
+        groups_instances.append(instance["group"])
     # Collect unique names of features.
-    collections_unique = putly.collect_unique_elements(
-        elements=collections,
+    groups_instances_unique = putly.collect_unique_elements(
+        elements=groups_instances,
     )
-    # Collect information.
-    collections_groups_observations = list()
-    # Iterate on groups of cohort instances.
-    for collection in collections_unique:
-        # Collect information.
-        groups_observations = dict()
-        # Filter instances by group.
-        instances_collection = list(filter(
-            lambda record: (str(record["group"]) == collection),
-            instances
-        ))
-        # Iterate on cohort instances in current group.
-        for instance in instances_collection:
-            # Filter and extract identifiers of cohort sample observations
-            # corresponding to selection criteria for current instance.
-            observations = (
-                porg.filter_extract_table_row_identifiers_by_columns_categories(
-                    table=table_sample,
-                    column_identifier="identifier_signal",
-                    name=instance["instance"], # or "name_instance"
-                    columns_categories=instance["cohort_selection_primary"],
-                    report=report,
-            ))
-            # Collect information.
-            groups_observations[instance["instance"]] = observations
-            pass
-        # Collect information.
-        collections_groups_observations.append(groups_observations)
-        pass
 
     ##########
-    # 3. Do stuff.
-
-
-    ##################
-    # Prepare basic tables.
-    pail_tables = (
-        pdesc.extract_describe_signals_for_features_in_observations_groups(
-            table=pail_source["table_signal"],
-            index_features="identifier_gene",
-            index_observations="identifier_sample", # assigned in new tables
-            features=identifiers_genes_available,
-            groups_observations=collections_groups_observations[0],
-            translations_features=translations_gene,
-            translations_observations=None,
+    # Iterate on groups of instances of parameters.
+    for group_instances in groups_instances_unique:
+        control_procedure_part_branch(
+            name_group_instances=group_instances,
+            instances_parameter=instances,
+            table_sample=table_sample,
+            table_gene=table_gene,
+            table_signal=table_signal,
+            index_genes="identifier_gene",
+            index_samples="identifier_sample",
+            paths=paths,
             report=report,
-    ))
-
-    ###################
-    # Cluster table for heatmap of individual signals
-
-    #  arguments:
-    #    table_box=table_2
-    #    table_heatmap_individual=table_3
-    #    table_heatmap_mean=table_6
-    #    box_chart: True/False
-    #    heatmap_mean: True/False
-    #    heatmap_individual: True/False
-    #    report: True/False
-
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_3!!!!!!!!!!!!!!!!!!!")
-    print(pail_tables["table_3"])
-
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_4!!!!!!!!!!!!!!!!!!!")
-    print(pail_tables["table_4"])
-
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_7!!!!!!!!!!!!!!!!!!!")
-    print(pail_tables["table_7"])
-
-
-    ##################
-    # Plot charts.
-    pail_plot = manage_plot_charts(
-        table_box=pail_tables["table_2"],
-        table_heatmap_individual_1=pail_tables["table_3"],
-        table_heatmap_individual_2=pail_tables["table_4"],
-        table_heatmap_mean=pail_tables["table_7"],
-        box_features=[
-            "OXT",
-            "PNPLA3",
-            "PI16",
-            "IGFBP3",
-            "TUBA8",
-            #"CMKLR2", # unavailable in signal table?
-            "KIF19",
-            "HSD11B2",
-            "GREB1",
-            "KCNK6",
-            "CISH",
-        ],
-        box=True,
-        heatmap_individual=True,
-        heatmap_mean=True,
-        report=report,
-    )
-    #pail["heatmap_mean"]
-
-    ##########
-    # Collect information.
-    pail_write_plot = dict()
-    if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
-        for record_box in pail_plot["box"]:
-            pail_write_plot[record_box["name"]] = record_box["figure"]
-            pass
+        )
         pass
-    pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
-    pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
-    pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
 
-    ##########
-    # _. Write product information to file.
-    #paths["out_data"]
-    #paths["out_plot"]
-
-    # Write figures to file.
-    pplot.write_product_plots_parent_directory(
-    pail_write=pail_write_plot,
-    format="jpg", # jpg, png, svg
-    resolution=300,
-    path_directory=paths["out_plot"],
-)
 
     pass
 
