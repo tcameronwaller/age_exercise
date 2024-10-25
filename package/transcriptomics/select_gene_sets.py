@@ -1037,7 +1037,7 @@ def control_procedure_part_branch(
         column_name="gene_name",
         column_fold_change="fold_change_log2",
         column_significance="q_value_fill",
-        threshold_fold_change=math.log(float(2.0), 2), # base two logarithm
+        threshold_fold_change=math.log(float(1), 2), # base two logarithm
         threshold_significance=float(0.05),
         tissue=tissue,
         name_instance=name_instance,
@@ -1069,7 +1069,7 @@ def control_procedure_part_branch(
         column_plot_p="p_value_negative_log10",
         column_fold_change="fold_change_log2",
         column_significance="q_value_fill",
-        threshold_fold_change=math.log(float(2.0), 2), # base two logarithm
+        threshold_fold_change=math.log(float(1), 2), # base two logarithm
         threshold_significance=float(0.05),
         identifiers_emphasis=identifiers_emphasis,
         tissue=tissue,

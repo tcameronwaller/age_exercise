@@ -871,7 +871,9 @@ def manage_plot_charts(
 
     ##########
     # Box
-    if box:
+    if (
+        box and (len(box_features) < 50)
+    ):
         figures_box = list()
         for feature in box_features:
             record_box = dict()
@@ -1204,61 +1206,76 @@ def execute_procedure(
     )
 
     ##########
-    # 2. Read and organize source information from file.
-    pail_source = read_source(
-        paths=paths,
-        report=report,
+    # Read and count unique genes in sets.
+    path_directory_sets_gene = os.path.join(
+        paths["in_parameters_private"], "transcriptomics", "sets_gene",
     )
-    # Organize table of information about sample observations.
-    table_sample = pail_source["table_sample"]
-    table_sample["inclusion"] = table_sample["inclusion"].astype("str")
-    # Organize table of information about signals.
-    table_signal = pail_source["table_signal"]
-    # Organize indices in table.
-    table_signal.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
-    # Organize table of information about genes.
-    table_gene = pail_source["table_gene"]
-    # Organize indices in table.
-    table_gene.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
+    table_counts_sets_gene = (
+        putly.read_child_files_text_list_count_unique_items(
+            path_directory=path_directory_sets_gene,
+            name_file_prefix="",
+            name_file_suffix=".txt",
+            name_file_not="",
+            report=report,
+    ))
 
-    ##########
-    # Read and organize information about parameters for instances.
-    instances = read_organize_source_parameter_instances(
-        paths=paths,
-        report=report,
-    )
-    # Organize information for groups of instances.
-    groups_instances = list()
-    for instance in instances:
-        groups_instances.append(instance["group"])
-    # Collect unique names of features.
-    groups_instances_unique = putly.collect_unique_elements(
-        elements=groups_instances,
-    )
-
-    ##########
-    # Iterate on groups of instances of parameters.
-    for group_instances in groups_instances_unique:
-        control_procedure_part_branch(
-            name_group_instances=group_instances,
-            instances_parameter=instances,
-            table_sample=table_sample,
-            table_gene=table_gene,
-            table_signal=table_signal,
-            index_genes="identifier_gene",
-            index_samples="identifier_sample",
+    if False:
+        ##########
+        # 2. Read and organize source information from file.
+        pail_source = read_source(
             paths=paths,
             report=report,
         )
-        pass
+        # Organize table of information about sample observations.
+        table_sample = pail_source["table_sample"]
+        table_sample["inclusion"] = table_sample["inclusion"].astype("str")
+        # Organize table of information about signals.
+        table_signal = pail_source["table_signal"]
+        # Organize indices in table.
+        table_signal.reset_index(
+            level=None,
+            inplace=True,
+            drop=False, # remove index; do not move to regular columns
+        )
+        # Organize table of information about genes.
+        table_gene = pail_source["table_gene"]
+        # Organize indices in table.
+        table_gene.reset_index(
+            level=None,
+            inplace=True,
+            drop=False, # remove index; do not move to regular columns
+        )
+
+        ##########
+        # Read and organize information about parameters for instances.
+        instances = read_organize_source_parameter_instances(
+            paths=paths,
+            report=report,
+        )
+        # Organize information for groups of instances.
+        groups_instances = list()
+        for instance in instances:
+            groups_instances.append(instance["group"])
+        # Collect unique names of features.
+        groups_instances_unique = putly.collect_unique_elements(
+            elements=groups_instances,
+        )
+
+        ##########
+        # Iterate on groups of instances of parameters.
+        for group_instances in groups_instances_unique:
+            control_procedure_part_branch(
+                name_group_instances=group_instances,
+                instances_parameter=instances,
+                table_sample=table_sample,
+                table_gene=table_gene,
+                table_signal=table_signal,
+                index_genes="identifier_gene",
+                index_samples="identifier_sample",
+                paths=paths,
+                report=report,
+            )
+            pass
 
 
     pass
