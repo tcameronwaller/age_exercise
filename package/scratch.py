@@ -314,6 +314,7 @@ def define_column_types_table_parameter_instances():
     types_columns["inclusion"] = "string" # "int32"
     types_columns["tissue"] = "string"
     types_columns["sort"] = "int32" # "int32"
+    types_columns["sort_group"] = "int32" # "int32"
     types_columns["group"] = "string"
     types_columns["instance"] = "string"
     types_columns["selection_samples_primary"] = "string"
@@ -380,7 +381,12 @@ def read_organize_source_parameter_instances(
             # Collect information.
             pail = dict()
             pail["sort"] = str(row["sort"])
+            pail["sort_group"] = str(row["sort_group"])
             pail["group"] = str(row["group"])
+            pail["name_group"] = "_".join([
+                str(row["sort_group"]),
+                str(row["group"])
+            ])
             pail["tissue"] = str(row["tissue"])
             pail["instance"] = str(row["instance"])
             pail["name_instance"] = "_".join([
@@ -1013,7 +1019,7 @@ def control_procedure_part_branch(
     # Extract parameters for instances in current group.
     # Filter instances by group.
     instances_group = list(filter(
-        lambda record: (str(record["group"]) == name_group_instances),
+        lambda record: (str(record["name_group"]) == name_group_instances),
         instances_parameter
     ))
 
@@ -1254,7 +1260,7 @@ def execute_procedure(
     # Organize information for groups of instances.
     groups_instances = list()
     for instance in instances:
-        groups_instances.append(instance["group"])
+        groups_instances.append(instance["name_group"])
     # Collect unique names of features.
     groups_instances_unique = putly.collect_unique_elements(
         elements=groups_instances,
