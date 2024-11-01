@@ -72,6 +72,7 @@ import partner.description as pdesc
 import partner.plot as pplot
 import partner.parallelization as prall
 import exercise.transcriptomics.organize_signal as exrosig
+import exercise.transcriptomics.select_gene_sets as exrosel
 
 ###############################################################################
 # Functionality
@@ -122,6 +123,9 @@ def initialize_directories(
     )
     paths["in_parameters_private"] = os.path.join(
         paths["dock"], "in_parameters_private", str(project),
+    )
+    paths["in_sets_gene"] = os.path.join(
+        paths["in_parameters_private"], "transcriptomics", "sets_gene",
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -449,52 +453,6 @@ def read_organize_source_parameter_instances(
         pass
     # Return information.
     return instances
-
-
-def read_extract_set_genes(
-    name_set=None,
-    path_directory=None,
-    report=None,
-):
-    """
-    Reads and extracts from a source file the identifiers of genes in a set.
-
-    arguments:
-        name_set (str): name for a set of genes that corresponds to the name of
-            a file
-        path_directory (str): path to directory within which to find files of
-            sets of genes
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (list<str>): identifiers of genes from a set
-
-    """
-
-    # Define paths to files.
-    path_file = os.path.join(
-        path_directory, str(name_set + ".txt"),
-    )
-    # Read information from file.
-    genes_set = putly.read_file_text_list(
-        delimiter="\n",
-        path_file=path_file,
-    )
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
-        function = "read_extract_gene_set"
-        print(str("function: " + function + "()"))
-        putly.print_terminal_partition(level=4)
-        count_items = len(genes_set)
-        print("count of items in set or list: " + str(count_items))
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return genes_set
 
 
 ##########
@@ -966,6 +924,10 @@ def manage_plot_charts(
 ##########
 # Control procedure within branch for iteration.
 
+#        name_set_gene (str): name corresponding to a file in text format that
+#            gives identifiers of genes in a set of interest
+
+
 
 def control_procedure_part_branch(
     name_group_instances=None,
@@ -1048,12 +1010,9 @@ def control_procedure_part_branch(
     # Extract name of a set of genes.
     name_set_gene = instances_group[0]["name_set_gene"]
     # Read and extract identifiers of genes in set.
-    path_directory_sets_gene = os.path.join(
-        paths["in_parameters_private"], "transcriptomics", "sets_gene",
-    )
-    genes_set = read_extract_set_genes(
+    genes_set = exrosel.read_extract_set_genes(
         name_set=name_set_gene,
-        path_directory=path_directory_sets_gene,
+        path_directory=paths["in_sets_gene"],
         report=report,
     )
     # Collect unique names of genes in set.

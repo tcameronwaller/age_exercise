@@ -33,8 +33,6 @@ path_directory_package="$path_directory_process/package"
 path_directory_package_partner="$path_directory_package/partner"
 path_directory_package_project_main="$path_directory_package/${project_main}"
 
-path_directory_package_project_main="$path_directory_package/${project_main}"
-
 path_directory_dock="$path_directory_process/dock"
 path_directory_data="$path_directory_dock/in_data" # restore script does not modify "in_data" for efficiency
 path_directory_parameters="$path_directory_dock/in_parameters/${project_main}"

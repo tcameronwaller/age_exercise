@@ -123,6 +123,9 @@ def preinitialize_directories(
     paths["in_parameters_private"] = os.path.join(
         paths["dock"], "in_parameters_private", str(project), str(routine),
     )
+    paths["in_sets_gene"] = os.path.join(
+        paths["in_parameters_private"], "sets_gene",
+    )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
@@ -465,6 +468,50 @@ def read_source(
     return pail
 
 
+def read_extract_set_genes(
+    name_set=None,
+    path_directory=None,
+    report=None,
+):
+    """
+    Reads and extracts from a source file the identifiers of genes in a set.
+
+    arguments:
+        name_set (str): name for a set of genes that corresponds to the name of
+            a file
+        path_directory (str): path to directory within which to find files of
+            sets of genes
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (list<str>): identifiers of genes from a set
+
+    """
+
+    # Define paths to files.
+    path_file = os.path.join(
+        path_directory, str(name_set + ".txt"),
+    )
+    # Read information from file.
+    genes_set = putly.read_file_text_list(
+        delimiter="\n",
+        path_file=path_file,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.select_gene_sets.py")
+        function = "read_extract_gene_set"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        count_items = len(genes_set)
+        print("count of items in set or list: " + str(count_items))
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return genes_set
 
 
 
@@ -961,6 +1008,7 @@ def control_procedure_part_branch(
     tissue=None,
     group=None,
     name_instance=None,
+    name_set_gene=None,
     project=None,
     routine=None,
     procedure=None,
@@ -976,6 +1024,8 @@ def control_procedure_part_branch(
         group (str): name of a group of analyses
         name_instance (str): name of instance set of parameters for
             selection of samples in cohort and definition of analysis
+        name_set_gene (str): name corresponding to a file in text format that
+            gives identifiers of genes in a set of interest
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -1059,6 +1109,20 @@ def control_procedure_part_branch(
         )
 
     ##########
+    # 6. Prepare information about genes in a set of interest.
+    # Read and extract identifiers of genes in set.
+    genes_set = read_extract_set_genes(
+        name_set=name_set_gene,
+        path_directory=paths["in_sets_gene"],
+        report=report,
+    )
+    # Collect unique names of genes in set.
+    genes_set_unique = putly.collect_unique_elements(
+        elements=genes_set,
+    )
+
+
+    ##########
     # 6. Create chart to represent fold changes and write to file.
     identifiers_emphasis = []
     plot_write_chart_fold_change_volcano(
@@ -1071,7 +1135,7 @@ def control_procedure_part_branch(
         column_significance="q_value_fill",
         threshold_fold_change=math.log(float(1.0), 2), # base two logarithm
         threshold_significance=float(0.05),
-        identifiers_emphasis=identifiers_emphasis,
+        identifiers_emphasis=genes_set_unique,
         tissue=tissue,
         name_instance=name_instance,
         paths=paths,
@@ -1102,6 +1166,7 @@ def control_procedure_part_branch(
     putly.write_lists_to_file_text(
         pail_write=pail_write_lists,
         path_directory=paths["out_data"],
+        delimiter="\n",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
@@ -1139,6 +1204,8 @@ def control_parallel_instance(
             group (str): name of a group of analyses
             name_instance (str): name of instance set of parameters for
                 selection of samples in cohort and definition of analysis
+            name_set_gene (str): name corresponding to a file in text format
+                that gives identifiers of genes in a set of interest
         parameters (dict): parameters common to all instances
             project (str): name of project
             routine (str): name of routine, either 'transcriptomics' or
@@ -1161,6 +1228,7 @@ def control_parallel_instance(
     tissue = instance["tissue"]
     group = instance["group"]
     name_instance = instance["name_instance"]
+    name_set_gene = instance["name_set_gene"]
     # Extract parameters common across all instances.
     project = parameters["project"]
     routine = parameters["routine"]
@@ -1174,6 +1242,7 @@ def control_parallel_instance(
         tissue=tissue,
         group=group,
         name_instance=name_instance,
+        name_set_gene=name_set_gene,
         project=project,
         routine=routine,
         procedure=procedure,

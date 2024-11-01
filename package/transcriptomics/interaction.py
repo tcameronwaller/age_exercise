@@ -77,6 +77,11 @@ import exercise.transcriptomics.organize_signal as exrosig
 # Functionality
 
 
+# TODO: TCW; 31 October 2024
+# Most code in this module is still scrap, I think.
+# Need to clean up and integrate functionality from "scratch.py".
+
+
 ##########
 # 1. Initialize directories for read of source and write of product files.
 

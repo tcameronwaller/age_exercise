@@ -94,7 +94,9 @@ do
   raw_results_contrast="${array[19]}"
   raw_results_name="${array[20]}"
   raw_threshold_significance="${array[21]}"
-  raw_note="${array[22]}"
+  raw_name_set_gene="${array[22]}"
+  raw_review="${array[23]}"
+  raw_note="${array[24]}"
   name_instance="${raw_tissue}_${raw_sort}_${raw_instance}"
 
   # Report.
@@ -124,7 +126,9 @@ do
     echo "field 19, results_contrast: ${raw_results_contrast}"
     echo "field 20, results_name: ${raw_results_name}"
     echo "field 21, threshold_significance: ${raw_threshold_significance}"
-    echo "field 22, note: ${raw_note}"
+    echo "field 22, name_set_gene: ${raw_name_set_gene}"
+    echo "field 23, review: ${raw_review}"
+    echo "field 24, note: ${raw_note}"
     echo "----------"
     echo "derivation fields"
     echo "----------"

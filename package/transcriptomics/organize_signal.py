@@ -488,6 +488,8 @@ def define_column_types_table_parameter_instances():
     types_columns["levels_supplement_3"] = "string"
     types_columns["subject"] = "string"
     types_columns["threshold_significance"] = "string"
+    types_columns["name_set_gene"] = "string"
+    types_columns["review"] = "string"
     types_columns["note"] = "string"
     # Return information.
     return types_columns
@@ -623,6 +625,9 @@ def read_organize_source_parameter_instances(
                     text=row["selection_genes"],
                 )
             )
+            # Collect information about a set of genes that is relevant to the
+            # current analysis.
+            pail["name_set_gene"] = str(row["name_set_gene"]).strip()
             # Collect information and parameters for current instance.
             instances.append(pail)
             pass
@@ -1304,8 +1309,7 @@ def organize_describe_summarize_table_sample_tertiles(
                 putly.write_list_to_file_text(
                     elements=bins_text,
                     delimiter=", ",
-                    name_file=column_product,
-                    path_directory=paths["out_summary"],
+                    path_file=path_file,
                 )
             pass
     else:
@@ -1375,7 +1379,7 @@ def select_sets_final_identifier_table_sample(
     if (continuity_scale is not None):
         # Calculate standard z scores.
         table_selection = (
-            pscl.drive_transform_variables_distribution_scale_z_score(
+            pscl.transform_standard_z_score_by_table_columns(
                 table=table_selection,
                 columns=continuity_scale,
                 report=report,
@@ -3497,6 +3501,7 @@ def control_procedure_part_branch(
     continuity_scale=None,
     columns_set=None,
     selection_genes=None,
+    name_set_gene=None,
     project=None,
     routine=None,
     procedure=None,
@@ -3524,6 +3529,8 @@ def control_procedure_part_branch(
             are relevant to the current set or instance of parameters
         selection_genes (dict<list<str>>): filters on rows in table for
             selection of genes relevant to analysis
+        name_set_gene (str): name corresponding to a file in text format that
+            gives identifiers of genes in a set of interest
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -3669,6 +3676,8 @@ def control_parallel_instance(
                 that are relevant to the current set or instance of parameters
             selection_genes (dict<list<str>>): filters on rows in table for
                 selection of genes relevant to analysis
+            name_set_gene (str): name corresponding to a file in text format
+                that gives identifiers of genes in a set of interest
         parameters (dict): parameters common to all instances
             project (str): name of project
             routine (str): name of routine, either 'transcriptomics' or
@@ -3697,6 +3706,7 @@ def control_parallel_instance(
     continuity_scale = instance["continuity_scale"]
     columns_set = instance["columns_set"]
     selection_genes = instance["selection_genes"]
+    name_set_gene = instance["name_set_gene"]
     # Extract parameters common across all instances.
     project = parameters["project"]
     routine = parameters["routine"]
@@ -3716,6 +3726,7 @@ def control_parallel_instance(
         continuity_scale=continuity_scale,
         columns_set=columns_set,
         selection_genes=selection_genes,
+        name_set_gene=name_set_gene,
         project=project,
         routine=routine,
         procedure=procedure,
@@ -3826,7 +3837,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
-    if True:
+    if False:
         # Initialize directories.
         paths = initialize_directories_trunk(
             project=project,
@@ -3857,7 +3868,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to describe tables of signals with adjustment of scale
     # and normalization.
-    if True:
+    if False:
         # Control procedure for description of signal data as a whole.
         control_procedure_whole_trunk_description(
             tissue="muscle",
@@ -3931,7 +3942,7 @@ def execute_procedure(
         )
         ##########
         # Organize summary information about all instances overall.
-        if False:
+        if True:
             read_organize_write_summary_instances_tissue(
                 tissue="muscle",
                 paths=paths_muscle,
