@@ -138,11 +138,14 @@ def preinitialize_directories(
     paths["out_data_overall"] = os.path.join(
         paths["out_procedure"], "data",
     )
+    paths["out_data_overall_pickle"] = os.path.join(
+        paths["out_data_overall"], "pickle",
+    )
     paths["out_data_overall_text"] = os.path.join(
         paths["out_data_overall"], "text",
     )
-    paths["out_data_overall_pickle"] = os.path.join(
-        paths["out_data_overall"], "pickle",
+    paths["out_data_overall_rank"] = os.path.join(
+        paths["out_data_overall"], "rank",
     )
     paths["out_plot_overall"] = os.path.join(
         paths["out_procedure"], "plot",
@@ -153,8 +156,9 @@ def preinitialize_directories(
         #paths["out_routine"],
         paths["out_procedure"],
         paths["out_data_overall"],
-        paths["out_data_overall_text"],
         paths["out_data_overall_pickle"],
+        paths["out_data_overall_text"],
+        paths["out_data_overall_rank"],
         paths["out_plot_overall"],
     ]
     # Remove previous directories and files to avoid version or batch
@@ -490,15 +494,22 @@ def read_extract_set_genes(
 
     """
 
-    # Define paths to files.
-    path_file = os.path.join(
-        path_directory, str(name_set + ".txt"),
-    )
-    # Read information from file.
-    genes_set = putly.read_file_text_list(
-        delimiter="\n",
-        path_file=path_file,
-    )
+    # Determine whether parameter is valid.
+    if (
+        (name_set is not None) and
+        (str(name_set).strip().lower() != "none")
+    ):
+        # Define paths to files.
+        path_file = os.path.join(
+            path_directory, str(name_set + ".txt"),
+        )
+        # Read information from file.
+        genes_set = putly.read_file_text_list(
+            delimiter="\n",
+            path_file=path_file,
+        )
+    else:
+        genes_set = []
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -628,12 +639,16 @@ def organize_table_change_deseq2(
     ]
     table_change["p_value_fill"] = table_change.apply(
         lambda row:
-            2.23E-308 if (float(row["p_value"]) < 2.23E-308) else row["p_value"],
+            2.23E-308 if (
+                float(row["p_value"]) < 2.23E-308
+            ) else row["p_value"],
         axis="columns", # apply function to each row
     )
     table_change["q_value_fill"] = table_change.apply(
         lambda row:
-            2.23E-308 if (float(row["q_value"]) < 2.23E-308) else row["q_value"],
+            2.23E-308 if (
+                float(row["q_value"]) < 2.23E-308
+            ) else row["q_value"],
         axis="columns", # apply function to each row
     )
     # Filter rows in table for selection of non-missing values for fold change.
@@ -753,6 +768,7 @@ def select_sets_differential_expression_gene(
     column_significance=None,
     threshold_fold_change=None,
     threshold_significance=None,
+    identifiers_exclusion=None,
     tissue=None,
     name_instance=None,
     report=None,
@@ -779,6 +795,9 @@ def select_sets_differential_expression_gene(
         threshold_significance (float): value for threshold on p-values or
             q-values (p-value or q-value < threshold) that is not on a scale of
             the negative logarithm
+        identifiers_exclusion (list<str>): identifiers corresponding to
+            entities (genes) for exclusion from selection, such as for genes
+            that show differential expression in placebo group
         tissue (list<str>): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
         name_instance (str): name for set of samples and parameters in the
@@ -794,6 +813,17 @@ def select_sets_differential_expression_gene(
 
     # Copy information in table.
     table = table.copy(deep=True)
+
+    # Determine whether to exclude specific genes from selection.
+    if (
+        (identifiers_exclusion is not None) and
+        (len(identifiers_exclusion) > 0)
+    ):
+        # Filter rows in table to exclude specific genes.
+        table = table.loc[
+            (~table[column_identifier].isin(identifiers_exclusion)), :
+        ].copy(deep=True)
+        pass
 
     # Filter rows in table for selection of sets of genes that demonstrate
     # specific characteristics of differential expression.
@@ -1008,7 +1038,8 @@ def control_procedure_part_branch(
     tissue=None,
     group=None,
     name_instance=None,
-    name_set_gene=None,
+    name_set_gene_emphasis=None,
+    name_set_gene_exclusion=None,
     project=None,
     routine=None,
     procedure=None,
@@ -1024,8 +1055,12 @@ def control_procedure_part_branch(
         group (str): name of a group of analyses
         name_instance (str): name of instance set of parameters for
             selection of samples in cohort and definition of analysis
-        name_set_gene (str): name corresponding to a file in text format that
-            gives identifiers of genes in a set of interest
+        name_set_gene_emphasis (str): name corresponding to a file in text
+            format that gives identifiers of genes in a set of interest for
+            emphasis on plot charts
+        name_set_gene_exclusion (str): name corresponding to a file in text
+            format that gives identifiers of genes in a set for exclusion from
+            selection of genes with significant differential expression
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -1066,7 +1101,28 @@ def control_procedure_part_branch(
     )
 
     ##########
-    # 3. Organize from source the information about differential expression of
+    # 3. Prepare information about genes in sets of interest.
+    # Read and extract identifiers of genes in sets.
+    genes_set_emphasis = read_extract_set_genes(
+        name_set=name_set_gene_emphasis,
+        path_directory=paths["in_sets_gene"],
+        report=report,
+    )
+    genes_set_exclusion = read_extract_set_genes(
+        name_set=name_set_gene_exclusion,
+        path_directory=paths["in_sets_gene"],
+        report=report,
+    )
+    # Collect unique names of genes in set.
+    genes_set_emphasis_unique = putly.collect_unique_elements(
+        elements=genes_set_emphasis,
+    )
+    genes_set_exclusion_unique = putly.collect_unique_elements(
+        elements=genes_set_exclusion,
+    )
+
+    ##########
+    # 4. Organize from source the information about differential expression of
     #    genes.
     columns_sequence = define_column_sequence_table_change_deseq2()
     pail_organization = organize_table_change_deseq2(
@@ -1079,7 +1135,7 @@ def control_procedure_part_branch(
     #pail_organization["table_change"]
 
     ##########
-    # 4. Select sets of genes with differential expression.
+    # 5. Select sets of genes with differential expression.
     #threshold_p=(-1 * math.log(float(0.05), 10)), # negative base ten logarithm
     pail_selection = select_sets_differential_expression_gene(
         table=pail_organization["table"],
@@ -1089,38 +1145,31 @@ def control_procedure_part_branch(
         column_significance="q_value_fill",
         threshold_fold_change=math.log(float(1.0), 2), # base two logarithm
         threshold_significance=float(0.05),
+        identifiers_exclusion=genes_set_exclusion_unique,
         tissue=tissue,
         name_instance=name_instance,
         report=report,
     )
 
+
+    # TODO: TCW; 11 November 2024
+    # TODO: within a new function to prepare a GSEA-format ranked gene list
+    # (selection of columns from the DE results table), integrate option to
+    # TODO: exclude the "exclusion" genes
+
     ##########
-    # 5. Prepare rank lists of genes for analysis by gene set enrichment
+    # 6. Prepare rank lists of genes for analysis by gene set enrichment
     #    analysis.
     if False:
         pail_rank = rank_list_gene(
             table=pail_organization["table"],
-            column_identifier="gene_identifier",
+            column_identifier="gene_identifier_base",
             column_name="gene_name",
             column_rank="rank_fold_p",
             tissue=tissue,
             name_instance=name_instance,
             report=report,
         )
-
-    ##########
-    # 6. Prepare information about genes in a set of interest.
-    # Read and extract identifiers of genes in set.
-    genes_set = read_extract_set_genes(
-        name_set=name_set_gene,
-        path_directory=paths["in_sets_gene"],
-        report=report,
-    )
-    # Collect unique names of genes in set.
-    genes_set_unique = putly.collect_unique_elements(
-        elements=genes_set,
-    )
-
 
     ##########
     # 6. Create chart to represent fold changes and write to file.
@@ -1135,7 +1184,7 @@ def control_procedure_part_branch(
         column_significance="q_value_fill",
         threshold_fold_change=math.log(float(1.0), 2), # base two logarithm
         threshold_significance=float(0.05),
-        identifiers_emphasis=genes_set_unique,
+        identifiers_emphasis=genes_set_emphasis_unique,
         tissue=tissue,
         name_instance=name_instance,
         paths=paths,
@@ -1161,6 +1210,14 @@ def control_procedure_part_branch(
         pail_organization["table"]
     )
 
+
+    # TODO: TCW; 12 November 2024
+    # TODO: write rank file to appropriate directory
+    # paths["out_data_overall_rank"]
+    # <-- need to use ".rnk" file suffix for rank files, technically...
+
+
+
     ##########
     # Write product information to file.
     putly.write_lists_to_file_text(
@@ -1174,6 +1231,8 @@ def control_procedure_part_branch(
         reset_index=False,
         write_index=True,
         type="text",
+        delimiter="\t",
+        suffix=".tsv",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
@@ -1181,6 +1240,8 @@ def control_procedure_part_branch(
         reset_index=False,
         write_index=True,
         type="pickle",
+        delimiter=None,
+        suffix=".pickle",
     )
     pass
 
@@ -1204,8 +1265,13 @@ def control_parallel_instance(
             group (str): name of a group of analyses
             name_instance (str): name of instance set of parameters for
                 selection of samples in cohort and definition of analysis
-            name_set_gene (str): name corresponding to a file in text format
-                that gives identifiers of genes in a set of interest
+            name_set_gene_emphasis (str): name corresponding to a file in text
+                format that gives identifiers of genes in a set of interest for
+                emphasis on plot charts
+            name_set_gene_exclusion (str): name corresponding to a file in text
+                format that gives identifiers of genes in a set for exclusion
+                from selection of genes with significant differential
+                expression
         parameters (dict): parameters common to all instances
             project (str): name of project
             routine (str): name of routine, either 'transcriptomics' or
@@ -1228,7 +1294,8 @@ def control_parallel_instance(
     tissue = instance["tissue"]
     group = instance["group"]
     name_instance = instance["name_instance"]
-    name_set_gene = instance["name_set_gene"]
+    name_set_gene_emphasis = instance["name_set_gene_emphasis"]
+    name_set_gene_exclusion = instance["name_set_gene_exclusion"]
     # Extract parameters common across all instances.
     project = parameters["project"]
     routine = parameters["routine"]
@@ -1242,7 +1309,8 @@ def control_parallel_instance(
         tissue=tissue,
         group=group,
         name_instance=name_instance,
-        name_set_gene=name_set_gene,
+        name_set_gene_emphasis=name_set_gene_emphasis,
+        name_set_gene_exclusion=name_set_gene_exclusion,
         project=project,
         routine=routine,
         procedure=procedure,

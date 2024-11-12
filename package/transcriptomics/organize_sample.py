@@ -1213,6 +1213,8 @@ def execute_procedure(
         reset_index=False,
         write_index=False,
         type="text",
+        delimiter="\t",
+        suffix=".tsv",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
@@ -1220,6 +1222,8 @@ def execute_procedure(
         reset_index=False,
         write_index=False,
         type="pickle",
+        delimiter=None,
+        suffix=".pickle",
     )
     if False:
         putly.write_objects_to_file_pickle(

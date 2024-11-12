@@ -488,7 +488,8 @@ def define_column_types_table_parameter_instances():
     types_columns["levels_supplement_3"] = "string"
     types_columns["subject"] = "string"
     types_columns["threshold_significance"] = "string"
-    types_columns["name_set_gene"] = "string"
+    types_columns["name_set_gene_emphasis"] = "string"
+    types_columns["name_set_gene_exclusion"] = "string"
     types_columns["review"] = "string"
     types_columns["note"] = "string"
     # Return information.
@@ -605,8 +606,12 @@ def read_organize_source_parameter_instances(
             #columns.append("inclusion")
             #columns.append("tissue")
             # Extract and include names of other columns.
-            columns_formula = row["formula_text"].strip().split(",")
+            columns_formula = row["formula_text"].strip().replace(
+                ":", ","
+            ).split(",")
             # Remove any interaction terms, since these are not columns.
+            # This filter is unnecessary since a split by colon ":" already
+            # extracted the columns.
             columns_formula = list(filter(
                 lambda column: (":" not in str(column)),
                 columns_formula
@@ -625,9 +630,14 @@ def read_organize_source_parameter_instances(
                     text=row["selection_genes"],
                 )
             )
-            # Collect information about a set of genes that is relevant to the
+            # Collect information about sets of genes that are relevant to the
             # current analysis.
-            pail["name_set_gene"] = str(row["name_set_gene"]).strip()
+            pail["name_set_gene_emphasis"] = str(
+                row["name_set_gene_emphasis"]
+            ).strip()
+            pail["name_set_gene_exclusion"] = str(
+                row["name_set_gene_exclusion"]
+            ).strip()
             # Collect information and parameters for current instance.
             instances.append(pail)
             pass
@@ -994,8 +1004,10 @@ def read_organize_write_summary_instances_tissue(
 ##########
 # 3. Select set of samples for specific analyses.
 
+
 # TODO: TCW; 16 October 2024
 # use porg.filter_extract_table_row_identifiers_by_columns_categories()
+# Actually that function might be inappropriate (TCW; 6 November 2024)
 def select_sets_identifier_table_sample(
     table_sample=None,
     name_instance=None,
@@ -1073,11 +1085,31 @@ def select_sets_identifier_table_sample(
     table_cohort = table_inclusion.copy(deep=True)
     if (selection_samples_set is not None):
         for feature in selection_samples_set.keys():
-            table_cohort = table_cohort.loc[(
-                table_cohort[feature].isin(selection_samples_set[feature])
-            ), :].copy(deep=True)
+            values_feature = copy.deepcopy(selection_samples_set[feature])
+            if (
+                (len(values_feature) == 1) and
+                (str(values_feature[0]).strip().lower() == "nonmissing")
+            ):
+                # Filter rows in table by nonmissing values of feature
+                # variable.
+                # Filter rows in table for non-missing values across relevant
+                # columns.
+                table_cohort.dropna(
+                    axis="index",
+                    how="any",
+                    subset=[feature],
+                    inplace=True,
+                )
+                pass
+            else:
+                # Filter rows in table by specific values of feature variable.
+                table_cohort = table_cohort.loc[(
+                    table_cohort[feature].isin(selection_samples_set[feature])
+                ), :].copy(deep=True)
+                pass
             pass
         pass
+
 
     # Copy information in table.
     table_selection = table_cohort.copy(deep=True)
@@ -1330,6 +1362,185 @@ def organize_describe_summarize_table_sample_tertiles(
     return pail_tertile["table"]
 
 
+def determine_subject_pairs_nest_category_levels(
+    table=None,
+    columns_set=None,
+    name_original=None,
+    name_novel=None,
+    category=None,
+    levels=None,
+    report=None,
+):
+    """
+    Determine pairs of study subjects that are nested within categorical levels
+    of experimental conditions.
+
+    There must be more than one categorical levels of experimental conditions.
+
+    arguments:
+        table (object): Pandas data-frame table of information about samples
+            that correspond to signals within accompanying main table
+        columns_set (list<str>): names of columns for feature variables that
+            are relevant to the current set or instance of parameters
+        name_original (str): name of column in table for original identifiers
+            of individual subjects in the study that correspond to pairs of
+            samples between experimental categories or groups
+        name_novel (str): name of column in table for original identifiers
+            of individual subjects in the study that correspond to pairs of
+            samples between experimental categories or groups
+        category (str): name of column in table for categorical levels of
+            experimental conditions within which to nest identifiers of
+            subjects
+        levels (list<str>): names of categorical levels of experimental
+            conditions within which to nest identifiers of subjects
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table of information about samples
+
+    """
+
+    # Define subordinate functions for internal use.
+    def determine_translation_identifier(
+        identifier_source=None,
+        level_source=None,
+        translations=None
+    ):
+        if (identifier_source in translations[level_source].keys()):
+            identifier_product = translations[level_source][identifier_source]
+        else:
+            identifier_product = pandas.NA
+        return identifier_product
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    columns_set = copy.deepcopy(columns_set)
+
+    # Filter rows in table for non-missing values across relevant columns.
+    if (name_novel in columns_set):
+        columns_set.remove(name_novel)
+    table.dropna(
+        axis="index",
+        how="any",
+        subset=columns_set,
+        inplace=True,
+    )
+
+    # Extract identifiers of individual subjects in each categorical level of
+    # experimental conditions.
+    levels_subjects = dict()
+    lists_subjects = list()
+    sets_subjects = list()
+    for level in levels:
+        table_level = table.loc[
+            (table[category] == level), :
+        ].copy(deep=True)
+        subjects_level = copy.deepcopy(
+            table_level[name_original].dropna().unique().tolist()
+        )
+        subjects_level = list(filter(
+            lambda identifier: ((identifier != "") and (identifier != "none")),
+            subjects_level
+        ))
+        subjects_level = putly.collect_unique_elements(
+            elements=subjects_level,
+        )
+        subjects_level = sorted(
+            subjects_level,
+            key=str.casefold,
+            reverse=True,
+        )
+        levels_subjects[level] = subjects_level
+        lists_subjects.append(subjects_level)
+        sets_subjects.append(set(copy.deepcopy(subjects_level)))
+        pass
+    # Determine union and intersection of sets of subjects across all
+    # categorical levels of experimental conditions.
+    subjects_union = list()
+    for list_subjects in lists_subjects:
+        subjects_union.extend(list_subjects)
+        pass
+    subjects_union = putly.collect_unique_elements(
+        elements=subjects_union,
+    )
+    subjects_intersection = list(set.intersection(*sets_subjects))
+
+    # Determine minimal count of subjects across all categorical levels of
+    # experimental conditions.
+    counts_levels = list(map(
+        lambda subjects_level: len(subjects_level),
+        lists_subjects
+    ))
+    count_minimum = min(counts_levels)
+
+    # Downsample at random for any categorical levels of experimental
+    # conditions with more than the minimal count of subjects.
+    levels_subjects_even = dict()
+    for level in levels:
+        if (len(levels_subjects[level]) > count_minimum):
+            levels_subjects_even[level] = random.sample(
+                copy.deepcopy(levels_subjects[level]),
+                count_minimum,
+            )
+        else:
+            levels_subjects_even[level] = copy.deepcopy(levels_subjects[level])
+            pass
+
+    # In each categorical level of experimental conditions, map identifiers of
+    # subjects to artificial pairs.
+    levels_translations = dict()
+    for level in levels:
+        levels_translations[level] = dict()
+        for index, item in enumerate(levels_subjects_even[level]):
+            if (index < (count_minimum)):
+                levels_translations[level][item] = str(
+                    "subject_" + str(index + 1)
+                )
+            else:
+                levels_translations[level][item] = pandas.NA
+            pass
+        pass
+
+    # Determine artificial pairs of individual subjects that are nested within
+    # categorical levels of experimental conditions.
+    table[name_novel] = table.apply(
+        lambda row: determine_translation_identifier(
+            identifier_source=row[name_original],
+            level_source=row[category],
+            translations=levels_translations,
+        ),
+        axis="columns", # apply function to each row
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: determine_subject_pairs_nest_category_levels()")
+        putly.print_terminal_partition(level=4)
+        for level in levels_subjects.keys():
+            count_level = len(levels_subjects[level])
+            print("level: " + str(level))
+            print("count: " + str(count_level))
+            putly.print_terminal_partition(level=5)
+            pass
+        count_union = len(subjects_union)
+        count_intersection = len(subjects_intersection)
+        print("union: " + str(count_union))
+        print("intersection: " + str(count_intersection))
+        putly.print_terminal_partition(level=4)
+        print("minimum count of subjects across levels: " + str(count_minimum))
+        putly.print_terminal_partition(level=4)
+        print(table)
+        putly.print_terminal_partition(level=4)
+        pass
+    # Return information.
+    return table
+
+
 def select_sets_final_identifier_table_sample(
     table_sample=None,
     name_instance=None,
@@ -1384,6 +1595,26 @@ def select_sets_final_identifier_table_sample(
                 columns=continuity_scale,
                 report=report,
         ))
+        pass
+
+    # Determine artificial pairs of individual subjects that are nested within
+    # categorical levels of experimental conditions.
+    # These nested identifiers for subjects define pairs of samples for
+    # analyses that consider paired samples both within and between categorical
+    # levels of two experimental conditions.
+    # It is necessary to determine these nested identifiers after selection of
+    # the sample observations for the specific cohort.
+    feature_nest = "identifier_subject_nest_intervention"
+    if (feature_nest in columns_set):
+        table_selection = determine_subject_pairs_nest_category_levels(
+            table=table_selection,
+            columns_set=columns_set,
+            name_original="identifier_subject",
+            name_novel="identifier_subject_nest_intervention",
+            category="intervention_text",
+            levels=["placebo", "active",],
+            report=report,
+        )
         pass
 
     # Filter rows in table for non-missing values across relevant columns.
@@ -3133,6 +3364,8 @@ def control_procedure_whole_trunk_preparation(
         reset_index=False,
         write_index=True,
         type="text",
+        delimiter="\t",
+        suffix=".tsv",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_table,
@@ -3140,6 +3373,8 @@ def control_procedure_whole_trunk_preparation(
         reset_index=False,
         write_index=True,
         type="pickle",
+        delimiter=None,
+        suffix=".pickle",
     )
     pass
 
@@ -3501,7 +3736,8 @@ def control_procedure_part_branch(
     continuity_scale=None,
     columns_set=None,
     selection_genes=None,
-    name_set_gene=None,
+    name_set_gene_emphasis=None,
+    name_set_gene_exclusion=None,
     project=None,
     routine=None,
     procedure=None,
@@ -3529,8 +3765,12 @@ def control_procedure_part_branch(
             are relevant to the current set or instance of parameters
         selection_genes (dict<list<str>>): filters on rows in table for
             selection of genes relevant to analysis
-        name_set_gene (str): name corresponding to a file in text format that
-            gives identifiers of genes in a set of interest
+        name_set_gene_emphasis (str): name corresponding to a file in text
+            format that gives identifiers of genes in a set of interest for
+            emphasis on plot charts
+        name_set_gene_exclusion (str): name corresponding to a file in text
+            format that gives identifiers of genes in a set for exclusion from
+            selection of genes with significant differential expression
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -3634,6 +3874,8 @@ def control_procedure_part_branch(
         reset_index=False,
         write_index=True,
         type="text",
+        delimiter="\t",
+        suffix=".tsv",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_data,
@@ -3641,6 +3883,8 @@ def control_procedure_part_branch(
         reset_index=False,
         write_index=True,
         type="pickle",
+        delimiter=None,
+        suffix=".pickle",
     )
     pass
 
@@ -3676,8 +3920,13 @@ def control_parallel_instance(
                 that are relevant to the current set or instance of parameters
             selection_genes (dict<list<str>>): filters on rows in table for
                 selection of genes relevant to analysis
-            name_set_gene (str): name corresponding to a file in text format
-                that gives identifiers of genes in a set of interest
+            name_set_gene_emphasis (str): name corresponding to a file in text
+                format that gives identifiers of genes in a set of interest for
+                emphasis on plot charts
+            name_set_gene_exclusion (str): name corresponding to a file in text
+                format that gives identifiers of genes in a set for exclusion
+                from selection of genes with significant differential
+                expression
         parameters (dict): parameters common to all instances
             project (str): name of project
             routine (str): name of routine, either 'transcriptomics' or
@@ -3706,7 +3955,8 @@ def control_parallel_instance(
     continuity_scale = instance["continuity_scale"]
     columns_set = instance["columns_set"]
     selection_genes = instance["selection_genes"]
-    name_set_gene = instance["name_set_gene"]
+    name_set_gene_emphasis = instance["name_set_gene_emphasis"]
+    name_set_gene_exclusion = instance["name_set_gene_exclusion"]
     # Extract parameters common across all instances.
     project = parameters["project"]
     routine = parameters["routine"]
@@ -3726,7 +3976,8 @@ def control_parallel_instance(
         continuity_scale=continuity_scale,
         columns_set=columns_set,
         selection_genes=selection_genes,
-        name_set_gene=name_set_gene,
+        name_set_gene_emphasis=name_set_gene_emphasis,
+        name_set_gene_exclusion=name_set_gene_exclusion,
         project=project,
         routine=routine,
         procedure=procedure,
@@ -3787,7 +4038,7 @@ def control_parallel_instances(
     else:
         # Execute procedure directly for testing.
         control_parallel_instance(
-            instance=instances[0],
+            instance=instances[2],
             parameters=parameters,
         )
     pass
@@ -3837,7 +4088,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Initialize directories.
         paths = initialize_directories_trunk(
             project=project,
@@ -3868,7 +4119,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to describe tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Control procedure for description of signal data as a whole.
         control_procedure_whole_trunk_description(
             tissue="muscle",
