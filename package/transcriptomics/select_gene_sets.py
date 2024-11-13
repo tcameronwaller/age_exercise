@@ -873,6 +873,119 @@ def select_sets_differential_expression_gene(
 
 
 ##########
+# 5. Select sets of genes with differential expression.
+
+
+def organize_rank_list_gene(
+    table=None,
+    identifiers_exclusion=None,
+    column_identifier=None,
+    column_name=None,
+    column_rank=None,
+    tissue=None,
+    name_instance=None,
+    report=None,
+):
+    """
+    Prepare a ranked list of genes for analysis by gene set enrichment analysis
+    (GSEA).
+
+    arguments:
+        table (object): Pandas data-frame table of information about genes
+            that demonstrate differential expression
+        identifiers_exclusion (list<str>): identifiers corresponding to
+            entities (genes) for exclusion from selection, such as for genes
+            that show differential expression in placebo group
+        column_identifier (str): name of column in table for the unique
+            identifier of the gene corresponding to the fold change
+        column_name (str): name of column in table for the name of the gene
+            corresponding to the fold change
+        column_rank (str): name of column in table for rank metric
+        tissue (list<str>): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
+        name_instance (str): name for set of samples and parameters in the
+            analysis of differential expression
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    # Define relevant columns in sequence.
+    columns_sequence = [
+        "gene_identifier_base",
+        #"gene_name",
+        "rank_fold_p",
+    ]
+
+    # Organize indices in table.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+
+    # Determine whether to exclude specific genes from selection.
+    if (
+        (identifiers_exclusion is not None) and
+        (len(identifiers_exclusion) > 0)
+    ):
+        # Filter rows in table to exclude specific genes.
+        table = table.loc[
+            (~table[column_identifier].isin(identifiers_exclusion)), :
+        ].copy(deep=True)
+        pass
+
+    # Filter rows in table for non-missing values across relevant columns.
+    table.dropna(
+        axis="index",
+        how="all",
+        subset=columns_sequence,
+        inplace=True,
+    )
+
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "rank_fold_p",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
+
+    # Filter and sort columns within table.
+    table_change = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+
+    # Collect information.
+    pail = dict()
+    pail["table"] = table
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_signal.py")
+        print("function: organize_rank_list_gene()")
+        putly.print_terminal_partition(level=5)
+        print("tissue: " + tissue)
+        print("name_instance: " + name_instance)
+        putly.print_terminal_partition(level=4)
+        pass
+    # Return information.
+    return pail
+
+
+##########
 # 6. Create chart to represent fold changes and write to file.
 
 
@@ -1151,28 +1264,22 @@ def control_procedure_part_branch(
         report=report,
     )
 
-
-    # TODO: TCW; 11 November 2024
-    # TODO: within a new function to prepare a GSEA-format ranked gene list
-    # (selection of columns from the DE results table), integrate option to
-    # TODO: exclude the "exclusion" genes
-
     ##########
     # 6. Prepare rank lists of genes for analysis by gene set enrichment
     #    analysis.
-    if False:
-        pail_rank = rank_list_gene(
-            table=pail_organization["table"],
-            column_identifier="gene_identifier_base",
-            column_name="gene_name",
-            column_rank="rank_fold_p",
-            tissue=tissue,
-            name_instance=name_instance,
-            report=report,
-        )
+    pail_rank = organize_rank_list_gene(
+        table=pail_organization["table"],
+        identifiers_exclusion=genes_set_exclusion_unique,
+        column_identifier="gene_identifier_base",
+        column_name="gene_name",
+        column_rank="rank_fold_p",
+        tissue=tissue,
+        name_instance=name_instance,
+        report=report,
+    )
 
     ##########
-    # 6. Create chart to represent fold changes and write to file.
+    # 7. Create chart to represent fold changes and write to file.
     identifiers_emphasis = []
     plot_write_chart_fold_change_volcano(
         table=pail_organization["table"],
@@ -1191,7 +1298,6 @@ def control_procedure_part_branch(
         report=report,
     )
 
-
     ##########
     # Collect information.
     # Collections of files.
@@ -1209,14 +1315,10 @@ def control_procedure_part_branch(
     pail_write_tables[str("table_" + name_instance)] = (
         pail_organization["table"]
     )
-
-
-    # TODO: TCW; 12 November 2024
-    # TODO: write rank file to appropriate directory
-    # paths["out_data_overall_rank"]
-    # <-- need to use ".rnk" file suffix for rank files, technically...
-
-
+    pail_write_ranks = dict()
+    pail_write_ranks[str("rank_" + name_instance)] = (
+        pail_rank["table"]
+    )
 
     ##########
     # Write product information to file.
@@ -1228,8 +1330,9 @@ def control_procedure_part_branch(
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_data_overall_text"],
-        reset_index=False,
-        write_index=True,
+        reset_index_rows=False,
+        write_index_rows=True,
+        write_index_columns=True,
         type="text",
         delimiter="\t",
         suffix=".tsv",
@@ -1237,11 +1340,22 @@ def control_procedure_part_branch(
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_data_overall_pickle"],
-        reset_index=False,
-        write_index=True,
+        reset_index_rows=None,
+        write_index_rows=None,
+        write_index_columns=None,
         type="pickle",
         delimiter=None,
         suffix=".pickle",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_ranks,
+        path_directory=paths["out_data_overall_rank"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=False,
+        type="text",
+        delimiter="\t",
+        suffix=".rnk",
     )
     pass
 

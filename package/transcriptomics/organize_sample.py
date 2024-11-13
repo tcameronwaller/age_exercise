@@ -1210,8 +1210,9 @@ def execute_procedure(
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_data"],
-        reset_index=False,
-        write_index=False,
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=True,
         type="text",
         delimiter="\t",
         suffix=".tsv",
@@ -1219,8 +1220,9 @@ def execute_procedure(
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_data"],
-        reset_index=False,
-        write_index=False,
+        reset_index_rows=None,
+        write_index_rows=None,
+        write_index_columns=None,
         type="pickle",
         delimiter=None,
         suffix=".pickle",

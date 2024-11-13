@@ -876,16 +876,22 @@ def control_procedure_part_branch(
     putly.write_tables_to_file(
         pail_write=pail_write_data,
         path_directory=path_directory_product_data,
-        reset_index=False,
-        write_index=True,
+        reset_index_rows=False,
+        write_index_rows=True,
+        write_index_columns=True,
         type="text",
+        delimiter="\t",
+        suffix=".tsv",
     )
     putly.write_tables_to_file(
         pail_write=pail_write_data,
         path_directory=path_directory_product_data,
-        reset_index=False,
-        write_index=True,
+        reset_index_rows=None,
+        write_index_rows=None,
+        write_index_columns=None,
         type="pickle",
+        delimiter=None,
+        suffix=".pickle",
     )
 
 
