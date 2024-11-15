@@ -509,7 +509,7 @@ def read_extract_set_genes(
             path_file=path_file,
         )
     else:
-        genes_set = []
+        genes_set = list()
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
@@ -524,6 +524,96 @@ def read_extract_set_genes(
     # Return information.
     return genes_set
 
+
+def read_extract_combine_custom_sets_genes(
+    names_sets=None,
+    genes_available=None,
+    path_directory=None,
+    report=None,
+):
+    """
+    Reads and extracts from a source file the identifiers of genes in a set.
+
+    arguments:
+        names_sets (dict<list<str>>): names of sets of genes to include within
+            custom combination sets with custom names
+        genes_available (list<str>): identifiers of genes with available
+            signals
+        path_directory (str): path to directory within which to find files of
+            sets of genes
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<list<str>>): identifiers of genes within custom combination sets
+
+    """
+
+    # Copy information.
+    names_sets = copy.deepcopy(names_sets)
+    genes_available = copy.deepcopy(genes_available)
+    # Iterate on features and values for sets of genes.
+    if (
+        (names_sets is not None) and
+        (str(names_sets).strip().lower() != "none")
+    ):
+        sets_genes = dict()
+        for name_merge in names_sets.keys():
+            genes_set_collection = list()
+            for name_set in names_sets[name_merge]:
+                if (
+                    (name_set is not None) and
+                    (str(name_set).strip().lower() != "none")
+                ):
+                    # Read and extract identifiers of genes in set.
+                    genes_set_temporary = read_extract_set_genes(
+                        name_set=name_set,
+                        path_directory=path_directory,
+                        report=False,
+                    )
+                    # Collect information.
+                    genes_set_collection.extend(genes_set_temporary)
+                    pass
+                pass
+            # Organize custom combination set of genes.
+            # Collect unique names of genes in set.
+            genes_set_collection = putly.collect_unique_elements(
+                elements=genes_set_collection,
+            )
+            # Ensure that all genes in set are in the table of signals.
+            genes_set_collection = list(filter(
+                lambda gene: (gene in genes_available),
+                genes_set_collection
+            ))
+            # Collect genes in custom set.
+            sets_genes[name_merge] = copy.deepcopy(genes_set_collection)
+            pass
+        pass
+    else:
+        sets_genes = None
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.select_gene_sets.py")
+        function = "read_extract_combine_custom_sets_genes"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        # Iterate on custom sets of genes.
+        if (sets_genes is not None):
+            for name_set in sets_genes.keys():
+                count_set = len(sets_genes[name_set])
+                print(
+                    "count of items in set " +
+                    str(name_set) + ": " +
+                    str(count_set)
+                )
+            pass
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return sets_genes
 
 
 ##########
@@ -812,7 +902,9 @@ def select_sets_differential_expression_gene(
     """
 
     # Copy information in table.
-    table = table.copy(deep=True)
+    table_source = table.copy(deep=True)
+    # Copy other information.
+    identifiers_exclusion = copy.deepcopy(identifiers_exclusion)
 
     # Determine whether to exclude specific genes from selection.
     if (
@@ -820,15 +912,18 @@ def select_sets_differential_expression_gene(
         (len(identifiers_exclusion) > 0)
     ):
         # Filter rows in table to exclude specific genes.
-        table = table.loc[
-            (~table[column_identifier].isin(identifiers_exclusion)), :
+        table_product = table_source.loc[
+            (~table_source[column_identifier].isin(identifiers_exclusion)), :
         ].copy(deep=True)
+    else:
+        # Copy information in table.
+        table_product = table_source.copy(deep=True)
         pass
 
     # Filter rows in table for selection of sets of genes that demonstrate
     # specific characteristics of differential expression.
     pail_threshold = porg.segregate_fold_change_values_by_thresholds(
-        table=table,
+        table=table_product,
         column_fold_change=column_fold_change,
         column_significance=column_significance,
         threshold_fold_change=threshold_fold_change,
@@ -860,6 +955,13 @@ def select_sets_differential_expression_gene(
         print("tissue: " + tissue)
         print("name_instance: " + name_instance)
         putly.print_terminal_partition(level=4)
+        count_source = table_source.shape[0]
+        count_exclusion = len(identifiers_exclusion)
+        count_product = table_product.shape[0]
+        print("count of original source genes: " + str(count_source))
+        print("count of exclusion genes: " + str(count_exclusion))
+        print("count of novel product genes: " + str(count_product))
+        putly.print_terminal_partition(level=5)
         count_both = (len(pail["genes_change"]))
         count_up = (len(pail["genes_up"]))
         count_down = (len(pail["genes_down"]))
@@ -919,9 +1021,9 @@ def organize_rank_list_gene(
 
     # Define relevant columns in sequence.
     columns_sequence = [
-        "gene_identifier_base",
-        #"gene_name",
-        "rank_fold_p",
+        column_identifier,
+        #column_name,
+        column_rank,
     ]
 
     # Organize indices in table.
@@ -945,7 +1047,7 @@ def organize_rank_list_gene(
     # Filter rows in table for non-missing values across relevant columns.
     table.dropna(
         axis="index",
-        how="all",
+        how="any",
         subset=columns_sequence,
         inplace=True,
     )
@@ -962,7 +1064,7 @@ def organize_rank_list_gene(
     )
 
     # Filter and sort columns within table.
-    table_change = porg.filter_sort_table_columns(
+    table = porg.filter_sort_table_columns(
         table=table,
         columns_sequence=columns_sequence,
         report=report,
@@ -979,6 +1081,8 @@ def organize_rank_list_gene(
         putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
         print("name_instance: " + name_instance)
+        putly.print_terminal_partition(level=4)
+        print(table)
         putly.print_terminal_partition(level=4)
         pass
     # Return information.

@@ -571,7 +571,7 @@ def read_organize_source_parameter_instances(
                 putly.parse_extract_text_keys_values_semicolon_colon_comma(
                     text=row["selection_samples_primary"],
                 )
-            )
+            )["features_values"]
             if (pail["selection_samples_primary"] is not None):
                 columns.extend(list(pail["selection_samples_primary"].keys()))
                 pass
@@ -580,7 +580,7 @@ def read_organize_source_parameter_instances(
                 putly.parse_extract_text_keys_values_semicolon_colon_comma(
                     text=row["selection_samples_secondary"],
                 )
-            )
+            )["features_values"]
             if (pail["selection_samples_secondary"] is not None):
                 columns.extend(list(
                     pail["selection_samples_secondary"].keys()
@@ -629,7 +629,7 @@ def read_organize_source_parameter_instances(
                 putly.parse_extract_text_keys_values_semicolon_colon_comma(
                     text=row["selection_genes"],
                 )
-            )
+            )["features_values"]
             # Collect information about sets of genes that are relevant to the
             # current analysis.
             pail["name_set_gene_emphasis"] = str(
