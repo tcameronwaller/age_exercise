@@ -993,9 +993,12 @@ def read_organize_write_summary_instances_tissue(
         table=table,
         name_file="table_counts_sets_sample",
         path_directory=paths["out_summary"],
-        reset_index=False,
-        write_index=False,
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=True,
         type="text",
+        delimiter="\t",
+        suffix=".tsv",
     )
     # Return information.
     pass
@@ -4150,7 +4153,7 @@ def execute_procedure(
 
     # The current implementation requires manual switch on or off according to
     # the tissues that are included in the batch.
-    if True:
+    if False:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
             project=project,

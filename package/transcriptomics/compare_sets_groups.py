@@ -150,7 +150,8 @@ def initialize_directories_trunk(
     )
     # Specific.
     paths["in_sets_gene"] = os.path.join(
-        paths["in_parameters_private"], project, routine, "sets_gene",
+        paths["in_parameters_private"], project, routine,
+        "sets_gene_2024-11-21",
     )
     paths["out_procedure_data"] = os.path.join(
         paths["out_procedure"], "data",
@@ -227,6 +228,7 @@ def define_column_types_table_demonstration():
 
 
 def read_source(
+    tissue=None,
     paths=None,
     report=None,
 ):
@@ -237,6 +239,8 @@ def read_source(
     integer variable types.
 
     arguments:
+        tissue (str): name of tissue, either 'muscle' or 'adipose', that
+            distinguishes the study design and its relevant data
         paths (dict<str>): collection of paths to directories for procedure's
             files
         report (bool): whether to print reports
@@ -263,11 +267,11 @@ def read_source(
     )
     path_file_table_gene = os.path.join(
         paths["out_routine"], "organize_signal", "whole", "preparation",
-        "table_gene_adipose.pickle",
+        str("table_gene_" + tissue + ".pickle"),
     )
     path_file_table_signal = os.path.join(
         paths["out_project"], "transcriptomics", "organize_signal", "whole",
-        "preparation", "table_signal_scale_adipose.pickle",
+        "preparation", str("table_signal_scale_" + tissue + ".pickle"),
     )
 
     # Collect information.
@@ -299,6 +303,8 @@ def read_source(
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.compare_sets_groups.py")
         print("function: read_source()")
+        putly.print_terminal_partition(level=5)
+        print("tissue: " + str(tissue))
         putly.print_terminal_partition(level=5)
         count_rows = (pail["table_demonstration"].shape[0])
         count_columns = (pail["table_demonstration"].shape[1])
@@ -1307,9 +1313,6 @@ def manage_plot_charts(
 def control_procedure_part_branch(
     name_group_instances=None,
     instances_parameter=None,
-    table_sample=None,
-    table_gene=None,
-    table_signal=None,
     index_genes=None,
     index_samples=None,
     paths=None,
@@ -1318,16 +1321,17 @@ def control_procedure_part_branch(
     """
     Control branch of procedure.
 
+    table_sample (object): Pandas data-frame table of information about
+        samples
+    table_gene (object): Pandas data-frame table of information about genes
+    table_signal (object): Pandas data-frame table of values of signal
+        intensity corresponding to genes across rows and samples across
+        columns
+
     arguments:
         name_group_instances (str): name for a group of instances in the
             collection of parameters
         instances_parameter (list<dict>): collection of instances of parameters
-        table_sample (object): Pandas data-frame table of information about
-            samples
-        table_gene (object): Pandas data-frame table of information about genes
-        table_signal (object): Pandas data-frame table of values of signal
-            intensity corresponding to genes across rows and samples across
-            columns
         index_genes (str): name for index corresponding to genes, which
             is a column in the original source table of signals
         index_samples (str): name for index corresponding to samples,
@@ -1345,10 +1349,6 @@ def control_procedure_part_branch(
 
     ##########
     # Organize information.
-    # Copy information in table.
-    table_sample = table_sample.copy(deep=True)
-    table_gene = table_gene.copy(deep=True)
-    table_signal = table_signal.copy(deep=True)
     # Copy other information.
     instances_parameter = copy.deepcopy(instances_parameter)
 
@@ -1359,6 +1359,34 @@ def control_procedure_part_branch(
         lambda record: (str(record["name_group"]) == name_group_instances),
         instances_parameter
     ))
+
+    ##########
+    # Read and organize source information from file.
+
+    pail_source = read_source(
+        tissue=instances_group[0]["tissue"],
+        paths=paths,
+        report=report,
+    )
+    # Organize table of information about sample observations.
+    table_sample = pail_source["table_sample"]
+    table_sample["inclusion"] = table_sample["inclusion"].astype("str")
+    # Organize table of information about signals.
+    table_signal = pail_source["table_signal"]
+    # Organize indices in table.
+    table_signal.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    # Organize table of information about genes.
+    table_gene = pail_source["table_gene"]
+    # Organize indices in table.
+    table_gene.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
 
     ##########
     # Prepare information about genes.
@@ -1621,33 +1649,7 @@ def execute_procedure(
     ))
 
     ##########
-    # 2.2. Read and organize main source information from file.
-    pail_source = read_source(
-        paths=paths,
-        report=report,
-    )
-    # Organize table of information about sample observations.
-    table_sample = pail_source["table_sample"]
-    table_sample["inclusion"] = table_sample["inclusion"].astype("str")
-    # Organize table of information about signals.
-    table_signal = pail_source["table_signal"]
-    # Organize indices in table.
-    table_signal.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
-    # Organize table of information about genes.
-    table_gene = pail_source["table_gene"]
-    # Organize indices in table.
-    table_gene.reset_index(
-        level=None,
-        inplace=True,
-        drop=False, # remove index; do not move to regular columns
-    )
-
-    ##########
-    # 2.3. Read and organize information about parameters for instances.
+    # 2.2. Read and organize information about parameters for instances.
     instances = read_organize_source_parameter_instances(
         paths=paths,
         report=report,
@@ -1661,83 +1663,28 @@ def execute_procedure(
         elements=groups_instances,
     )
 
-
-    ##########
-    # Develop and test code for clustering across columns within groups...
-    # pail_source["table_demonstration"]
-    if False:
-        table_source = pail_source["table_demonstration"].copy(deep=True)
-        groups_columns = dict()
-        groups_columns["one"] = [
-            "feature_1",
-            "feature_2",
-            "feature_3",
-            "feature_4",
-            "feature_5",
-            "feature_6",
-            "feature_7",
-            "feature_8",
-            "feature_9",
-            "feature_10",
-        ]
-        groups_columns["two"] = [
-            "feature_11",
-            "feature_12",
-            "feature_13",
-            "feature_14",
-            "feature_15",
-            "feature_16",
-            "feature_17",
-            "feature_18",
-            "feature_19",
-            "feature_20",
-        ]
-        groups_columns["three"] = [
-            "feature_21",
-            "feature_22",
-            "feature_23",
-            "feature_24",
-            "feature_25",
-            "feature_26",
-            "feature_27",
-            "feature_28",
-            "feature_29",
-            "feature_30",
-        ]
-
-        indices_rows = [
-            "observation",
-            "group",
-        ]
-        names_groups_sequence = [
-            "one",
-            "two",
-            "three",
-        ]
-
-        porg.cluster_table_columns_by_external_group(
-            table=table_source,
-            indices_rows=indices_rows,
-            groups_columns=groups_columns,
-            names_groups_sequence=names_groups_sequence,
-            report=True,
-        )
-
     ##########
     # Execute procedure iteratively across groups of instances of parameters.
-    for group_instances in groups_instances_unique:
+    if True:
+        for group_instances in groups_instances_unique:
+            control_procedure_part_branch(
+                name_group_instances=group_instances,
+                instances_parameter=instances,
+                index_genes="identifier_gene",
+                index_samples="identifier_sample",
+                paths=paths,
+                report=report,
+            )
+            pass
+    else:
         control_procedure_part_branch(
-            name_group_instances=group_instances,
+            name_group_instances="2_muscle_exercise_interaction_age_exercise_genes_interaction",
             instances_parameter=instances,
-            table_sample=table_sample,
-            table_gene=table_gene,
-            table_signal=table_signal,
             index_genes="identifier_gene",
             index_samples="identifier_sample",
             paths=paths,
             report=report,
         )
-        pass
     pass
 
 

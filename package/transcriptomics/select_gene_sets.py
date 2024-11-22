@@ -1376,7 +1376,7 @@ def control_procedure_part_branch(
         identifiers_exclusion=genes_set_exclusion_unique,
         column_identifier="gene_identifier_base",
         column_name="gene_name",
-        column_rank="rank_fold_p",
+        column_rank="rank_fold_p", # (fold_change_log2 * p_value_negative_log10)
         tissue=tissue,
         name_instance=name_instance,
         report=report,

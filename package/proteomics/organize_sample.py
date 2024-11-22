@@ -493,11 +493,14 @@ def define_interaction_combination_categorical_factor():
     # Specify sequence of columns within table.
     columns_sequence = dict()
     columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
-    columns_sequence["exercise_time_point_by_sex_text"] = "3_hour_by_male"
-    columns_sequence["intervention_text_by_sex_text"] = "active_by_male"
+    columns_sequence["cohort_age_text_by_exercise_time_point"] = (
+        "elder_by_3_hour"
+    )
+    columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
     columns_sequence["intervention_text_by_study_clinic_visit"] = (
         "active_by_second"
     )
+    columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
     # Return information.
     return columns_sequence
 
@@ -886,6 +889,16 @@ def organize_table_sample_attribute(
         to_replace=0,
         value=pandas.NA,
     )
+
+    # Clean values for C-reactive protein variable.
+    table["c_react_protein"] = table.apply(
+        lambda row:
+            str(row["c_react_protein"]).replace(
+                "<.2", "0.1"
+            ).replace("<0.2", "0.1"),
+        axis="columns", # apply function to each row
+    )
+    table["c_react_protein"] = table["c_react_protein"].astype("float32")
 
     # Sort rows within table.
     table.sort_values(
