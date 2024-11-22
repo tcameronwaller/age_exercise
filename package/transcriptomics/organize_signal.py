@@ -4153,7 +4153,7 @@ def execute_procedure(
 
     # The current implementation requires manual switch on or off according to
     # the tissues that are included in the batch.
-    if False:
+    if True:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
             project=project,
