@@ -1,7 +1,7 @@
 """
 Supply functionality for process and analysis of data from proteomics.
 
-This module 'organize_sample' is part of the 'proteomics' package within
+This module 'organize_subject' is part of the 'proteomics' package within
 the 'exercise' package.
 
 Author:
@@ -91,14 +91,16 @@ def initialize_directories(
     report=None,
 ):
     """
-    Initialize directories for procedure's product files.
+    Initialize directories for procedure's source and product files.
 
     arguments:
-        project (str): name of project
+        project (str): name of project that normally corresponds to a single
+            Python package
         routine (str): name of routine, either 'transcriptomics' or
-            'proteomics'
-        procedure (str): name of procedure, a set or step in the routine
-            process
+            'proteomics' that normally corresponds to a single Python package
+            or subpackage
+        procedure (str): name of procedure, a step in the routine process that
+            normally corresponds to a single Python module within the package
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -107,22 +109,26 @@ def initialize_directories(
     raises:
 
     returns:
-        (dict<str>): collection of paths to directories for procedure's files
+        (dict<str>): collection of paths to directories
 
     """
 
     # Collect paths.
     paths = dict()
     # Define paths to directories.
+    # Broad.
     paths["dock"] = path_directory_dock
     paths["in_data"] = os.path.join(
         paths["dock"], "in_data",
     )
+    paths["in_demonstration"] = os.path.join(
+        paths["dock"], "in_demonstration",
+    )
     paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(routine),
+        paths["dock"], "in_parameters",
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project),
+        paths["dock"], "in_parameters_private",
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -133,27 +139,27 @@ def initialize_directories(
     paths["out_procedure"] = os.path.join(
         paths["out_routine"], str(procedure),
     )
-    #paths["out_test"] = os.path.join(
-    #    paths["out_procedure"], "test",
-    #)
-    paths["out_data"] = os.path.join(
+    # Specific.
+    paths["out_procedure_data"] = os.path.join(
         paths["out_procedure"], "data",
     )
-    #paths["out_plot"] = os.path.join(
-    #    paths["out_procedure"], "plot",
-    #)
+    paths["out_procedure_plot"] = os.path.join(
+        paths["out_procedure"], "plot",
+    )
+
     # Initialize directories in main branch.
     paths_initialization = [
-        paths["out_project"],
-        paths["out_routine"],
+        #paths["out_project"],
+        #paths["out_routine"],
         paths["out_procedure"],
-        paths["out_data"],
+        paths["out_procedure_data"],
+        paths["out_procedure_plot"],
     ]
     # Remove previous directories and files to avoid version or batch
     # confusion.
     if restore:
         for path in paths_initialization:
-            putly.remove_directory(path=path)
+            putly.remove_directory(path=path) # caution
             pass
     # Create directories.
     for path in paths_initialization:
@@ -164,7 +170,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample.py")
+        print("module: exercise.proteomics.organize_subject.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -175,12 +181,11 @@ def initialize_directories(
     return paths
 
 
-
 ##########
 # 2. Read source information from file.
 
 
-def define_type_columns_table_sample_feature_organization():
+def define_type_columns_table_subject_feature_organization():
     """
     Defines the variable types of columns within table for organization of
     attributes of samples.
@@ -239,7 +244,7 @@ def parse_extract_table_sample_feature_organization(
     # Copy information in table.
     table = table.copy(deep=True)
 
-    # Filter rows in table for selection of relevant samples.
+    # Filter rtable_feature_organizationn of relevant samples.
     table_inclusion = table.loc[
         (table[inclusion] == 1), :
     ].copy(deep=True)
@@ -361,13 +366,13 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
-    path_file_table_sample_organization = os.path.join(
-        paths["in_data"], "study_exercise_age", "subject_sample",
+    path_file_table_feature_organization = os.path.join(
+        paths["in_data"], "study_age_exercise", "subject_sample",
         "table_subject_sample_feature_organization.tsv",
     )
-    path_file_table_sample_attribute = os.path.join(
-        paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_subject_sample_feature_olink_hek_2024-08-26.csv",
+    path_file_table_subject_property = os.path.join(
+        paths["in_data"], "study_age_exercise", "subject_sample",
+        "table_subject_sample_feature_olink_hek_2024-11-22.csv",
     )
 
     # Collect information.
@@ -376,9 +381,9 @@ def read_source(
 
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
-    types_columns = define_type_columns_table_sample_feature_organization()
-    pail["table_sample_organization"] = pandas.read_csv(
-        path_file_table_sample_organization,
+    types_columns = define_type_columns_table_subject_feature_organization()
+    pail["table_feature_organization"] = pandas.read_csv(
+        path_file_table_feature_organization,
         sep="\t",
         header=0,
         dtype=types_columns,
@@ -387,15 +392,15 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = parse_extract_table_sample_feature_organization(
-        table=pail["table_sample_organization"],
-        inclusion="inclusion_proteomics",
-        report=report,
-    )
+    #pail_parse = parse_extract_table_sample_feature_organization(
+    #    table=pail["table_feature_organization"],
+    #    inclusion="inclusion_proteomics",
+    #    report=report,
+    #)
 
     # Table of attributes for samples.
-    pail["table_sample_attribute"] = pandas.read_csv(
-        path_file_table_sample_attribute,
+    pail["table_subject_property"] = pandas.read_csv(
+        path_file_table_subject_property,
         sep=",",
         header=0,
         dtype=pail_parse["types_columns"],
@@ -405,16 +410,16 @@ def read_source(
         encoding="utf-8",
     )
     # Fill information about intervention in experimental condition.
-    #pail["table_sample_attribute"]["Intervention"] = "Placebo"
+    #pail["table_subject_property"]["Intervention"] = "Placebo"
 
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
+        print("module: exercise.proteomics.organize_subject.py")
         print("function: read_source()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for subjects and samples: ")
-        print(pail["table_sample_attribute"].iloc[0:10, 0:])
+        print(pail["table_subject_property"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -470,37 +475,6 @@ def define_sequence_columns_novel_sample_feature():
         #"tertiles_insulin_sensitivity",
         #"tertiles_activity_steps",
     ]
-    # Return information.
-    return columns_sequence
-
-
-def define_interaction_combination_categorical_factor():
-    """
-    Defines names of columns for interaction combinations of categorical factor
-    variables.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): names of columns for interaction combinations of
-            categorical factor variables and their specific single values for
-            designation as not 'other'
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = dict()
-    columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
-    columns_sequence["cohort_age_text_by_exercise_time_point"] = (
-        "elder_by_3_hour"
-    )
-    columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
-    columns_sequence["intervention_text_by_study_clinic_visit"] = (
-        "active_by_second"
-    )
-    columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
     # Return information.
     return columns_sequence
 
@@ -763,7 +737,7 @@ def determine_date_visit_text(
     return designator
 
 
-def organize_table_sample_attribute(
+def organize_table_subject_property(
     table=None,
     translations_column=None,
     columns_original=None,
@@ -932,7 +906,7 @@ def organize_table_sample_attribute(
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.proteomics.organize_sample_olink.py")
-        print("function: organize_table_sample_attribute()")
+        print("function: organize_table_subject_property()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
         print(pail["table"].iloc[0:10, 0:])
@@ -941,6 +915,40 @@ def organize_table_sample_attribute(
         pass
     # Return information.
     return pail
+
+
+
+
+
+def define_interaction_combination_categorical_factor():
+    """
+    Defines names of columns for interaction combinations of categorical factor
+    variables.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): names of columns for interaction combinations of
+            categorical factor variables and their specific single values for
+            designation as not 'other'
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = dict()
+    columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
+    columns_sequence["cohort_age_text_by_exercise_time_point"] = (
+        "elder_by_3_hour"
+    )
+    columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
+    columns_sequence["intervention_text_by_study_clinic_visit"] = (
+        "active_by_second"
+    )
+    columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
+    # Return information.
+    return columns_sequence
 
 
 # TODO: TCW; 18 October 2024
@@ -1271,14 +1279,14 @@ def execute_procedure(
     # Parameters.
     project="exercise"
     routine="proteomics"
-    procedure="organize_sample_olink"
+    procedure="organize_subject"
     report = True
 
     ##########
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
+        print("module: exercise.proteomics.organize_subject.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
@@ -1306,20 +1314,39 @@ def execute_procedure(
         report=report,
     )
 
+    # source["table_subject_property"]
+
     ##########
-    # 3. Organize table of attributes for samples.
+    # 3. Parse table of parameters describing properties for subjects.
     pail_parse = parse_extract_table_sample_feature_organization(
-        table=pail_source["table_sample_organization"],
+        table=pail_source["table_feature_organization"],
         inclusion="inclusion_proteomics",
         report=report,
     )
+
+    ##########
+    # 4. Organize table of attributes for samples.
+    columns_original = pail_parse["columns_all"]
+    columns_novel = define_sequence_columns_novel_sample_feature() # <-- this might move to "transcriptomics"
+    pail_organization = organize_table_subject_property(
+        table=pail_source["table_subject_property"],
+        translations_column=pail_parse["translations_column"],
+        columns_original=columns_original,
+        columns_novel=columns_novel,
+        report=report,
+    )
+    table_sample_attribute = pail_sample_attribute["table"]
+
+
+
+    ##########
+    # 3. Organize table of properties for subjects.
     columns_interaction = define_interaction_combination_categorical_factor()
     columns_novel = define_sequence_columns_novel_sample_feature()
-    table_sample_attribute = organize_table_sample_attribute(
-        table=pail_source["table_sample_attribute"],
+    table_subject_property = organize_table_subject_property(
+        table=pail_source["table_subject_property"],
         translations_column=pail_parse["translations_column"],
         columns_original=pail_parse["columns_all"],
-        columns_interaction=columns_interaction,
         columns_novel=columns_novel,
         report=report,
     )
@@ -1328,7 +1355,7 @@ def execute_procedure(
     # 4. Organize proteomics from measurements by O-Link technology.
     table_sample_olink_components = (
         organize_olink_principal_components_tissues(
-            table=table_sample_attribute,
+            table=table_subject_property,
             column_index="identifier_subject_attribute",
             columns_olink_plasma=pail_parse["columns_olink_plasma"],
             columns_olink_muscle=pail_parse["columns_olink_muscle"],
@@ -1338,6 +1365,11 @@ def execute_procedure(
 
     # 4.1. extract from the parameter table the columns of O-Link targets in
     # each tissue
+
+
+
+    # "table_subject.tsv"
+    # "table_subject.pickle"
 
 
 

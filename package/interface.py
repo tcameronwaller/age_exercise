@@ -51,7 +51,7 @@ import exercise.transcriptomics.organize_sample
 import exercise.transcriptomics.organize_signal
 import exercise.transcriptomics.select_gene_sets
 import exercise.transcriptomics.compare_sets_groups
-import exercise.proteomics.organize_sample
+import exercise.proteomics.organize_subject
 
 #dir()
 #importlib.reload()
@@ -343,13 +343,14 @@ def define_subparser_proteomics(
         )
     )
     parser_routine.add_argument(
-        "-organize_sample",
-        "--organize_sample",
-        dest="organize_sample",
+        "-organize_subject",
+        "--organize_subject",
+        dest="organize_subject",
         action="store_true",
         help=(
-            "Organize information about samples, including measurements by " +
-            "O-Link technology."
+            "Organize information about samples at the level of study "
+            "subjects, including measurements from the clinic, laboratory, " +
+            "and O-Link technology."
         )
     )
 
@@ -535,14 +536,14 @@ def evaluate_parameters_proteomics(arguments):
     print("--------------------------------------------------")
     print("... call to transcriptomics routine ...")
     # Execute procedure.
-    if arguments.organize_sample:
+    if arguments.organize_subject:
         # Report status.
         print(
-           "... executing exercise.proteomics.organize_sample " +
+           "... executing exercise.proteomics.organize_subject " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.proteomics.organize_sample.execute_procedure(
+        exercise.proteomics.organize_subject.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 

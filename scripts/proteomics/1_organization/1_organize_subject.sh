@@ -110,7 +110,7 @@ fi
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
 proteomics \
---organize_sample \
+--organize_subject \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################

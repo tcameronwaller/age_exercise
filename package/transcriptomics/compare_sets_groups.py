@@ -37,12 +37,6 @@ License:
 ###############################################################################
 # Notes
 
-# TODO: TCW; 15 October 2024
-# TODO: simplify this process of organizing the signal information
-# TODO: It might help to separate the preparation of the overall signal table
-# TODO: from the stratified signal tables for individual analyses.
-
-
 
 ###############################################################################
 # Installation and importation
@@ -102,14 +96,16 @@ def initialize_directories_trunk(
     report=None,
 ):
     """
-    Initialize directories for procedure's product files.
+    Initialize directories for procedure's source and product files.
 
     arguments:
-        project (str): name of project
+        project (str): name of project that normally corresponds to a single
+            Python package
         routine (str): name of routine, either 'transcriptomics' or
-            'proteomics'
-        procedure (str): name of procedure, a set or step in the routine
-            process
+            'proteomics' that normally corresponds to a single Python package
+            or subpackage
+        procedure (str): name of procedure, a step in the routine process that
+            normally corresponds to a single Python module within the package
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -118,7 +114,7 @@ def initialize_directories_trunk(
     raises:
 
     returns:
-        (dict<str>): collection of paths to directories for procedure's files
+        (dict<str>): collection of paths to directories
 
     """
 

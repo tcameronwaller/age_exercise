@@ -71,7 +71,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.proteomics.organize_sample as expr_sample
+import exercise.proteomics.organize_subject as aexpr_sub
 
 ###############################################################################
 # Functionality
@@ -177,7 +177,8 @@ def initialize_directories(
 ##########
 # 2. Read source information from file.
 
-
+# TODO: TCW; 26 November 2024
+# KEEP THIS HERE.
 def define_type_columns_table_sample_file():
     """
     Defines the variable types of columns within table for attributes of
@@ -243,16 +244,16 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
-    path_file_table_sample_organization = os.path.join(
-        paths["in_data"], "study_exercise_age", "subject_sample",
+    path_file_table_feature_organization = os.path.join(
+        paths["in_data"], "study_age_exercise", "subject_sample",
         "table_subject_sample_feature_organization.tsv",
     )
-    path_file_table_sample_attribute = os.path.join(
-        paths["in_data"], "study_exercise_age", "subject_sample",
-        "table_subject_sample_feature_olink_hek_2024-08-26.csv",
+    path_file_table_subject = os.path.join(
+        paths["out_project"], "proteomics", "organize_subject", "data",
+        "table_subject.pickle",
     )
     path_file_table_sample_file = os.path.join(
-        paths["in_data"], "study_exercise_age", "subject_sample",
+        paths["in_data"], "study_age_exercise", "subject_sample",
         "table_sample_file_rnaseq.tsv",
     )
 
@@ -263,10 +264,10 @@ def read_source(
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
     types_columns = (
-        expr_sample.define_type_columns_table_sample_feature_organization()
+        aexpr_sub.define_type_columns_table_subject_feature_organization()
     )
-    pail["table_sample_organization"] = pandas.read_csv(
-        path_file_table_sample_organization,
+    pail["table_feature_organization"] = pandas.read_csv(
+        path_file_table_feature_organization,
         sep="\t",
         header=0,
         dtype=types_columns,
@@ -275,22 +276,15 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = expr_sample.parse_extract_table_sample_feature_organization(
-        table=pail["table_sample_organization"],
-        inclusion="inclusion_transcriptomics",
-        report=report,
-    )
+    #pail_parse = parse_extract_table_sample_feature_organization(
+    #    table=pail["table_feature_organization"],
+    #    inclusion="inclusion_proteomics",
+    #    report=report,
+    #)
 
-    # Table of attributes for samples.
-    pail["table_sample_attribute"] = pandas.read_csv(
-        path_file_table_sample_attribute,
-        sep=",",
-        header=0,
-        dtype=pail_parse["types_columns"],
-        na_values=[
-            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
-        ],
-        encoding="utf-8",
+    # Table of properties for subjects.
+    pail["table_subject"] = pandas.read_pickle(
+        path_file_table_subject,
     )
 
     # Table of matches between samples and files.
@@ -312,8 +306,8 @@ def read_source(
         print("module: exercise.transcriptomics.organize_sample.py")
         print("function: read_source()")
         putly.print_terminal_partition(level=5)
-        print("table of attributes for subjects and samples: ")
-        print(pail["table_sample_attribute"].iloc[0:10, 0:])
+        print("table of properties for subjects: ")
+        print(pail["table_subject"].iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         print("table of matches between samples and files: ")
         print(pail["table_sample_file"].iloc[0:10, 0:])
@@ -1125,23 +1119,24 @@ def execute_procedure(
         report=report,
     )
 
+    # pail_source["table_subject"]
+
     ##########
-    # 3. Organize table of attributes for samples.
-    pail_parse = expr_sample.parse_extract_table_sample_feature_organization(
-        table=pail_source["table_sample_organization"],
+    # 3. Parse table of parameters describing properties for subjects.
+    pail_parse = aexpr_sub.parse_extract_table_sample_feature_organization(
+        table=pail_source["table_feature_organization"],
         inclusion="inclusion_transcriptomics",
         report=report,
     )
-    columns_original = pail_parse["columns_all"]
-    columns_novel = expr_sample.define_sequence_columns_novel_sample_feature()
-    pail_sample_attribute = expr_sample.organize_table_sample_attribute(
-        table=pail_source["table_sample_attribute"],
-        translations_column=pail_parse["translations_column"],
-        columns_original=columns_original,
-        columns_novel=columns_novel,
-        report=report,
-    )
-    table_sample_attribute = pail_sample_attribute["table"]
+
+    # TODO: TCW; 26 November 2024
+    # TODO: I think the part about the combination interaction terms needs to
+    # move to the respective "organize_sample" modules for "proteomics" or "transcriptomics"
+
+
+
+    # TODO: TCW; 26 November 2024
+    # Most stuff below here is definitely for "transcriptomics.organize_sample"
 
     ##########
     # 4. Organize table of matches between samples and files.
@@ -1163,7 +1158,7 @@ def execute_procedure(
     columns_transfer.remove("match_sample_attribute_file_transcriptomics")
     table_sample_merge = combine_table_sample_file_attribute(
         table_sample_file=table_sample_file,
-        table_sample_attribute=table_sample_attribute,
+        table_sample_attribute=table_sample_attribute, # <-- "table_subject"???
         columns_transfer=columns_transfer,
         report=report,
     )
@@ -1171,10 +1166,10 @@ def execute_procedure(
     ##########
     # 6. Prepare combinations of variables for analyses of interaction.
     columns_interaction = (
-        expr_sample.define_interaction_combination_categorical_factor()
+        aexpr_sub.define_interaction_combination_categorical_factor()
     )
     pail_interaction = (
-        expr_sample.organize_table_sample_interaction_combinations(
+        aexpr_sub.organize_table_sample_interaction_combinations(
             table=table_sample_merge,
             columns_interaction=columns_interaction,
             report=report,

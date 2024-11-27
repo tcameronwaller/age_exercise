@@ -715,7 +715,7 @@ def read_source_sample(
 
     # Define paths to child files.
     path_file_table_sample_file = os.path.join(
-        paths["in_data"], "study_exercise_age", "subject_sample",
+        paths["in_data"], "study_age_exercise", "subject_sample",
         "table_sample_file_rnaseq.tsv",
     )
     path_file_table_sample = os.path.join(
@@ -794,13 +794,13 @@ def read_source_main(
     # Define paths to child files.
     if (tissue == "adipose"):
         path_file_table_main = os.path.join(
-            paths["in_data"], "study_exercise_age", "transcriptomics",
+            paths["in_data"], "study_age_exercise", "transcriptomics",
             "quantification_2024-07-14",
             "organization", "quantification_rna_reads_gene_adipose.tsv",
         )
     elif (tissue == "muscle"):
         path_file_table_main = os.path.join(
-            paths["in_data"], "study_exercise_age", "transcriptomics",
+            paths["in_data"], "study_age_exercise", "transcriptomics",
             "quantification_2024-07-14",
             "organization", "quantification_rna_reads_gene_muscle.tsv",
         )
