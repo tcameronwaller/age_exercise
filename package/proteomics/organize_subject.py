@@ -276,7 +276,7 @@ def parse_extract_table_sample_feature_organization(
 
     # Extract product names of all columns.
     columns_all = copy.deepcopy(
-        table_inclusion["name_product"].to_list()
+        table_inclusion["name_product"].unique().tolist()
     )
 
     # Extract names of columns corresponding to O-Link measurements in each
@@ -392,11 +392,11 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    #pail_parse = parse_extract_table_sample_feature_organization(
-    #    table=pail["table_feature_organization"],
-    #    inclusion="inclusion_proteomics",
-    #    report=report,
-    #)
+    pail_parse = parse_extract_table_sample_feature_organization(
+        table=pail["table_feature_organization"],
+        inclusion="inclusion_proteomics",
+        report=report,
+    )
 
     # Table of attributes for samples.
     pail["table_subject_property"] = pandas.read_csv(
@@ -427,7 +427,7 @@ def read_source(
 
 
 ##########
-# 3. Organize table of attributes for samples.
+# 3. Organize table of properties for study subjects.
 
 
 def define_sequence_columns_novel_sample_feature():
@@ -450,14 +450,15 @@ def define_sequence_columns_novel_sample_feature():
 
     # Specify sequence of columns within table.
     columns_sequence = [
-        "match_sample_attribute_file_transcriptomics",
+        "match_subject_sample_file_transcriptomics",
         "cohort_age",
         "cohort_age_text",
         #"cohort_age_letter",
         "intervention",
         "intervention_text",
-        #"identifier_subject_attribute",
+        #"identifier_subject",
         #"study_clinic_visit_relative",
+        "study_clinic_visit",
         "date_visit_text",
         #"date_visit_text_raw",
         "sex_y",
@@ -477,6 +478,62 @@ def define_sequence_columns_novel_sample_feature():
     ]
     # Return information.
     return columns_sequence
+
+
+def determine_subject_study_clinic_visit(
+    tissue=None,
+    instance=None,
+):
+    """
+    Determines the clinical visit of the study at which collection of a
+    sample occurred.
+
+    arguments:
+        tissue (str): name of tissue, either 'adipose' or 'muscle', which
+            distinguishes study design and sets of samples
+        instance (str): designation of study instance in terms of clinical
+            visit for sample collection
+
+    raises:
+
+    returns:
+        (str): indicator of clinical visit in the study at which collection of
+            a sample occurred, either 'first' or 'second'
+
+    """
+
+    # Determine indicator.
+    if (
+        (pandas.notna(tissue)) and
+        (len(str(tissue).strip()) > 0) and
+        (pandas.notna(instance)) and
+        (len(str(instance).strip()) > 0)
+    ):
+        # There is adequate information.
+        if (
+            (str(tissue).strip().lower() == "muscle") and
+            (str(instance).strip() in ["1B", "2B", "3B"])
+        ):
+            indicator = "first"
+        elif (
+            (str(tissue).strip().lower() == "adipose") and
+            (str(instance).strip() == "B")
+        ):
+            indicator = "first"
+        elif (
+            (str(tissue).strip().lower() == "adipose") and
+            (str(instance).strip() == "PI")
+        ):
+            indicator = "second"
+        else:
+            indicator = ""
+    else:
+        indicator = ""
+        pass
+    # Return information.
+    return indicator
+
+
 
 
 def determine_match_sample_file_forward(
@@ -790,7 +847,7 @@ def organize_table_subject_property(
     # Filter rows in table.
     table = table.loc[
         (
-            (table["identifier_subject_attribute"].str.len() > 0)
+            (table["identifier_subject"].str.len() > 0)
         ), :
     ].copy(deep=True)
     table.dropna(
@@ -798,15 +855,27 @@ def organize_table_subject_property(
         axis="index",
     )
 
+    # Determine designation for subject's first or second clinical visit of the
+    # study.
+    table["study_clinic_visit"] = table.apply(
+        lambda row:
+            determine_subject_study_clinic_visit(
+                visit_relative=row["study_clinic_visit_relative"],
+            ),
+        axis="columns", # apply function to each row
+    )
+
     # Determine designation to match sample to attribute.
-    table["match_sample_attribute_file_transcriptomics"] = table.apply(
+    table["match_subject_sample_file_transcriptomics"] = table.apply(
         lambda row:
             determine_match_sample_file_forward(
-                subject=row["identifier_subject_attribute"],
+                subject=row["identifier_subject"],
                 study_clinic_visit=row["study_clinic_visit_relative"],
             ),
         axis="columns", # apply function to each row
     )
+
+
     # Determine designations of cohort by age.
     table["cohort_age_text"] = table.apply(
         lambda row:
@@ -879,7 +948,7 @@ def organize_table_subject_property(
         by=[
             "cohort_age",
             "intervention",
-            "identifier_subject_attribute",
+            "identifier_subject",
             "study_clinic_visit_relative",
         ],
         axis="index",
@@ -917,132 +986,16 @@ def organize_table_subject_property(
     return pail
 
 
-
-
-
-def define_interaction_combination_categorical_factor():
-    """
-    Defines names of columns for interaction combinations of categorical factor
-    variables.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): names of columns for interaction combinations of
-            categorical factor variables and their specific single values for
-            designation as not 'other'
-
-    """
-
-    # Specify sequence of columns within table.
-    columns_sequence = dict()
-    columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
-    columns_sequence["cohort_age_text_by_exercise_time_point"] = (
-        "elder_by_3_hour"
-    )
-    columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
-    columns_sequence["intervention_text_by_study_clinic_visit"] = (
-        "active_by_second"
-    )
-    columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
-    # Return information.
-    return columns_sequence
-
-
-# TODO: TCW; 18 October 2024
-# This function could additionally prepare binary "dummies" for categories
-# and then calculate the product combinations for interaction effects.
-
-
-def organize_table_sample_interaction_combinations(
-    table=None,
-    columns_interaction=None,
-    report=None,
-):
-    """
-    Organizes information in table that provides attributes of samples.
-
-    This function prepares combinations of categorical features for analysis of
-    interaction effects.
-
-    arguments:
-        table (object): Pandas data-frame table of subjects, samples, and their
-            attribute features
-        columns_interaction (dict<str>): names of columns for interaction
-            combinations of categorical factor variables and their specific
-            single values for designation as not 'other'
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table
-
-    """
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-    # Copy other information.
-    columns_interaction = copy.deepcopy(columns_interaction)
-
-    # Define interaction combinations of categorical factor variables.
-    #interactions = define_interaction_combination_categorical_factor()
-    for interaction in columns_interaction.keys():
-        parts = list(str(interaction).strip().split("_by_"))
-        part_first = parts[0]
-        part_second = parts[1]
-        # Create interaction combination of categorical factor variables.
-        table[interaction] = table.apply(
-            lambda row: "_by_".join([
-                str(row[part_first]),
-                str(row[part_second]),
-            ]),
-            axis="columns", # apply function to each row
-        )
-        # Desginate all values of interaction combination as 'other' that do
-        # not match the specific single effect value.
-        match = str(columns_interaction[interaction]).strip()
-        table[interaction] = table.apply(
-            lambda row:
-                row[interaction] if (row[interaction] == match) else "other",
-            axis="columns", # apply function to each row
-        )
-        pass
-
-    # Filter and sort columns within table.
-    # TODO: TCW; 18 October 2024
-    # Consider whether to filter columns again at this point.
-
-    # Collect information.
-    pail = dict()
-    pail["columns_interaction"] = columns_interaction
-    pail["table"] = table
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
-        print("function: organize_table_sample_interaction_combinations()")
-        putly.print_terminal_partition(level=5)
-        print("table of attributes for samples: ")
-        print(pail["table"].iloc[0:10, 0:])
-        print(pail["table"])
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return pail
-
+##########
+# 4. Organize proteomics from measurements by O-Link technology.
 
 # TODO: TCW; 2024-08-27
 # Ideally, the calculation of the PCs should happen AFTER stratifying the
 # samples for the cohort that's relevant to the analysis.
+# --> It won't be that big a deal... I think the main difference will be scale
 
-
-##########
-# 4. Organize proteomics from measurements by O-Link technology.
-
+# TODO: TCW; 2024-11-26
+# Olink measurements are only available for "Pre" or "before" visits.
 
 def organize_olink_principal_components_tissue(
     table=None,
@@ -1325,9 +1278,9 @@ def execute_procedure(
     )
 
     ##########
-    # 4. Organize table of attributes for samples.
+    # 4. Organize table of properties for study subjects.
     columns_original = pail_parse["columns_all"]
-    columns_novel = define_sequence_columns_novel_sample_feature() # <-- this might move to "transcriptomics"
+    columns_novel = define_sequence_columns_novel_sample_feature()
     pail_organization = organize_table_subject_property(
         table=pail_source["table_subject_property"],
         translations_column=pail_parse["translations_column"],
@@ -1335,33 +1288,22 @@ def execute_procedure(
         columns_novel=columns_novel,
         report=report,
     )
-    table_sample_attribute = pail_sample_attribute["table"]
+    table_subject = pail_organization["table"]
 
-
-
-    ##########
-    # 3. Organize table of properties for subjects.
-    columns_interaction = define_interaction_combination_categorical_factor()
-    columns_novel = define_sequence_columns_novel_sample_feature()
-    table_subject_property = organize_table_subject_property(
-        table=pail_source["table_subject_property"],
-        translations_column=pail_parse["translations_column"],
-        columns_original=pail_parse["columns_all"],
-        columns_novel=columns_novel,
-        report=report,
-    )
 
     ##########
     # 4. Organize proteomics from measurements by O-Link technology.
-    table_sample_olink_components = (
-        organize_olink_principal_components_tissues(
-            table=table_subject_property,
-            column_index="identifier_subject_attribute",
-            columns_olink_plasma=pail_parse["columns_olink_plasma"],
-            columns_olink_muscle=pail_parse["columns_olink_muscle"],
-            columns_olink_adipose=pail_parse["columns_olink_adipose"],
-            report=report,
-    ))
+    if False:
+        table_sample_olink_components = (
+            organize_olink_principal_components_tissues(
+                table=table_subject,
+                column_index="identifier_subject",
+                columns_olink_plasma=pail_parse["columns_olink_plasma"],
+                columns_olink_muscle=pail_parse["columns_olink_muscle"],
+                columns_olink_adipose=pail_parse["columns_olink_adipose"],
+                report=report,
+        ))
+        pass
 
     # 4.1. extract from the parameter table the columns of O-Link targets in
     # each tissue
@@ -1370,8 +1312,41 @@ def execute_procedure(
 
     # "table_subject.tsv"
     # "table_subject.pickle"
+    ##########
+    # Collect information.
+    # Collections of files.
+    pail_write_tables = dict()
+    pail_write_tables[str("table_subject")] = table_subject
+    pail_write_objects = dict()
+    #pail_write_objects[str("samples")]
 
-
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=True,
+        type="text",
+        delimiter="\t",
+        suffix=".tsv",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data"],
+        reset_index_rows=None,
+        write_index_rows=None,
+        write_index_columns=None,
+        type="pickle",
+        delimiter=None,
+        suffix=".pickle",
+    )
+    if False:
+        putly.write_objects_to_file_pickle(
+            pail_write=pail_write_objects,
+            path_directory=paths["out_procedure_data"],
+        )
 
     pass
 

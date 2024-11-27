@@ -318,7 +318,32 @@ def read_source(
 
 
 ##########
-# 3. Organize table of attributes for samples.
+# 3. Organize table of properties for study subjects.
+
+
+def define_translation_columns_table_subject_property():
+    """
+    Defines translations for the names of columns in a table.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): translations for names of columns in a table
+
+    """
+
+
+    # Translate names of columns.
+    translations = dict()
+    translations["identifier_subject"] = "identifier_subject_study"
+    translations["study_clinic_visit"] = "study_clinic_visit_subject"
+    # Return information.
+    return translations
+
+
+
 
 
 
@@ -373,7 +398,7 @@ def define_sequence_columns_table_sample_file():
         "condition_correction",
         "study_clinic_visit",
         "exercise_time_point",
-        "match_sample_attribute_file_transcriptomics",
+        "match_subject_sample_file_transcriptomics",
         #"path_file",
         #"sample_plate",
         #"plate",
@@ -593,7 +618,7 @@ def organize_table_sample_file(
         axis="columns", # apply function to each row
     )
     # Determine designation to match sample to attribute.
-    table["match_sample_attribute_file_transcriptomics"] = table.apply(
+    table["match_subject_sample_file_transcriptomics"] = table.apply(
         lambda row:
             determine_match_sample_file_reverse(
                 subject=row["identifier_subject"],
@@ -635,9 +660,9 @@ def organize_table_sample_file(
 # along with their further attributes.
 
 
-def combine_table_sample_file_attribute(
+def combine_table_subject_sample_file_property(
     table_sample_file=None,
-    table_sample_attribute=None,
+    table_subject=None,
     columns_transfer=None,
     report=None,
 ):
@@ -647,7 +672,7 @@ def combine_table_sample_file_attribute(
     arguments:
         table_sample_file (object): Pandas data-frame table of information
             about samples at the level of individual files of data
-        table_sample_attribute (object): Pandas data-frame table of information
+        table_subject (object): Pandas data-frame table of information
             about samples at the level of individual subjects and their
             clinical visits for the study
         columns_transfer (list<str>): names of columns for attributes to
@@ -663,14 +688,14 @@ def combine_table_sample_file_attribute(
 
     # Copy information in table.
     table_sample_file = table_sample_file.copy(deep=True)
-    table_sample_attribute = table_sample_attribute.copy(deep=True)
+    table_subject = table_subject.copy(deep=True)
 
     # Transfer attributes.
     table = porg.transfer_table_rows_attributes_reference(
         table_main=table_sample_file,
-        column_main_key="match_sample_attribute_file_transcriptomics",
-        table_reference=table_sample_attribute,
-        column_reference_key="match_sample_attribute_file_transcriptomics",
+        column_main_key="match_subject_sample_file_transcriptomics",
+        table_reference=table_subject,
+        column_reference_key="match_subject_sample_file_transcriptomics",
         columns_reference_transfer=columns_transfer,
         prefix_reference_main="",
         suffix_reference_main="",
@@ -700,7 +725,7 @@ def combine_table_sample_file_attribute(
     if report:
         putly.print_terminal_partition(level=3)
         print("module: exercise.transcriptomics.organize_sample.py")
-        print("function: combine_table_sample_file_attribute()")
+        print("function: combine_table_subject_sample_file_property()")
         putly.print_terminal_partition(level=5)
         print("table of files and attributes for samples: ")
         print(table.iloc[0:10, 0:])
@@ -710,8 +735,132 @@ def combine_table_sample_file_attribute(
     return table
 
 
+
 ##########
-# 6. Describe factors in table of samples.
+# 6. Prepare combinations of categorical factor variables for analyses of
+# interaction.
+
+
+def define_interaction_combination_categorical_factor():
+    """
+    Defines names of columns for interaction combinations of categorical factor
+    variables.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): names of columns for interaction combinations of
+            categorical factor variables and their specific single values for
+            designation as not 'other'
+
+    """
+
+    # Specify sequence of columns within table.
+    columns_sequence = dict()
+    columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
+    columns_sequence["cohort_age_text_by_exercise_time_point"] = (
+        "elder_by_3_hour"
+    )
+    columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
+    columns_sequence["intervention_text_by_study_clinic_visit"] = (
+        "active_by_second"
+    )
+    columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
+    # Return information.
+    return columns_sequence
+
+
+# TODO: TCW; 18 October 2024
+# This function could additionally prepare binary "dummies" for categories
+# and then calculate the product combinations for interaction effects.
+
+
+def organize_table_sample_interaction_combinations(
+    table=None,
+    columns_interaction=None,
+    report=None,
+):
+    """
+    Organizes information in table that provides attributes of samples.
+
+    This function prepares combinations of categorical features for analysis of
+    interaction effects.
+
+    arguments:
+        table (object): Pandas data-frame table of subjects, samples, and their
+            attribute features
+        columns_interaction (dict<str>): names of columns for interaction
+            combinations of categorical factor variables and their specific
+            single values for designation as not 'other'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    columns_interaction = copy.deepcopy(columns_interaction)
+
+    # Define interaction combinations of categorical factor variables.
+    #interactions = define_interaction_combination_categorical_factor()
+    for interaction in columns_interaction.keys():
+        parts = list(str(interaction).strip().split("_by_"))
+        part_first = parts[0]
+        part_second = parts[1]
+        # Create interaction combination of categorical factor variables.
+        table[interaction] = table.apply(
+            lambda row: "_by_".join([
+                str(row[part_first]),
+                str(row[part_second]),
+            ]),
+            axis="columns", # apply function to each row
+        )
+        # Desginate all values of interaction combination as 'other' that do
+        # not match the specific single effect value.
+        match = str(columns_interaction[interaction]).strip()
+        table[interaction] = table.apply(
+            lambda row:
+                row[interaction] if (row[interaction] == match) else "other",
+            axis="columns", # apply function to each row
+        )
+        pass
+
+    # Filter and sort columns within table.
+    # TODO: TCW; 18 October 2024
+    # Consider whether to filter columns again at this point.
+
+    # Collect information.
+    pail = dict()
+    pail["columns_interaction"] = columns_interaction
+    pail["table"] = table
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.proteomics.organize_sample_olink.py")
+        print("function: organize_table_sample_interaction_combinations()")
+        putly.print_terminal_partition(level=5)
+        print("table of attributes for samples: ")
+        print(pail["table"].iloc[0:10, 0:])
+        print(pail["table"])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
+
+
+
+
+
+##########
+# 7. Describe factors in table of samples.
 
 
 def describe_table_sample_factors(
@@ -1133,13 +1282,17 @@ def execute_procedure(
     # TODO: I think the part about the combination interaction terms needs to
     # move to the respective "organize_sample" modules for "proteomics" or "transcriptomics"
 
-
+    ##########
+    # 4. Organize table of properties for study subjects.
+    translations_subject = define_translation_columns_table_subject_property()
 
     # TODO: TCW; 26 November 2024
     # Most stuff below here is definitely for "transcriptomics.organize_sample"
 
+
+
     ##########
-    # 4. Organize table of matches between samples and files.
+    # 5. Organize table of matches between samples and files.
     translations_sample_file = define_translation_columns_table_sample_file()
     columns_sample_file = define_sequence_columns_table_sample_file()
     table_sample_file = organize_table_sample_file(
@@ -1152,31 +1305,39 @@ def execute_procedure(
     ##########
     # 5. Combine within the same table the matches between samples and files
     # along with their further attributes.
-
+    columns_original = pail_parse["columns_all"]
+    columns_original.remove("identifier_subject")
+    #columns_original.append("identifier_subject_study")
+    columns_original.insert(5, "identifier_subject_study")
+    columns_novel = aexpr_sub.define_sequence_columns_novel_sample_feature()
+    columns_novel.remove("study_clinic_visit")
+    #columns_novel.append("study_clinic_visit_subject")
+    columns_novel.insert(5, "study_clinic_visit_subject")
     columns_transfer = copy.deepcopy(columns_original)
     columns_transfer.extend(columns_novel)
-    columns_transfer.remove("match_sample_attribute_file_transcriptomics")
-    table_sample_merge = combine_table_sample_file_attribute(
+    columns_transfer.remove("match_subject_sample_file_transcriptomics")
+    table_sample_merge = combine_table_subject_sample_file_property(
         table_sample_file=table_sample_file,
-        table_sample_attribute=table_sample_attribute, # <-- "table_subject"???
+        table_subject=table_subject,
         columns_transfer=columns_transfer,
         report=report,
     )
 
     ##########
-    # 6. Prepare combinations of variables for analyses of interaction.
+    # 6. Prepare combinations of categorical factor variables for analyses of
+    # interaction.
     columns_interaction = (
-        aexpr_sub.define_interaction_combination_categorical_factor()
+        define_interaction_combination_categorical_factor()
     )
     pail_interaction = (
-        aexpr_sub.organize_table_sample_interaction_combinations(
+        organize_table_sample_interaction_combinations(
             table=table_sample_merge,
             columns_interaction=columns_interaction,
             report=report,
     ))
 
     ##########
-    # 6. Describe factors in table of samples.
+    # 7. Describe factors in table of samples.
     describe_table_sample_factors(
         table_sample=pail_interaction["table"],
         report=report,
