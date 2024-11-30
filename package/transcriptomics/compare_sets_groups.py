@@ -1333,7 +1333,7 @@ def control_procedure_part_branch(
         index_samples (str): name for index corresponding to samples,
             which is not a column in the original source table of signals but
             will be in a novel product table
-        paths : (dict<str>): collection of paths to directories for procedure's
+        paths (dict<str>): collection of paths to directories for procedure's
             files
         report (bool): whether to print reports
 

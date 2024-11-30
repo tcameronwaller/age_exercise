@@ -205,6 +205,7 @@ def define_type_columns_table_subject_feature_organization():
     types_columns = dict()
     types_columns["inclusion_transcriptomics"] = "int32"
     types_columns["inclusion_proteomics"] = "int32"
+    types_columns["selection_continuous"] = "int32"
     types_columns["category_raw"] = "string"
     types_columns["category"] = "string"
     types_columns["name_source"] = "string"
@@ -279,6 +280,19 @@ def parse_extract_table_sample_feature_organization(
         table_inclusion["name_product"].unique().tolist()
     )
 
+    # Determine names of columns for feature variables on quantitative
+    # continuous interval or ratio scales of measurement.
+    table_continuous = table.loc[
+        (
+            (table[inclusion] == 1) &
+            (table["selection_continuous"] == 1) &
+            (~table["category"].str.contains("olink_"))
+        ), :
+    ].copy(deep=True)
+    columns_continuous = copy.deepcopy(
+        table_continuous["name_product"].to_list()
+    )
+
     # Extract names of columns corresponding to O-Link measurements in each
     # type of tissue.
     columns_olink_plasma = copy.deepcopy(table_inclusion.loc[
@@ -332,6 +346,7 @@ def parse_extract_table_sample_feature_organization(
     pail["types_columns"] = types_columns
     pail["translations_column"] = translations_column
     pail["columns_all"] = columns_all
+    pail["columns_continuous"] = columns_continuous
     pail["columns_olink_plasma"] = columns_olink_plasma
     pail["columns_olink_muscle"] = columns_olink_muscle
     pail["columns_olink_adipose"] = columns_olink_adipose
@@ -450,7 +465,6 @@ def define_sequence_columns_novel_sample_feature():
 
     # Specify sequence of columns within table.
     columns_sequence = [
-        "match_subject_sample_file_transcriptomics",
         "cohort_age",
         "cohort_age_text",
         #"cohort_age_letter",
@@ -459,6 +473,7 @@ def define_sequence_columns_novel_sample_feature():
         #"identifier_subject",
         #"study_clinic_visit_relative",
         "study_clinic_visit",
+        "subject_visit",
         "date_visit_text",
         #"date_visit_text_raw",
         "sex_y",
@@ -481,18 +496,15 @@ def define_sequence_columns_novel_sample_feature():
 
 
 def determine_subject_study_clinic_visit(
-    tissue=None,
-    instance=None,
+    visit_relative=None,
 ):
     """
     Determines the clinical visit of the study at which collection of a
     sample occurred.
 
     arguments:
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        instance (str): designation of study instance in terms of clinical
-            visit for sample collection
+        visit_relative (str): indicator of clinical visit in the study at which
+            collection of a sample occurred, either 'Pre' or 'Post'
 
     raises:
 
@@ -502,84 +514,24 @@ def determine_subject_study_clinic_visit(
 
     """
 
-    # Determine indicator.
-    if (
-        (pandas.notna(tissue)) and
-        (len(str(tissue).strip()) > 0) and
-        (pandas.notna(instance)) and
-        (len(str(instance).strip()) > 0)
-    ):
-        # There is adequate information.
-        if (
-            (str(tissue).strip().lower() == "muscle") and
-            (str(instance).strip() in ["1B", "2B", "3B"])
-        ):
-            indicator = "first"
-        elif (
-            (str(tissue).strip().lower() == "adipose") and
-            (str(instance).strip() == "B")
-        ):
-            indicator = "first"
-        elif (
-            (str(tissue).strip().lower() == "adipose") and
-            (str(instance).strip() == "PI")
-        ):
-            indicator = "second"
-        else:
-            indicator = ""
-    else:
-        indicator = ""
-        pass
-    # Return information.
-    return indicator
-
-
-
-
-def determine_match_sample_file_forward(
-    subject=None,
-    study_clinic_visit=None,
-):
-    """
-    Determines a designator to match samples from their files of signals with
-    their attributes.
-
-    arguments:
-        subject (str): identifier of study participant subject
-        study_clinic_visit (str): indicator of clinical visit in the study at
-            which collection of a sample occurred, either 'Pre' or 'Post'
-
-    raises:
-
-    returns:
-        (str): common designator to match samples from their files of signals
-            to their attributes
-
-    """
-
     # Determine designator.
     if (
-        (pandas.notna(subject)) and
-        (len(str(subject).strip()) > 0) and
-        (pandas.notna(study_clinic_visit)) and
-        (len(str(study_clinic_visit).strip()) > 0)
+        (pandas.notna(visit_relative)) and
+        (len(str(visit_relative).strip()) > 0)
     ):
         # There is adequate information.
-        subject = str(subject).strip()
-        study_clinic_visit = str(study_clinic_visit).strip().lower()
-        if (study_clinic_visit == "pre"):
+        visit_relative = str(visit_relative).strip().lower()
+        if (visit_relative == "pre"):
             visit = str("first")
-            designator = str(subject + "_" + visit)
-        elif (study_clinic_visit == "post"):
+        elif (visit_relative == "post"):
             visit = str("second")
-            designator = str(subject + "_" + visit)
         else:
-            designator = ""
+            visit = ""
     else:
-        designator = ""
+        visit = ""
         pass
     # Return information.
-    return designator
+    return visit
 
 
 def determine_cohort_age_text(
@@ -865,16 +817,13 @@ def organize_table_subject_property(
         axis="columns", # apply function to each row
     )
 
-    # Determine designation to match sample to attribute.
-    table["match_subject_sample_file_transcriptomics"] = table.apply(
-        lambda row:
-            determine_match_sample_file_forward(
-                subject=row["identifier_subject"],
-                study_clinic_visit=row["study_clinic_visit_relative"],
-            ),
+    # Determine combination designation for subject and visit.
+    table["subject_visit"] = table.apply(
+        lambda row: str(
+            row["identifier_subject"] + "_" + row["study_clinic_visit"]
+        ),
         axis="columns", # apply function to each row
     )
-
 
     # Determine designations of cohort by age.
     table["cohort_age_text"] = table.apply(
@@ -943,13 +892,21 @@ def organize_table_subject_property(
     )
     table["c_react_protein"] = table["c_react_protein"].astype("float32")
 
+    # Transform values to logarithmic scale for a selection of features on a
+    # quantitative continuous interval or ratio scale of measurement.
+
+    # TODO: TCW; 27 November 2024
+    # TODO: include another "selection" column in the parameter table to
+    # designate features for logarithmic scale. Then will need to include
+    # those is a new column list in the "parse" function.
+
     # Sort rows within table.
     table.sort_values(
         by=[
             "cohort_age",
             "intervention",
             "identifier_subject",
-            "study_clinic_visit_relative",
+            "study_clinic_visit",
         ],
         axis="index",
         ascending=True,
@@ -958,8 +915,8 @@ def organize_table_subject_property(
     )
     # Filter and sort columns within table.
     #columns_sequence.insert(0, column_index)
-    columns_sequence = copy.deepcopy(columns_original)
-    columns_sequence.extend(columns_novel)
+    columns_sequence = copy.deepcopy(columns_novel)
+    columns_sequence.extend(columns_original)
     table = porg.filter_sort_table_columns(
         table=table,
         columns_sequence=columns_sequence,
@@ -974,7 +931,7 @@ def organize_table_subject_property(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
+        print("module: exercise.proteomics.organize_subject.py")
         print("function: organize_table_subject_property()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
@@ -987,169 +944,149 @@ def organize_table_subject_property(
 
 
 ##########
-# 4. Organize proteomics from measurements by O-Link technology.
+# 4. Histograms
 
-# TODO: TCW; 2024-08-27
-# Ideally, the calculation of the PCs should happen AFTER stratifying the
-# samples for the cohort that's relevant to the analysis.
-# --> It won't be that big a deal... I think the main difference will be scale
 
-# TODO: TCW; 2024-11-26
-# Olink measurements are only available for "Pre" or "before" visits.
-
-def organize_olink_principal_components_tissue(
+def create_plot_chart_histogram(
     table=None,
-    column_index=None,
-    columns_olink=None,
-    prefix=None,
+    column_feature=None,
     report=None,
 ):
     """
-    Organizes the calculation and integration of principal components across
-    measurements of proteomics by O-Link technology in a specific tissue.
+    Create and plot a chart of the histogram type.
 
     arguments:
-        table (object): Pandas data-frame table of information about samples
-        column_index (str): name of column for index of unique values across
-            rows
-        columns_olink (list<str>): names of columns corresponding to O-Link
-            measurements in a single tissue
-        prefix (str): prefix for names of columns corresponding to scores for
-            principal components
+        table (object): Pandas data-frame table of floating-point values on
+            continuous interval or ratio scales of measurement
+        column_feature (str): name of column for values corresponding to a
+            specific feature
         report (bool): whether to print reports
 
     raises:
 
     returns:
-        (object): Pandas data-frame table
+        (object): figure object from MatPlotLib
+
+    """
+
+    ##########
+    # Organize information for plot.
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    # Extract nonmissing values from column in table.
+    # partner.organization.extract_organize_values_from_series()
+    values_raw = table[column_feature].to_numpy(
+        dtype="float64",
+        na_value=numpy.nan,
+        copy=True,
+    )
+    values_nonmissing = numpy.copy(values_raw[~numpy.isnan(values_raw)])
+    mean_values = round(numpy.nanmean(pail_values["values_nonmissing"]), 3)
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Create figure.
+    figure = pplot.plot_distribution_histogram(
+        array=pail_values["values_nonmissing"],
+        title="",
+        bin_method="count",
+        bin_count=20,
+        bar_width=0.5,
+        label_bins="Value Distribution",
+        label_counts="Counts",
+        fonts=fonts,
+        colors=colors,
+        line=True,
+        line_position=mean_values,
+        label_title=column_feature,
+        label_report=True,
+    )
+
+    # Return information.
+    return figure
+
+
+def drive_manage_plot_write_histograms_charts(
+    table=None,
+    sets_columns=None,
+    paths=None,
+    report=None,
+):
+    """
+    Plot chart representations of values of signal intensity for features
+    across sample observations or groups of sample observations.
+
+    arguments:
+        table (object): Pandas data-frame table of values of features across
+            columns and sample observations across rows
+        sets_columns (dict<list<str>>): names of sets of features and names of
+            columns corresponding to each feature in each set
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of figure objects from MatPlotLib
 
     """
 
     # Copy information in table.
-    table_main = table.copy(deep=True)
-    table_excerpt = table.copy(deep=True)
+    table = table.copy(deep=True)
     # Copy other information.
-    columns_olink = copy.deepcopy(columns_olink)
-    # Organize indices in table.
-    table_main.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
-    table_main.set_index(
-        [column_index],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_excerpt.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
-    )
+    sets_columns = copy.deepcopy(sets_columns)
 
-    # Separate information in table for proteomics from measurements by O-Link
-    # technology.
-    columns_excerpt = copy.deepcopy(columns_olink)
-    columns_excerpt.insert(0, column_index)
-    #table_excerpt = table_excerpt.loc[
-    #    :, table_excerpt.columns.isin(columns_excerpt)
-    #].copy(deep=True)
-    table_excerpt = table_excerpt.filter(
-        items=columns_excerpt,
-        axis="columns",
-    )
-    table_excerpt.set_index(
-        [column_index],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-
-    # Calculate principal components to represent variance with a reduction of
-    # dimensionality.
-    pail_reduction = (
-        pdecomp.organize_principal_components_by_singular_value_decomposition(
-            table=table_excerpt,
-            index_name=column_index,
-            prefix=prefix,
-            separator="_",
-            report=False, # report is extensive
+    # Iterate on sets of features.
+    for name_set in sets_columns.keys():
+        # Initialize child directory in which to write charts to file.
+        path_directory = os.path.join(
+            paths["out_procedure_plot"], "histogram", str(name_set),
         )
-    )
-    table_component_scores = (
-        pail_reduction["table_component_scores"].copy(deep=True)
-    )
-    # Organize indices in table.
-    table_component_scores.reset_index(
-        level=None,
-        inplace=True,
-        drop=False,
-    )
-    table_component_scores.set_index(
-        column_index,
-        append=False,
-        drop=True,
-        inplace=True
-    )
-    # Extract names of columns corresponding to scores for principal
-    # components.
-    columns_component_scores = (
-        copy.deepcopy(table_component_scores.columns.to_list())
-    )
-    # Merge scores for principal components with the main table.
-    table_merge = porg.merge_columns_two_tables(
-        identifier_first=column_index,
-        identifier_second=column_index,
-        table_first=table_main,
-        table_second=table_component_scores,
-        preserve_index=True,
-        report=report,
-    )
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
-        print("function: organize_olink_principal_components_tissue()")
-        putly.print_terminal_partition(level=5)
-        print("table of excerpt information for decomposition: ")
-        print(table_excerpt)
-        putly.print_terminal_partition(level=5)
-        print("table of scores for principal components: ")
-        print(table_component_scores.iloc[0:10, 0:])
-        putly.print_terminal_partition(level=5)
-        print("columns of scores for principal components: ")
-        count_columns_component_scores = len(columns_component_scores)
-        print(columns_component_scores)
-        print(str(
-            "count of scores for principal components: " +
-            str(count_columns_component_scores)
-        ))
-        putly.print_terminal_partition(level=5)
-        # Compare methods for calculation of Pincipal Component Analysis.
-        pdecomp.compare_principal_components_methods(
-            table=table_excerpt,
-            index_name=column_index,
-            prefix=prefix,
-            separator="_",
-            report=True,
+        putly.create_directories(
+            path=path_directory,
         )
+        # Iterate on features in set.
+        for column_feature in sets_columns[name_set]:
+            # Create histogram for values of feature across observations.
+            figure = create_plot_chart_histogram(
+                table=table,
+                column_feature=column_feature,
+                report=report,
+            )
+            # Write figure to file.
+            pplot.write_product_plot_figure(
+                figure=figure,
+                format="jpg", # jpg, png, svg
+                resolution=300,
+                name_file=column_feature,
+                path_directory=path_directory,
+            )
+            pass
         pass
-    # Collect information.
-    pail = dict()
-    pail["table"] = table_merge
-    pail["columns_component_scores"] = columns_component_scores
-    # Return information.
-    return pail
+    pass
 
 
-def organize_olink_principal_components_tissues(
+##########
+# 5. Calculate principal components on features for Olink measurements.
+
+# TODO: TCW; 29 November 2024
+# I attempted to implement in the "decomposition" function a convenience filter on the principal components
+# by the proportion of original variance that they explain.
+# This filter is not working.
+
+
+
+def drive_manage_calculate_principal_components(
     table=None,
-    column_index=None,
-    columns_olink_plasma=None,
-    columns_olink_muscle=None,
-    columns_olink_adipose=None,
+    index_rows=None,
+    sets_columns=None,
     report=None,
 ):
     """
@@ -1158,14 +1095,10 @@ def organize_olink_principal_components_tissues(
 
     arguments:
         table (object): Pandas data-frame table of information about samples
-        column_index (str): name of column for index of unique values across
-            rows
-        columns_olink_plasma (list<str>): names of columns corresponding to
-            O-Link measurements in plasma tissue
-        columns_olink_muscle (list<str>): names of columns corresponding to
-            O-Link measurements in muscle tissue
-        columns_olink_adipose (list<str>): names of columns corresponding to
-            O-Link measurements in adipose tissue
+        index_rows (str): name of a column in source table which defines an
+            index corresponding to information across rows
+        sets_columns (dict<list<str>>): names of sets of features and names of
+            columns corresponding to each feature in each set
         report (bool): whether to print reports
 
     raises:
@@ -1178,33 +1111,39 @@ def organize_olink_principal_components_tissues(
     # Copy information in table.
     table = table.copy(deep=True)
     # Copy other information.
-    columns_olink_plasma = copy.deepcopy(columns_olink_plasma)
-    columns_olink_muscle = copy.deepcopy(columns_olink_muscle)
-    columns_olink_adipose = copy.deepcopy(columns_olink_adipose)
+    sets_columns = copy.deepcopy(sets_columns)
 
-
-    pail_plasma = organize_olink_principal_components_tissue(
-        table=table,
-        column_index=column_index,
-        columns_olink=columns_olink_plasma,
-        prefix="olink_plasma_component",
-        report=report,
-    )
-
+    # Collect information.
+    pail_collection = dict()
+    # Iterate on sets of features.
+    for name_set in sets_columns.keys():
+        pail_collection[name_set] = (
+            pdecomp.calculate_principal_components_table_columns_selection(
+                table=table,
+                index_rows=index_rows,
+                columns_selection=sets_columns[name_set],
+                prefix=name_set,
+                threshold_proportion=0.01,
+                report=report,
+        ))
+        # Copy information in table.
+        table = pail["table"].copy(deep=True)
+        pass
 
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
-        print("function: organize_olink_principal_components_tissues()")
+        print("package: partner")
+        print("subpackage: proteomics")
+        print("module: organize_subject.py")
+        print("function: drive_manage_calculate_principal_components()")
         putly.print_terminal_partition(level=5)
-        print("table of attributes for samples: ")
+        print("table with principal components: ")
         print(table.iloc[0:10, 0:])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
-    #return table
-    pass
+    return table
 
 
 
@@ -1290,28 +1229,69 @@ def execute_procedure(
     )
     table_subject = pail_organization["table"]
 
-
     ##########
-    # 4. Organize proteomics from measurements by O-Link technology.
+    # 5. Plot histogram charts for features on quantitative continuous interval
+    # or ratio scales of measurement.
+
+    # TODO: TCW; 27 November 2024
+    # TODO: include another "selection" column in the parameter table to
+    # designate features for logarithmic scale. Then will need to include
+    # those is a new column list in the "parse" function.
     if False:
-        table_sample_olink_components = (
-            organize_olink_principal_components_tissues(
-                table=table_subject,
-                column_index="identifier_subject",
-                columns_olink_plasma=pail_parse["columns_olink_plasma"],
-                columns_olink_muscle=pail_parse["columns_olink_muscle"],
-                columns_olink_adipose=pail_parse["columns_olink_adipose"],
-                report=report,
-        ))
+        pail_columns_histogram = dict()
+        pail_columns_histogram["other"] = copy.deepcopy(
+            pail_parse["columns_continuous"]
+        )
+        pail_columns_histogram["olink_plasma"] = copy.deepcopy(
+            pail_parse["columns_olink_plasma"]
+        )
+        pail_columns_histogram["olink_muscle"] = copy.deepcopy(
+            pail_parse["columns_olink_muscle"]
+        )
+        pail_columns_histogram["olink_adipose"] = copy.deepcopy(
+            pail_parse["columns_olink_adipose"]
+        )
+        drive_manage_plot_write_histograms_charts(
+            table=table_subject,
+            sets_columns=pail_columns_histogram,
+            paths=paths,
+            report=report,
+        )
         pass
 
-    # 4.1. extract from the parameter table the columns of O-Link targets in
-    # each tissue
+    ##########
+    # 6. Calculate principal components on features for Olink measurements.
+    # Olink measurements are only available for "Pre" or "first" clinical
+    # visits of the study.
+    columns_olink_plasma = copy.deepcopy(pail_parse["columns_olink_plasma"])
+    columns_olink_muscle = copy.deepcopy(pail_parse["columns_olink_muscle"])
+    columns_olink_adipose = copy.deepcopy(pail_parse["columns_olink_adipose"])
+    columns_olink_all = copy.deepcopy(columns_olink_plasma)
+    columns_olink_all.extend(columns_olink_muscle)
+    columns_olink_all.extend(columns_olink_adipose)
+    pail_columns_decomposition = dict()
+    pail_columns_decomposition["olink_all"] = columns_olink_all
+    pail_columns_decomposition["olink_plasma"] = columns_olink_plasma
+    pail_columns_decomposition["olink_muscle"] = columns_olink_muscle
+    pail_columns_decomposition["olink_adipose"] = columns_olink_adipose
+    if False:
+        table_subject = drive_manage_calculate_principal_components(
+                table=table_subject,
+                index_rows="subject_visit",
+                sets_columns=pail_columns_decomposition,
+                report=report,
+        )
+
+    pail_pca_test = (
+        pdecomp.calculate_principal_components_table_columns_selection(
+            table=table_subject,
+            index_rows="subject_visit",
+            columns_selection=columns_olink_plasma,
+            prefix="olink_plasma_test",
+            report=report,
+    ))
 
 
-
-    # "table_subject.tsv"
-    # "table_subject.pickle"
     ##########
     # Collect information.
     # Collections of files.

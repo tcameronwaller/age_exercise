@@ -344,7 +344,151 @@ def define_translation_columns_table_subject_property():
 
 
 
+def determine_match_subject_sample_file_forward(
+    subject=None,
+    study_clinic_visit=None,
+):
+    """
+    Determines a designator to match samples from their files of signals with
+    their attributes.
 
+    arguments:
+        subject (str): identifier of study participant subject
+        study_clinic_visit (str): indicator of clinical visit in the study at
+            which collection of a sample occurred, either 'first' or 'second'
+
+    raises:
+
+    returns:
+        (str): common designator to match samples from their files of signals
+            to their attributes
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(subject)) and
+        (len(str(subject).strip()) > 0) and
+        (pandas.notna(study_clinic_visit)) and
+        (len(str(study_clinic_visit).strip()) > 0)
+    ):
+        # There is adequate information.
+        subject = str(subject).strip()
+        study_clinic_visit = str(study_clinic_visit).strip().lower()
+        designator = str(subject + "_" + visit)
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def organize_table_subject_property(
+    table=None,
+    translations_column=None,
+    columns_original=None,
+    columns_novel=None,
+    report=None,
+):
+    """
+    Organizes information in table that provides attributes of samples.
+
+    This function prepares the table of sample attributes for merge with the
+    table of matches between samples and files.
+
+    arguments:
+        table (object): Pandas data-frame table of subjects, samples, and their
+            attribute features
+        translations_column (dict<str>): translations for names of columns in a
+            table
+        columns_original (list<str>): names of original columns in sequence by
+            which to filter and sort columns in table
+        columns_novel (list<str>): names of original columns in sequence by
+            which to filter and sort columns in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    translations_column = copy.deepcopy(translations_column)
+    columns_original = copy.deepcopy(columns_original)
+    columns_novel = copy.deepcopy(columns_novel)
+
+    # Translate names of columns.
+    table.rename(
+        columns=translations_column,
+        inplace=True,
+    )
+
+    # Filter rows in table.
+    table = table.loc[
+        (
+            (table["identifier_subject"].str.len() > 0)
+        ), :
+    ].copy(deep=True)
+    table.dropna(
+        how="all",
+        axis="index",
+    )
+
+    # Determine designation to match sample to attribute.
+    table["match_subject_sample_file_transcriptomics"] = table.apply(
+        lambda row:
+            determine_match_subject_sample_file_forward(
+                subject=row["identifier_subject"],
+                study_clinic_visit=row["study_clinic_visit_subject"],
+            ),
+        axis="columns", # apply function to each row
+    )
+
+    # Sort rows within table.
+    table.sort_values(
+        by=[
+            "cohort_age",
+            "intervention",
+            "identifier_subject_study",
+            "study_clinic_visit_subject",
+        ],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
+    # Filter and sort columns within table.
+    #columns_sequence.insert(0, column_index)
+    columns_sequence = copy.deepcopy(columns_novel)
+    columns_sequence.extend(columns_original)
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence,
+        report=report,
+    )
+
+    # Collect information.
+    pail = dict()
+    pail["columns_sequence"] = columns_sequence
+    pail["table"] = table
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: exercise.transcriptomics.organize_sample.py")
+        print("function: organize_table_subject_property()")
+        putly.print_terminal_partition(level=5)
+        print("table of attributes for samples: ")
+        print(pail["table"].iloc[0:10, 0:])
+        print(pail["table"])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
 
 
 ##########
@@ -518,7 +662,7 @@ def determine_muscle_exercise_time_point(
     return indicator
 
 
-def determine_match_sample_file_reverse(
+def determine_match_subject_sample_file_reverse(
     subject=None,
     study_clinic_visit=None,
 ):
@@ -620,7 +764,7 @@ def organize_table_sample_file(
     # Determine designation to match sample to attribute.
     table["match_subject_sample_file_transcriptomics"] = table.apply(
         lambda row:
-            determine_match_sample_file_reverse(
+            determine_match_subject_sample_file_reverse(
                 subject=row["identifier_subject"],
                 study_clinic_visit=row["study_clinic_visit"],
             ),
@@ -1285,9 +1429,28 @@ def execute_procedure(
     ##########
     # 4. Organize table of properties for study subjects.
     translations_subject = define_translation_columns_table_subject_property()
+    columns_subject_original = pail_parse["columns_all"]
+    columns_subject_original.remove("identifier_subject")
+    #columns_subject_original.append("identifier_subject_study")
+    columns_subject_original.insert(5, "identifier_subject_study")
+    columns_subject_novel = (
+        aexpr_sub.define_sequence_columns_novel_sample_feature()
+    )
+    columns_subject_novel.remove("study_clinic_visit")
+    #columns_subject_novel.append("study_clinic_visit_subject")
+    columns_subject_novel.insert(5, "study_clinic_visit_subject")
+    columns_subject_novel.insert(
+        5, "match_subject_sample_file_transcriptomics"
+    )
+    pail_subject = organize_table_subject_property(
+        table=pail_source["table_subject_property"],
+        translations_column=translations_subject,
+        columns_original=columns_subject_original,
+        columns_novel=columns_subject_novel,
+        report=report,
+    )
+    table_subject = pail_subject["table"]
 
-    # TODO: TCW; 26 November 2024
-    # Most stuff below here is definitely for "transcriptomics.organize_sample"
 
 
 
@@ -1305,16 +1468,8 @@ def execute_procedure(
     ##########
     # 5. Combine within the same table the matches between samples and files
     # along with their further attributes.
-    columns_original = pail_parse["columns_all"]
-    columns_original.remove("identifier_subject")
-    #columns_original.append("identifier_subject_study")
-    columns_original.insert(5, "identifier_subject_study")
-    columns_novel = aexpr_sub.define_sequence_columns_novel_sample_feature()
-    columns_novel.remove("study_clinic_visit")
-    #columns_novel.append("study_clinic_visit_subject")
-    columns_novel.insert(5, "study_clinic_visit_subject")
-    columns_transfer = copy.deepcopy(columns_original)
-    columns_transfer.extend(columns_novel)
+    columns_transfer = copy.deepcopy(columns_subject_original)
+    columns_transfer.extend(columns_subject_novel)
     columns_transfer.remove("match_subject_sample_file_transcriptomics")
     table_sample_merge = combine_table_subject_sample_file_property(
         table_sample_file=table_sample_file,
