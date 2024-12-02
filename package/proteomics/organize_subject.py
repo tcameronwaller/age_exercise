@@ -745,6 +745,11 @@ def determine_date_visit_text(
     # Return information.
     return designator
 
+# TODO: TCW; 27 November 2024
+# TODO: include another "selection" column in the parameter table to
+# designate features for logarithmic scale. Then will need to include
+# those is a new column list in the "parse" function.
+
 
 def organize_table_subject_property(
     table=None,
@@ -1076,12 +1081,6 @@ def drive_manage_plot_write_histograms_charts(
 ##########
 # 5. Calculate principal components on features for Olink measurements.
 
-# TODO: TCW; 29 November 2024
-# I attempted to implement in the "decomposition" function a convenience filter on the principal components
-# by the proportion of original variance that they explain.
-# This filter is not working.
-
-
 
 def drive_manage_calculate_principal_components(
     table=None,
@@ -1104,7 +1103,7 @@ def drive_manage_calculate_principal_components(
     raises:
 
     returns:
-        (object): Pandas data-frame table
+        (dict): collection of information
 
     """
 
@@ -1114,20 +1113,27 @@ def drive_manage_calculate_principal_components(
     sets_columns = copy.deepcopy(sets_columns)
 
     # Collect information.
-    pail_collection = dict()
+    pail_collection_total = dict()
+    pail_component_columns = dict()
     # Iterate on sets of features.
     for name_set in sets_columns.keys():
-        pail_collection[name_set] = (
+        pail_reduction = (
             pdecomp.calculate_principal_components_table_columns_selection(
                 table=table,
                 index_rows=index_rows,
                 columns_selection=sets_columns[name_set],
                 prefix=name_set,
-                threshold_proportion=0.01,
+                separator="_",
+                threshold_proportion=0.02, # float or None to keep all
                 report=report,
         ))
         # Copy information in table.
-        table = pail["table"].copy(deep=True)
+        table = pail_reduction["table"].copy(deep=True)
+        # Collect information.
+        pail_collection_total[name_set] = pail_reduction
+        pail_component_columns[name_set] = (
+            pail_reduction["columns_component_scores"]
+        )
         pass
 
     # Report.
@@ -1139,11 +1145,266 @@ def drive_manage_calculate_principal_components(
         print("function: drive_manage_calculate_principal_components()")
         putly.print_terminal_partition(level=5)
         print("table with principal components: ")
-        print(table.iloc[0:10, 0:])
+        #print(table.iloc[0:10, 0:])
+        print(table)
+        putly.print_terminal_partition(level=5)
+        print("columns for principal components corresponding to each set: ")
+        print(pail_component_columns)
         putly.print_terminal_partition(level=5)
         pass
+    # Collect information.
+    pail = dict()
+    pail["table"] = table
+    pail["sets_columns"] = pail_component_columns
     # Return information.
-    return table
+    return pail
+
+
+##########
+# 6. Plot charts of scatter points for principal components
+
+
+def define_response_features_principal_components_olink():
+    """
+    Defines names of columns in a table for features of interest as response,
+    outcome, or dependent variables.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): names of columns in sequence by which to filter and sort
+            columns in table
+
+    """
+
+    # Define records for features of interest and parameters for their
+    # handling.
+    records = list()
+    if True:
+        records.append({
+            "name": "sex_text",
+            "type": "category",
+        })
+        records.append({
+            "name": "cohort_age_text",
+            "type": "category",
+        })
+    if True:
+        records.append({
+            "name": "body_mass_index",
+            "type": "continuity",
+        })
+        records.append({
+            "name": "insulin_sensitivity",
+            "type": "continuity",
+        })
+    # Return information.
+    return records
+
+
+def create_plot_chart_scatter_point_response(
+    table=None,
+    column_response=None,
+    column_abscissa=None,
+    column_ordinate=None,
+    type_response=None,
+    report=None,
+):
+    """
+    Create and plot a chart of the scatter point type.
+
+    arguments:
+        table (object): Pandas data-frame table of floating-point values on
+            continuous interval or ratio scales of measurement
+        column_response (str): name of column for values corresponding to a
+            specific feature
+        column_abscissa (str): name of column with values for representation on
+            abscissa horizontal axis
+        column_ordinate (str): name of column with values for representation on
+            ordinate vertical axis
+        type_response (bool): type of the response feature, either 'continuity'
+            or 'category'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): figure object from MatPlotLib
+
+    """
+
+    ##########
+    # Organize information for plot.
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Create figure.
+    figure = pplot.plot_scatter(
+        data=table,
+        abscissa=column_abscissa,
+        ordinate=column_ordinate,
+        title_abscissa=column_abscissa,
+        title_ordinate=column_ordinate,
+        fonts=fonts,
+        colors=colors,
+        size=10,
+    )
+    figure = pplot.plot_scatter_point_color_response_discrete_or_continuous(
+        table=table,
+        column_identifier="subject_visit",
+        column_name="subject_visit",
+        column_response=column_response,
+        column_abscissa=column_abscissa,
+        column_ordinate=column_ordinate,
+        type_response=type_response,
+        minimum_abscissa=None,
+        maximum_abscissa=None,
+        minimum_ordinate=None,
+        maximum_ordinate=None,
+        set_axis_limits=False, # helpful if using minima and maxima to filter values
+        title_response=column_response,
+        title_abscissa=column_abscissa,
+        title_ordinate=column_ordinate,
+        identifiers_emphasis=None,
+        emphasis_label=None,
+        line_diagonal=True, # diagonal is not proportional to respective ranges of axes
+        size_title_abscissa="nine",
+        size_title_ordinate="nine",
+        size_title_legend_bar="ten",
+        size_label_abscissa="thirteen",
+        size_label_ordinate="thirteen",
+        size_label_emphasis="thirteen",
+        size_label_legend_bar="thirteen",
+        aspect="landscape",
+        fonts=fonts,
+        colors=colors,
+        report=None,
+    )
+    # Return information.
+    return figure
+
+
+def drive_manage_plot_write_principal_component_scatter_charts(
+    table=None,
+    features_response=None,
+    sets_columns=None,
+    paths=None,
+    report=None,
+):
+    """
+    Plot scatter point chart representations of values of principal components
+    on selections of features across observations.
+
+    arguments:
+        table (object): Pandas data-frame table of values of features across
+            columns and sample observations across rows
+        features_response (list<dict<str>>): names of columns and type
+            description corresponding to features of interest as response,
+            outcome, or dependent variables
+        sets_columns (dict<list<str>>): names of sets of principal components
+            corresponding to specific features and names of columns for
+            each principal component in each set
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of figure objects from MatPlotLib
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    features_response = copy.deepcopy(features_response)
+    sets_columns = copy.deepcopy(sets_columns)
+
+    # Iterate on selection of columns for extra features.
+    for record in features_response:
+        # Extract information.
+        name_feature = record["name"]
+        type_feature = record["type"]
+        # Iterate on sets of principal components corresponding to features.
+        for name_set in sets_columns.keys():
+            # Copy information in table.
+            table_excerpt = table.copy(deep=True)
+            # Separate information in table for a specific selection of columns.
+            columns_excerpt = copy.deepcopy(sets_columns[name_set])
+            columns_excerpt.insert(0, name_feature)
+            # Filter columns in table.
+            #table_excerpt = table_excerpt.loc[
+            #    :, table_excerpt.columns.isin(columns_excerpt)
+            #].copy(deep=True)
+            table_excerpt = table_excerpt.filter(
+                items=columns_excerpt,
+                axis="columns",
+            )
+            # Filter rows in table for non-missing values across relevant columns.
+            table_excerpt.dropna(
+                axis="index",
+                how="any",
+                subset=columns_excerpt,
+                inplace=True,
+            )
+            # Initialize child directory in which to write charts to file.
+            path_directory = os.path.join(
+                paths["out_procedure_plot"], "scatter_pca",
+                str(name_feature), str(name_set),
+            )
+            putly.create_directories(
+                path=path_directory,
+            )
+            # Define comparisons between principal components.
+            comparisons = [
+                ["_1", "_2",],
+                ["_1", "_3",],
+                ["_1", "_4",],
+                ["_2", "_3",],
+                ["_2", "_4",],
+                ["_3", "_4",],
+            ]
+            # Iterate on comparisons.
+            for comparison in comparisons:
+                # Determine name for chart.
+                name_chart = str(
+                    name_feature + "_" + name_set +
+                    "_pc" + comparison[0] + comparison[1]
+                )
+                # Plot chart of type scatter point as representation of principal
+                # components.
+                figure = create_plot_chart_scatter_point_response(
+                    table=table,
+                    column_response=name_feature,
+                    column_abscissa=str(name_set + comparison[0]),
+                    column_ordinate=str(name_set + comparison[1]),
+                    type_response=type_feature,
+                    report=report,
+                )
+                # Write figure to file.
+                pplot.write_product_plot_figure(
+                    figure=figure,
+                    format="jpg", # jpg, png, svg
+                    resolution=300,
+                    name_file=name_chart,
+                    path_directory=path_directory,
+                )
+                pass
+            pass
+        pass
+    pass
+
+
 
 
 
@@ -1205,7 +1466,6 @@ def execute_procedure(
         paths=paths,
         report=report,
     )
-
     # source["table_subject_property"]
 
     ##########
@@ -1259,6 +1519,32 @@ def execute_procedure(
         )
         pass
 
+
+    ######################################
+    # TODO: TCW; 30 November 2024
+    # TODO: stratify the subjects by sex and age group before calculating
+    # principal components
+    #######################################
+    if False:
+        table_subject = table_subject.loc[
+            (
+                (table_subject["cohort_age_text"] == "elder")
+            ), :
+        ].copy(deep=True)
+    if False:
+        table_subject = table_subject.loc[
+            (
+                (table_subject["sex_text"] == "female")
+            ), :
+        ].copy(deep=True)
+    if False:
+        table_subject = table_subject.loc[
+            (
+                (table_subject["sex_text"] == "male")
+            ), :
+        ].copy(deep=True)
+
+
     ##########
     # 6. Calculate principal components on features for Olink measurements.
     # Olink measurements are only available for "Pre" or "first" clinical
@@ -1274,29 +1560,55 @@ def execute_procedure(
     pail_columns_decomposition["olink_plasma"] = columns_olink_plasma
     pail_columns_decomposition["olink_muscle"] = columns_olink_muscle
     pail_columns_decomposition["olink_adipose"] = columns_olink_adipose
-    if False:
-        table_subject = drive_manage_calculate_principal_components(
+    if True:
+        pail_reduction = drive_manage_calculate_principal_components(
                 table=table_subject,
                 index_rows="subject_visit",
                 sets_columns=pail_columns_decomposition,
                 report=report,
         )
+    else:
+        pail_pca_test = (
+            pdecomp.calculate_principal_components_table_columns_selection(
+                table=table_subject,
+                index_rows="subject_visit",
+                columns_selection=columns_olink_plasma,
+                prefix="olink_plasma_test",
+                separator="_",
+                threshold_proportion=0.02, # float or None to keep all
+                report=report,
+        ))
+    # Notice that the names of columns corresponding to principal components
+    # of features in each original set are in ascending sort order.
+    #pail_reduction["sets_columns"]
 
-    pail_pca_test = (
-        pdecomp.calculate_principal_components_table_columns_selection(
-            table=table_subject,
-            index_rows="subject_visit",
-            columns_selection=columns_olink_plasma,
-            prefix="olink_plasma_test",
-            report=report,
-    ))
+    ##########
+    # 7. Plot charts of scatter points to represent principal components on
+    # sets of features for Olink measurements.
+    features_response = define_response_features_principal_components_olink()
+    drive_manage_plot_write_principal_component_scatter_charts(
+        table=pail_reduction["table"],
+        features_response=features_response,
+        sets_columns=pail_reduction["sets_columns"],
+        paths=paths,
+        report=report,
+    )
 
+
+
+
+    # TODO: TCW; 30 November 2024
+    # 1. filter to the relevant columns in the table
+    #   - principal components for relevant features
+    #   - corresponding subject properties
+    # 2. filter rows in table
+    #   - nonmissing principal components and subject properties
 
     ##########
     # Collect information.
     # Collections of files.
     pail_write_tables = dict()
-    pail_write_tables[str("table_subject")] = table_subject
+    pail_write_tables[str("table_subject")] = pail_reduction["table"]
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
 
