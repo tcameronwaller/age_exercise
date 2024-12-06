@@ -118,13 +118,14 @@ def preinitialize_directories(
         paths["dock"], "in_data", str(project), str(routine),
     )
     paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(routine),
+        paths["dock"], "in_parameters",
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(routine),
+        paths["dock"], "in_parameters_private",
     )
     paths["in_sets_gene"] = os.path.join(
-        paths["in_parameters_private"], "sets_gene",
+        paths["in_parameters_private"], "exercise", "transcriptomics",
+        "sets_gene",
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -399,11 +400,6 @@ def read_source(
         paths["out_routine"], "deseq2", tissue, group,
         str("table_result_deseq2_" + name_instance + ".tsv"),
     )
-    if False:
-        path_file_table_gene_emphasis = os.path.join(
-            paths["in_parameters_private"], "gene_sets_emphasis",
-            "table_gene_reference_adipose.tsv",
-        )
 
     # Collect information.
     pail = dict()

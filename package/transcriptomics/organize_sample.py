@@ -118,10 +118,10 @@ def initialize_directories(
         paths["dock"], "in_data",
     )
     paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(routine),
+        paths["dock"], "in_parameters",
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project),
+        paths["dock"], "in_parameters_private",
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -143,7 +143,7 @@ def initialize_directories(
     #)
     # Initialize directories in main branch.
     paths_initialization = [
-        paths["out_project"],
+        #paths["out_project"],
         paths["out_routine"],
         paths["out_procedure"],
         paths["out_data"],
@@ -177,8 +177,7 @@ def initialize_directories(
 ##########
 # 2. Read source information from file.
 
-# TODO: TCW; 26 November 2024
-# KEEP THIS HERE.
+
 def define_type_columns_table_sample_file():
     """
     Defines the variable types of columns within table for attributes of
@@ -250,7 +249,7 @@ def read_source(
     )
     path_file_table_subject = os.path.join(
         paths["out_project"], "proteomics", "organize_subject", "data",
-        "table_subject.pickle",
+        "tables", "table_subject.pickle",
     )
     path_file_table_sample_file = os.path.join(
         paths["in_data"], "study_age_exercise", "subject_sample",
@@ -343,7 +342,6 @@ def define_translation_columns_table_subject_property():
     return translations
 
 
-
 def determine_match_subject_sample_file_forward(
     subject=None,
     study_clinic_visit=None,
@@ -375,7 +373,7 @@ def determine_match_subject_sample_file_forward(
         # There is adequate information.
         subject = str(subject).strip()
         study_clinic_visit = str(study_clinic_visit).strip().lower()
-        designator = str(subject + "_" + visit)
+        designator = str(subject + "_" + study_clinic_visit)
     else:
         designator = ""
         pass
@@ -430,7 +428,7 @@ def organize_table_subject_property(
     # Filter rows in table.
     table = table.loc[
         (
-            (table["identifier_subject"].str.len() > 0)
+            (table["identifier_subject_study"].str.len() > 0)
         ), :
     ].copy(deep=True)
     table.dropna(
@@ -442,7 +440,7 @@ def organize_table_subject_property(
     table["match_subject_sample_file_transcriptomics"] = table.apply(
         lambda row:
             determine_match_subject_sample_file_forward(
-                subject=row["identifier_subject"],
+                subject=row["identifier_subject_study"],
                 study_clinic_visit=row["study_clinic_visit_subject"],
             ),
         axis="columns", # apply function to each row
@@ -1000,9 +998,6 @@ def organize_table_sample_interaction_combinations(
     return pail
 
 
-
-
-
 ##########
 # 7. Describe factors in table of samples.
 
@@ -1411,7 +1406,6 @@ def execute_procedure(
         paths=paths,
         report=report,
     )
-
     # pail_source["table_subject"]
 
     ##########
@@ -1422,10 +1416,6 @@ def execute_procedure(
         report=report,
     )
 
-    # TODO: TCW; 26 November 2024
-    # TODO: I think the part about the combination interaction terms needs to
-    # move to the respective "organize_sample" modules for "proteomics" or "transcriptomics"
-
     ##########
     # 4. Organize table of properties for study subjects.
     translations_subject = define_translation_columns_table_subject_property()
@@ -1434,7 +1424,7 @@ def execute_procedure(
     #columns_subject_original.append("identifier_subject_study")
     columns_subject_original.insert(5, "identifier_subject_study")
     columns_subject_novel = (
-        aexpr_sub.define_sequence_columns_novel_sample_feature()
+        aexpr_sub.define_sequence_columns_novel_subject_feature()
     )
     columns_subject_novel.remove("study_clinic_visit")
     #columns_subject_novel.append("study_clinic_visit_subject")
@@ -1443,16 +1433,13 @@ def execute_procedure(
         5, "match_subject_sample_file_transcriptomics"
     )
     pail_subject = organize_table_subject_property(
-        table=pail_source["table_subject_property"],
+        table=pail_source["table_subject"],
         translations_column=translations_subject,
         columns_original=columns_subject_original,
         columns_novel=columns_subject_novel,
         report=report,
     )
     table_subject = pail_subject["table"]
-
-
-
 
     ##########
     # 5. Organize table of matches between samples and files.
@@ -1466,7 +1453,7 @@ def execute_procedure(
     )
 
     ##########
-    # 5. Combine within the same table the matches between samples and files
+    # 6. Combine within the same table the matches between samples and files
     # along with their further attributes.
     columns_transfer = copy.deepcopy(columns_subject_original)
     columns_transfer.extend(columns_subject_novel)
@@ -1479,7 +1466,7 @@ def execute_procedure(
     )
 
     ##########
-    # 6. Prepare combinations of categorical factor variables for analyses of
+    # 7. Prepare combinations of categorical factor variables for analyses of
     # interaction.
     columns_interaction = (
         define_interaction_combination_categorical_factor()
@@ -1492,7 +1479,7 @@ def execute_procedure(
     ))
 
     ##########
-    # 7. Describe factors in table of samples.
+    # 8. Describe factors in table of samples.
     describe_table_sample_factors(
         table_sample=pail_interaction["table"],
         report=report,

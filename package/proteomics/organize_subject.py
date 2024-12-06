@@ -143,6 +143,12 @@ def initialize_directories(
     paths["out_procedure_data"] = os.path.join(
         paths["out_procedure"], "data",
     )
+    paths["out_procedure_data_lists"] = os.path.join(
+        paths["out_procedure_data"], "lists",
+    )
+    paths["out_procedure_data_tables"] = os.path.join(
+        paths["out_procedure_data"], "tables",
+    )
     paths["out_procedure_plot"] = os.path.join(
         paths["out_procedure"], "plot",
     )
@@ -153,6 +159,8 @@ def initialize_directories(
         #paths["out_routine"],
         paths["out_procedure"],
         paths["out_procedure_data"],
+        paths["out_procedure_data_lists"],
+        paths["out_procedure_data_tables"],
         paths["out_procedure_plot"],
     ]
     # Remove previous directories and files to avoid version or batch
@@ -445,7 +453,7 @@ def read_source(
 # 3. Organize table of properties for study subjects.
 
 
-def define_sequence_columns_novel_sample_feature():
+def define_sequence_columns_novel_subject_feature():
     """
     Defines names of columns in sequence by which to filter and sort columns in
     a table.
@@ -949,6 +957,418 @@ def organize_table_subject_property(
 
 
 ##########
+# 4. Calculate principal components on features for Olink measurements.
+
+
+def drive_manage_calculate_principal_components(
+    table=None,
+    index_rows=None,
+    sets_columns=None,
+    report=None,
+):
+    """
+    Organizes the calculation and integration of principal components across
+    measurements of proteomics by O-Link technology in specific tissues.
+
+    arguments:
+        table (object): Pandas data-frame table of information about samples
+        index_rows (str): name of a column in source table which defines an
+            index corresponding to information across rows
+        sets_columns (dict<list<str>>): names of sets of features and names of
+            columns corresponding to each feature in each set
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict): collection of information
+
+    """
+
+    # Copy information in table.
+    table = table.copy(deep=True)
+    # Copy other information.
+    sets_columns = copy.deepcopy(sets_columns)
+
+    # Collect information.
+    pail_collection_total = dict()
+    pail_component_columns = dict()
+    # Iterate on sets of features.
+    for name_set in sets_columns.keys():
+        pail_reduction = (
+            pdecomp.calculate_principal_components_table_columns_selection(
+                table=table,
+                index_rows=index_rows,
+                columns_selection=sets_columns[name_set],
+                prefix=name_set,
+                separator="_",
+                threshold_proportion=0.02, # float or None to keep all
+                report=report,
+        ))
+        # Copy information in table.
+        table = pail_reduction["table"].copy(deep=True)
+        # Collect information.
+        pail_collection_total[name_set] = pail_reduction
+        pail_component_columns[name_set] = (
+            pail_reduction["columns_component_scores"]
+        )
+        pass
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: partner")
+        print("subpackage: proteomics")
+        print("module: organize_subject.py")
+        print("function: drive_manage_calculate_principal_components()")
+        putly.print_terminal_partition(level=5)
+        print("table with principal components: ")
+        #print(table.iloc[0:10, 0:])
+        print(table)
+        putly.print_terminal_partition(level=5)
+        print("columns for principal components corresponding to each set: ")
+        print(pail_component_columns)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Collect information.
+    pail = dict()
+    pail["table"] = table
+    pail["sets_columns"] = pail_component_columns
+    # Return information.
+    return pail
+
+
+##########
+# 5. Prepare derivative tables of information about features and sets of
+# features across observations and groups of observations.
+
+
+def organize_preliminary_information_to_prepare_tables(
+    index_features=None,
+    index_observations=None,
+    features_all=None,
+    observations_all=None,
+    features_inclusion=None,
+    observations_inclusion=None,
+    groups_features=None,
+    groups_observations=None,
+    names_groups_features_sequence=None,
+    names_groups_observations_sequence=None,
+    translations_features=None,
+    translations_observations=None,
+    report=None,
+):
+    """
+    Organize preliminary information for subsequent use in preparation of
+    derivative tables.
+
+    Features could correspond to columns in an original source table, or they
+    could correspond to rows. Likewise, observations could correspond either
+    to rows or columns. This function handles features and observations
+    equivalently, so the difference is semantic.
+
+    Review: ____
+
+    arguments:
+        index_features (str): name for index corresponding to features across
+            columns in the original source table
+        index_observations (str): name for index corresponding to observations
+            across rows in the original source table
+        features_all (list<str>): identifiers of all features in the original
+            source table
+        observations_all (list<str>): identifiers of all observations in the
+            original source table
+        features_inclusion (list<str>): identifiers of features for which to
+            include and describe values of signal intensity across observations
+        observations_inclusion (list<str>): identifiers of observations for
+            which to include and describe values of signal intensity across
+            features
+        groups_features (dict<list<str>>): names of groups and identifiers
+            of features that belong to each of these groups; clustering of
+            features will have constraint within these groups
+        groups_observations (dict<list<str>>): names of groups and identifiers
+            of observations that belong to each of these groups; clustering of
+            observations will have constraint within these groups
+        names_groups_features_sequence (list<str>): names of groups for
+            features in specific sequence
+        names_groups_observations_sequence (list<str>): names of groups for
+            observations in specific sequence
+        translations_features (dict<str>): translations for names or
+            identifiers of features
+        translations_observations (dict<str>): translations for names or
+            identifiers of observations
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Organize and collect information.
+    pail = dict()
+
+    # Copy other information.
+    pail["index_features"] = index_features
+    pail["index_observations"] = index_observations
+    pail["features_all"] = copy.deepcopy(features_all)
+    pail["observations_all"] = copy.deepcopy(observations_all)
+    pail["features_inclusion"] = copy.deepcopy(features_inclusion)
+    pail["observations_inclusion"] = copy.deepcopy(observations_inclusion)
+    pail["groups_features"] = copy.deepcopy(groups_features)
+    pail["groups_observations"] = copy.deepcopy(groups_observations)
+    pail["names_groups_features_sequence"] = copy.deepcopy(
+        names_groups_features_sequence
+    )
+    pail["names_groups_observations_sequence"] = copy.deepcopy(
+        names_groups_observations_sequence
+    )
+    pail["translations_features"] = copy.deepcopy(translations_features)
+    pail["translations_observations"] = copy.deepcopy(
+        translations_observations
+    )
+
+    ##########
+    # Prepare source information.
+    # Prepare reference to sort rows or columns in a subsequent table.
+    # Option 1.
+    if True:
+        # Features.
+        sequence_groups_features = dict()
+        index = 0
+        for name in pail["names_groups_features_sequence"]:
+            sequence_groups_features[name] = index
+            index += 1
+            pass
+        # Observations.
+        sequence_groups_observations = dict()
+        index = 0
+        for name in pail["names_groups_observations_sequence"]:
+            sequence_groups_observations[name] = index
+            index += 1
+            pass
+    # Option 2.
+    if False:
+        sequence_groups_observations = dict(zip(
+            pail["names_groups_observations_sequence"],
+            range(len(names_groups_observations_sequence))
+        ))
+    # Option 3.
+    if False:
+        sequence_groups_observations = {
+            key: value for value, key in enumerate(
+                pail["names_groups_observations_sequence"]
+            )
+        }
+    pail["sequence_groups_features"] = sequence_groups_features
+    pail["sequence_groups_observations"] = sequence_groups_observations
+    # Ensure that features are unique.
+    features_inclusion_unique = putly.collect_unique_elements(
+        elements=pail["features_inclusion"],
+    )
+    pail["features_inclusion_unique"] = features_inclusion_unique
+    # Ensure that all features are in the source table.
+    features_available = list(filter(
+        lambda feature: (feature in pail["features_all"]),
+        pail["features_inclusion_unique"]
+    ))
+    pail["features_available"] = features_available
+    # Translate identifiers of features.
+    features_available_translation = copy.deepcopy(
+        features_available
+    )
+    if (pail["translations_features"] is not None):
+        features_available_translation = list(map(
+            lambda feature: (pail["translations_features"][feature]),
+            features_available_translation
+        ))
+        pass
+    # Ensure that features are unique after translation.
+    features_available_translation = putly.collect_unique_elements(
+        elements=features_available_translation,
+    )
+    pail["features_available_translation"] = features_available_translation
+    # Ensure that observations are unique.
+    observations_inclusion_unique = putly.collect_unique_elements(
+        elements=pail["observations_inclusion"],
+    )
+    pail["observations_inclusion_unique"] = observations_inclusion_unique
+    # Ensure that all observations are in the source table.
+    observations_available = list(filter(
+        lambda observation: (observation in pail["observations_all"]),
+        observations_inclusion_unique
+    ))
+    pail["observations_available"] = observations_available
+    # Translate identifiers of features.
+    observations_available_translation = copy.deepcopy(
+        observations_available
+    )
+    if (pail["translations_observations"] is not None):
+        observations_available_translation = list(map(
+            lambda observation: (
+                pail["translations_observations"][observation]
+            ),
+            observations_available_translation
+        ))
+        pass
+    # Ensure that features are unique after translation.
+    observations_available_translation = putly.collect_unique_elements(
+        elements=observations_available_translation,
+    )
+    pail["observations_available_translation"] = (
+        observations_available_translation
+    )
+
+    # Return information.
+    return pail
+
+
+def prepare_tables_signals_for_features_sets_in_observations_groups(
+    table=None,
+    index_features=None,
+    index_observations=None,
+    features_inclusion=None,
+    observations_inclusion=None,
+    groups_features=None,
+    groups_observations=None,
+    names_groups_features_sequence=None,
+    names_groups_observations_sequence=None,
+    translations_features=None,
+    translations_observations=None,
+    report=None,
+):
+    """
+    Prepare derivative tables of information about signals, measurements, or
+    other values corresponding to features and sets of features across
+    observations and groups of observations.
+
+    Any translations of identifiers or names of features and observations occur
+    after the selection of features and observations. Hence identifiers or
+    names for selection of features and observations must match those in the
+    original source table.
+
+    Each observation must only belong to a single group. That is, the groups of
+    observations must be exclusive.
+
+    Each feature can belong to multiple sets. That is, the sets of features are
+    not exclusive.
+
+    By intentional design, this function does not apply any transformation of
+    scale or normalization of distribution to the values of signal intensity.
+
+    Format of source table (name: "table_source")
+    Format of source table is in wide format with floating-point values of
+    signal intensities or other measurement values corresponding to features
+    across columns and distinct individual observations across rows. A special
+    header row gives identifiers or names corresponding to each feature across
+    columns, and a special column gives identifiers or names corresponding to
+    each observation across rows. For versatility, this table does not have
+    explicitly defined indices across rows or columns.
+    ----------
+    observation     feature_1 feature_2 feature_3 feature_4 feature_5 ...
+    observation_1   0.001     0.001     0.001     0.001     0.001     ...
+    observation_2   0.001     0.001     0.001     0.001     0.001     ...
+    observation_3   0.001     0.001     0.001     0.001     0.001     ...
+    observation_4   0.001     0.001     0.001     0.001     0.001     ...
+    observation_5   0.001     0.001     0.001     0.001     0.001     ...
+    ----------
+
+    Format of product table 1 (name: "table_product_1")
+    Format of product table 1 is in wide format with floating-point values of
+    signal intensities or other measurement values corresponding to features
+    across columns and distinct individual observations across rows. A special
+    header row gives identifiers or names corresponding to each feature across
+    columns, and a special column gives identifiers or names corresponding to
+    each observation across rows. For versatility, this table does not have
+    explicitly defined indices across rows or columns. This novel product table
+    shares its format with the original source table. The difference between
+    them is that this novel product table only includes a specific selection of
+    features and observations from the original source table.
+    ----------
+    observation     feature_1 feature_2 feature_3 feature_4 feature_5 ...
+    observation_1   0.001     0.001     0.001     0.001     0.001     ...
+    observation_2   0.001     0.001     0.001     0.001     0.001     ...
+    observation_3   0.001     0.001     0.001     0.001     0.001     ...
+    observation_4   0.001     0.001     0.001     0.001     0.001     ...
+    observation_5   0.001     0.001     0.001     0.001     0.001     ...
+    ----------
+
+    Review: ____
+
+    arguments:
+        table (object): Pandas data-frame table of values of signal intensity
+            corresponding to features across rows and observations across
+            columns
+        index_features (str): name for index corresponding to features across
+            columns in the original source table
+        index_observations (str): name for index corresponding to observations
+            across rows in the original source table
+        features_inclusion (list<str>): identifiers of features for which to
+            include and describe values of signal intensity across observations
+        observations_inclusion (list<str>): identifiers of observations for
+            which to include and describe values of signal intensity across
+            features
+        groups_features (dict<list<str>>): names of groups and identifiers
+            of features that belong to each of these groups; clustering of
+            features will have constraint within these groups
+        groups_observations (dict<list<str>>): names of groups and identifiers
+            of observations that belong to each of these groups; clustering of
+            observations will have constraint within these groups
+        names_groups_features_sequence (list<str>): names of groups for
+            features in specific sequence
+        names_groups_observations_sequence (list<str>): names of groups for
+            observations in specific sequence
+        translations_features (dict<str>): translations for names or
+            identifiers of features
+        translations_observations (dict<str>): translations for names or
+            identifiers of observations
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Copy information in table.
+    table_source = table.copy(deep=True)
+
+    ##########
+    # Organize preliminary information.
+    features_all = copy.deepcopy(table_source.columns.to_list())
+    features_all.remove(index_observations)
+    observations_all = copy.deepcopy(
+        table_source[index_observations].unique().tolist()
+    )
+    pail = organize_preliminary_information_to_prepare_tables(
+        index_features=index_features,
+        index_observations=index_observations, # assigned in new tables
+        features_all=features_all,
+        observations_all=observations_all,
+        features_inclusion=features_inclusion,
+        observations_inclusion=observations_inclusion,
+        groups_features=groups_features,
+        groups_observations=groups_observations,
+        names_groups_features_sequence=names_groups_features_sequence,
+        names_groups_observations_sequence=(
+            names_groups_observations_sequence
+        ),
+        translations_features=translations_features,
+        translations_observations=translations_observations,
+        report=report,
+    )
+
+
+    pass
+
+
+
+
+#############################
+# Below here can move to "plot_subject.py"
+
+##########
 # 4. Histograms
 
 
@@ -1076,88 +1496,6 @@ def drive_manage_plot_write_histograms_charts(
             pass
         pass
     pass
-
-
-##########
-# 5. Calculate principal components on features for Olink measurements.
-
-
-def drive_manage_calculate_principal_components(
-    table=None,
-    index_rows=None,
-    sets_columns=None,
-    report=None,
-):
-    """
-    Organizes the calculation and integration of principal components across
-    measurements of proteomics by O-Link technology in specific tissues.
-
-    arguments:
-        table (object): Pandas data-frame table of information about samples
-        index_rows (str): name of a column in source table which defines an
-            index corresponding to information across rows
-        sets_columns (dict<list<str>>): names of sets of features and names of
-            columns corresponding to each feature in each set
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict): collection of information
-
-    """
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-    # Copy other information.
-    sets_columns = copy.deepcopy(sets_columns)
-
-    # Collect information.
-    pail_collection_total = dict()
-    pail_component_columns = dict()
-    # Iterate on sets of features.
-    for name_set in sets_columns.keys():
-        pail_reduction = (
-            pdecomp.calculate_principal_components_table_columns_selection(
-                table=table,
-                index_rows=index_rows,
-                columns_selection=sets_columns[name_set],
-                prefix=name_set,
-                separator="_",
-                threshold_proportion=0.02, # float or None to keep all
-                report=report,
-        ))
-        # Copy information in table.
-        table = pail_reduction["table"].copy(deep=True)
-        # Collect information.
-        pail_collection_total[name_set] = pail_reduction
-        pail_component_columns[name_set] = (
-            pail_reduction["columns_component_scores"]
-        )
-        pass
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("package: partner")
-        print("subpackage: proteomics")
-        print("module: organize_subject.py")
-        print("function: drive_manage_calculate_principal_components()")
-        putly.print_terminal_partition(level=5)
-        print("table with principal components: ")
-        #print(table.iloc[0:10, 0:])
-        print(table)
-        putly.print_terminal_partition(level=5)
-        print("columns for principal components corresponding to each set: ")
-        print(pail_component_columns)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Collect information.
-    pail = dict()
-    pail["table"] = table
-    pail["sets_columns"] = pail_component_columns
-    # Return information.
-    return pail
 
 
 ##########
@@ -1405,11 +1743,49 @@ def drive_manage_plot_write_principal_component_scatter_charts(
     pass
 
 
-
-
-
 ###############################################################################
 # Procedure
+
+
+# TODO: TCW; 5 December 2024
+# DONE
+# 1. write out lists of the IDs for Olink signals from Adipose, Plasma, and Muscle
+# 2. place these file lists of Olink IDs in parameter directory "sets_olink"
+
+# TODO
+# 3. calculate correlations between...
+#   - subject continuous traits and Olink signals
+#   - pairwise Olink signals
+#   - subject continuous traits and PCs on Olink signals
+#   -
+
+
+# table = table_subject
+# index_features = "features" # across columns... function will assign
+# index_observations = "subject_visit"
+
+#    pail_tables = (
+#        pdesc.describe_signals_for_features_sets_in_observations_groups(
+#            table=table_signal,
+#            index_features=index_genes,
+#            index_observations=index_samples, # assigned in new tables
+#            features_inclusion=genes_inclusion,
+#            observations_inclusion=samples_inclusion,
+#            groups_features=pail_gene_sets["sets_gene_cluster"],
+#            groups_observations=groups_samples,
+#            names_groups_features_sequence=(
+#                instances_group[0]["sequence_sets_gene_cluster"]
+#            ),
+#            names_groups_observations_sequence=(
+#                names_groups_samples_sequence
+#            ),
+#            translations_features=translations_gene,
+#            translations_observations=None,
+#            report=report,
+#    ))
+
+# separate function <-- prepare correlations...
+
 
 
 def execute_procedure(
@@ -1479,7 +1855,7 @@ def execute_procedure(
     ##########
     # 4. Organize table of properties for study subjects.
     columns_original = pail_parse["columns_all"]
-    columns_novel = define_sequence_columns_novel_sample_feature()
+    columns_novel = define_sequence_columns_novel_subject_feature()
     pail_organization = organize_table_subject_property(
         table=pail_source["table_subject_property"],
         translations_column=pail_parse["translations_column"],
@@ -1525,25 +1901,19 @@ def execute_procedure(
     # TODO: stratify the subjects by sex and age group before calculating
     # principal components
     #######################################
-    if False:
-        table_subject = table_subject.loc[
-            (
-                (table_subject["cohort_age_text"] == "elder")
-            ), :
-        ].copy(deep=True)
-    if False:
-        table_subject = table_subject.loc[
-            (
-                (table_subject["sex_text"] == "female")
-            ), :
-        ].copy(deep=True)
-    if False:
-        table_subject = table_subject.loc[
-            (
-                (table_subject["sex_text"] == "male")
-            ), :
-        ].copy(deep=True)
-
+    # Filter rows in table by specific categorical values of specific columns.
+    columns_categories = dict()
+    columns_categories["cohort_age_text"] = ["younger", "elder",]
+    #columns_categories["cohort_age_text"] = ["younger",]
+    #columns_categories["cohort_age_text"] = ["elder",]
+    columns_categories["sex_text"] = ["female", "male",]
+    #columns_categories["sex_text"] = ["female",]
+    #columns_categories["sex_text"] = ["male",]
+    table_subject = porg.filter_select_table_rows_by_columns_categories(
+        table=table_subject,
+        columns_categories=columns_categories,
+        report=report,
+    )
 
     ##########
     # 6. Calculate principal components on features for Olink measurements.
@@ -1582,41 +1952,65 @@ def execute_procedure(
     # of features in each original set are in ascending sort order.
     #pail_reduction["sets_columns"]
 
+
+    if False:
+        ##########
+        # 7. Plot charts of scatter points to represent principal components on
+        # sets of features for Olink measurements.
+        features_response = define_response_features_principal_components_olink()
+        drive_manage_plot_write_principal_component_scatter_charts(
+            table=pail_reduction["table"],
+            features_response=features_response,
+            sets_columns=pail_reduction["sets_columns"],
+            paths=paths,
+            report=report,
+        )
+
     ##########
-    # 7. Plot charts of scatter points to represent principal components on
-    # sets of features for Olink measurements.
-    features_response = define_response_features_principal_components_olink()
-    drive_manage_plot_write_principal_component_scatter_charts(
-        table=pail_reduction["table"],
-        features_response=features_response,
-        sets_columns=pail_reduction["sets_columns"],
-        paths=paths,
-        report=report,
-    )
+    # 8. Prepare derivative tables of information about features and sets of
+    # features across observations and groups of observations.
+    pail_tables = (
+        prepare_tables_signals_for_features_sets_in_observations_groups(
+            table=table_subject,
+            index_features=None,
+            index_observations=None,
+            features_inclusion=None,
+            observations_inclusion=None,
+            groups_features=None,
+            groups_observations=None,
+            names_groups_features_sequence=None,
+            names_groups_observations_sequence=None,
+            translations_features=None,
+            translations_observations=None,
+            report=None,
+    ))
 
-
-
-
-    # TODO: TCW; 30 November 2024
-    # 1. filter to the relevant columns in the table
-    #   - principal components for relevant features
-    #   - corresponding subject properties
-    # 2. filter rows in table
-    #   - nonmissing principal components and subject properties
 
     ##########
     # Collect information.
     # Collections of files.
+
+    pail_write_lists = dict()
+    pail_write_lists["olink_all"] = columns_olink_all
+    pail_write_lists["olink_plasma"] = columns_olink_plasma
+    pail_write_lists["olink_muscle"] = columns_olink_muscle
+    pail_write_lists["olink_adipose"] = columns_olink_adipose
     pail_write_tables = dict()
     pail_write_tables[str("table_subject")] = pail_reduction["table"]
     pail_write_objects = dict()
+
     #pail_write_objects[str("samples")]
 
     ##########
     # Write product information to file.
+    putly.write_lists_to_file_text(
+        pail_write=pail_write_lists,
+        path_directory=paths["out_procedure_data_lists"],
+        delimiter="\n",
+    )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data"],
+        path_directory=paths["out_procedure_data_tables"],
         reset_index_rows=False,
         write_index_rows=False,
         write_index_columns=True,
@@ -1626,7 +2020,7 @@ def execute_procedure(
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data"],
+        path_directory=paths["out_procedure_data_tables"],
         reset_index_rows=None,
         write_index_rows=None,
         write_index_columns=None,

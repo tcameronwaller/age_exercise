@@ -127,10 +127,10 @@ def initialize_directories_trunk(
         paths["dock"], "in_data",
     )
     paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters", str(project), str(routine),
+        paths["dock"], "in_parameters",
     )
     paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private", str(project), str(routine),
+        paths["dock"], "in_parameters_private",
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -528,7 +528,7 @@ def read_organize_source_parameter_instances(
 
     # Define paths to child files.
     path_file_table_parameter = os.path.join(
-        paths["in_parameters_private"],
+        paths["in_parameters_private"], "exercise", "transcriptomics",
         "table_differential_expressions_genes_samples.tsv",
     )
 
@@ -1008,9 +1008,6 @@ def read_organize_write_summary_instances_tissue(
 # 3. Select set of samples for specific analyses.
 
 
-# TODO: TCW; 16 October 2024
-# use porg.filter_extract_table_row_identifiers_by_columns_categories()
-# Actually that function might be inappropriate (TCW; 6 November 2024)
 def select_sets_identifier_table_sample(
     table_sample=None,
     name_instance=None,
@@ -1085,6 +1082,8 @@ def select_sets_identifier_table_sample(
 
     # Filter rows in table by rules for selection of a specific set.
     # Iterate on features and values for selection of samples in cohort.
+    # Refer to function "filter_select_table_rows_by_columns_categories()" in
+    # module "organization.py" of package "partner".
     table_cohort = table_inclusion.copy(deep=True)
     if (selection_samples_set is not None):
         for feature in selection_samples_set.keys():
