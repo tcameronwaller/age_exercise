@@ -2090,181 +2090,17 @@ def determine_keep_series_by_identity(
     return indicator
 
 
-def filter_table_main_rows_signal(
-    table_main=None,
-    samples_all=None,
-    samples_control=None,
-    samples_intervention=None,
-    filter_rows_signal_by_condition=None,
-    threshold_signal_low=None,
-    threshold_signal_high=None,
-    proportion_signal_all=None,
-    proportion_signal_control=None,
-    proportion_signal_intervention=None,
-    tissue=None,
-    report=None,
-):
-    """
-    Filters information in table for gene features across rows.
-
-    This function filters rows for gene features by different thresholds on the
-    proportion of a gene's signal intensities that must have non-missing,
-    within-threshold, valid values across sets of samples in either the control
-    or intervention experimental conditions or both. The reason for using these
-    different thresholds is to allow genes to have signals that are detectable
-    in only one experimental condition or the other. An example would be an
-    experimental intervention that activates or deactivates transcriptional
-    expression of specific genes.
-
-    arguments:
-        table_main (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
-        samples_all (list<str>): identifiers of samples in both control and
-            intervention experimental conditions corresponding to names of
-            columns for measurement values of signal intensity across features
-        samples_control (list<str>): identifiers of samples in control
-            experimental condition corresponding to names of columns for
-            measurement values of signal intensity across features
-        samples_intervention (list<str>): identifiers of samples in
-            intervention experimental condition corresponding to names of
-            columns for measurement values of signal intensity across features
-        filter_rows_signal_by_condition (bool): whether to filter rows by
-            signal with separate consideration of columns for different
-            experimental conditions
-        threshold_signal_low (float): threshold below which
-            (value <= threshold) all values are considered invalid and missing
-        threshold_signal_high (float): threshold above which
-            (value > threshold) all values are considered invalid and missing
-        proportion_signal_all (float): proportion of signal intensities
-            across all samples in any experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_control (float): proportion of signal intensities
-            across samples in control experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_intervention (float): proportion of values of signal
-            intensities across samples in intervention experimental condition
-            that must have non-missing, within-threshold, valid values in
-            order to keep the row for each gene feature
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (object): Pandas data-frame table of values of intensity across
-            samples in columns and proteins in rows
-
-    """
-
-    # Copy information in table.
-    table_filter = table_main.copy(deep=True)
-    # Copy other information.
-    samples_all = copy.deepcopy(samples_all)
-    samples_control = copy.deepcopy(samples_control)
-    samples_intervention = copy.deepcopy(samples_intervention)
-
-    # Collect names of temporary columns.
-    names_columns_temporary = list()
-
-    ##########
-    # Filter rows in table on basis of signal validity.
-
-    # Filter rows in table by signal validity across all samples.
-    # porg.test_extract_organize_values_from_series()
-    table_filter["match_keep_signal_all"] = table_filter.apply(
-        lambda row:
-            porg.determine_series_signal_validity_threshold(
-                series=row,
-                keys_signal=samples_all,
-                threshold_low=threshold_signal_low,
-                threshold_high=threshold_signal_high,
-                proportion=proportion_signal_all,
-                report=False,
-            ),
-        axis="columns", # apply function to each row
-    )
-    table_filter = table_filter.loc[
-        (table_filter["match_keep_signal_all"] == 1), :
-    ]
-    names_columns_temporary.append("match_keep_signal_all")
-
-    # Filter rows in table by signal validity across samples in control or
-    # intervention experimental conditions, respectively.
-    if filter_rows_signal_by_condition:
-        table_filter["match_keep_signal_control"] = table_filter.apply(
-            lambda row:
-                porg.determine_series_signal_validity_threshold(
-                    series=row,
-                    keys_signal=samples_control,
-                    threshold_low=threshold_signal_low,
-                    threshold_high=threshold_signal_high,
-                    proportion=proportion_signal_control,
-                    report=False,
-                ),
-            axis="columns", # apply function to each row
-        )
-        table_filter["match_keep_signal_intervention"] = table_filter.apply(
-            lambda row:
-                porg.determine_series_signal_validity_threshold(
-                    series=row,
-                    keys_signal=samples_intervention,
-                    threshold_low=threshold_signal_low,
-                    threshold_high=threshold_signal_high,
-                    proportion=proportion_signal_intervention,
-                    report=False,
-                ),
-            axis="columns", # apply function to each row
-        )
-        table_filter = table_filter.loc[
-            (
-                (table_filter["match_keep_signal_control"] == 1) |
-                (table_filter["match_keep_signal_intervention"] == 1)
-            ), :
-        ]
-        names_columns_temporary.append("match_keep_signal_control")
-        names_columns_temporary.append("match_keep_signal_intervention")
-        pass
-
-    # Remove unnecessary columns.
-    table_filter.drop(
-        labels=names_columns_temporary,
-        axis="columns",
-        inplace=True
-    )
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
-        print("function: filter_table_main_rows_signal()")
-        print("tissue: " + tissue)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return table_filter
-
-
 def filter_table_main(
     table_main=None,
     columns_gene=None,
     samples_all=None,
-    samples_control=None,
-    samples_intervention=None,
     filter_rows_identity=None,
     selection_genes=None,
     remove_sex_chromosomes=None,
     filter_rows_signal=None,
-    filter_rows_signal_by_condition=None,
     threshold_signal_low=None,
     threshold_signal_high=None,
     proportion_signal_all=None,
-    proportion_signal_control=None,
-    proportion_signal_intervention=None,
     tissue=None,
     report=None,
 ):
@@ -2290,21 +2126,12 @@ def filter_table_main(
         samples_all (list<str>): identifiers of samples in both control and
             intervention experimental conditions corresponding to names of
             columns for measurement values of signal intensity across features
-        samples_control (list<str>): identifiers of samples in control
-            experimental condition corresponding to names of columns for
-            measurement values of signal intensity across features
-        samples_intervention (list<str>): identifiers of samples in
-            intervention experimental condition corresponding to names of
-            columns for measurement values of signal intensity across features
         filter_rows_identity (bool): whether to filter rows by identity
         selection_genes (dict<list<str>>): filters on rows in table for
             selection of genes relevant to analysis
         remove_sex_chromosomes (bool): whether to remove all genes on sex
             chromosomes
         filter_rows_signal (bool): whether to filter rows by signal
-        filter_rows_signal_by_condition (bool): whether to filter rows by
-            signal with separate consideration of columns for different
-            experimental conditions
         threshold_signal_low (float): threshold below which
             (value <= threshold) all values are considered invalid and missing
         threshold_signal_high (float): threshold above which
@@ -2313,14 +2140,6 @@ def filter_table_main(
             across all samples in any experimental condition that must have
             non-missing, within-threshold, valid values in order to keep the
             row for each gene feature
-        proportion_signal_control (float): proportion of signal intensities
-            across samples in control experimental condition that must have
-            non-missing, within-threshold, valid values in order to keep the
-            row for each gene feature
-        proportion_signal_intervention (float): proportion of values of signal
-            intensities across samples in intervention experimental condition
-            that must have non-missing, within-threshold, valid values in
-            order to keep the row for each gene feature
         tissue (str): name of tissue, either 'adipose' or 'muscle', which
             distinguishes study design and sets of samples
         report (bool): whether to print reports
@@ -2337,8 +2156,6 @@ def filter_table_main(
     # Copy other information.
     columns_gene = copy.deepcopy(columns_gene)
     samples_all = copy.deepcopy(samples_all)
-    samples_control = copy.deepcopy(samples_control)
-    samples_intervention = copy.deepcopy(samples_intervention)
 
     # Filter information in table.
 
@@ -2385,20 +2202,15 @@ def filter_table_main(
     ##########
     # Filter rows within table on basis of signal validity.
     if filter_rows_signal:
-        table_filter = filter_table_main_rows_signal(
-            table_main=table_filter,
-            samples_all=samples_all,
-            samples_control=samples_control,
-            samples_intervention=samples_intervention,
-            filter_rows_signal_by_condition=filter_rows_signal_by_condition,
-            threshold_signal_low=threshold_signal_low,
-            threshold_signal_high=threshold_signal_high,
-            proportion_signal_all=proportion_signal_all,
-            proportion_signal_control=proportion_signal_control,
-            proportion_signal_intervention=proportion_signal_intervention,
-            tissue=tissue,
-            report=report,
-        )
+        table_filter = (
+            porg.filter_table_rows_by_proportion_nonmissing_threshold(
+                table=table_filter,
+                columns=samples_all,
+                threshold_low=threshold_signal_low,
+                threshold_high=threshold_signal_high,
+                proportion=proportion_signal_all,
+                report=report,
+        ))
         pass
 
     ##########
@@ -3655,18 +3467,13 @@ def control_procedure_part_branch_signal(
         table_main=pail_organization_main["table_main"],
         columns_gene=columns_gene,
         samples_all=samples,
-        samples_control=[],
-        samples_intervention=[],
         filter_rows_identity=True,
         selection_genes=selection_genes,
         remove_sex_chromosomes=True, # exclude chromosomes X and Y
         filter_rows_signal=True,
-        filter_rows_signal_by_condition=False, # separate cases from controls
         threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
         threshold_signal_high=None,
         proportion_signal_all=0.33, # proportion of smaller condition to total
-        proportion_signal_control=0.5, # inactive
-        proportion_signal_intervention=0.5, # inactive
         tissue=tissue,
         report=report,
     )

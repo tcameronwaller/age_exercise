@@ -1373,12 +1373,12 @@ def plot_histogram_values_across_proteins_each_sample(
     # Create separate plot for each sample.
     for column in names_columns:
         # Extract and organize information from series.
-        pail_values = porg.extract_organize_values_from_series(
+        pail_values = porg.extract_filter_array_values_from_series(
             series=table[column],
             report=False,
         )
         if logarithm:
-            values_plot = pail_values["values_log"]
+            values_plot = numpy.log(pail_values["values_valid"])
         else:
             values_plot = pail_values["values_valid"]
         # Create figure and write to file.

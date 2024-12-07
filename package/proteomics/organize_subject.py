@@ -1067,7 +1067,7 @@ def organize_preliminary_information_to_prepare_tables(
     to rows or columns. This function handles features and observations
     equivalently, so the difference is semantic.
 
-    Review: ____
+    Review: 6 December 2024
 
     arguments:
         index_features (str): name for index corresponding to features across
@@ -1331,33 +1331,65 @@ def prepare_tables_signals_for_features_sets_in_observations_groups(
 
     """
 
+    ##########
     # Copy information in table.
     table_source = table.copy(deep=True)
 
     ##########
-    # Organize preliminary information.
-    features_all = copy.deepcopy(table_source.columns.to_list())
-    features_all.remove(index_observations)
-    observations_all = copy.deepcopy(
-        table_source[index_observations].unique().tolist()
+    # Filter table's rows and columns.
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before initial filters")
+    print(table_source)
+
+
+    # TODO: In the functions called by filter_table_rows_columns_by_proportion_nonmissing_threshold,
+    # filter the selection of rows and columns first to make sure that they're actually in
+    # the respective indices of the table.
+    table_filter = (
+        porg.filter_table_rows_columns_by_proportion_nonmissing_threshold(
+            table=table_source,
+            index_columns=index_features,
+            index_rows=index_observations,
+            columns=features_inclusion,
+            rows=observations_inclusion,
+            threshold_low=None,
+            threshold_high=None,
+            proportion_columns=0.9,
+            proportion_rows=0.9,
+            report=report,
+        )
     )
-    pail = organize_preliminary_information_to_prepare_tables(
-        index_features=index_features,
-        index_observations=index_observations, # assigned in new tables
-        features_all=features_all,
-        observations_all=observations_all,
-        features_inclusion=features_inclusion,
-        observations_inclusion=observations_inclusion,
-        groups_features=groups_features,
-        groups_observations=groups_observations,
-        names_groups_features_sequence=names_groups_features_sequence,
-        names_groups_observations_sequence=(
-            names_groups_observations_sequence
-        ),
-        translations_features=translations_features,
-        translations_observations=translations_observations,
-        report=report,
-    )
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!after initial filters")
+    print(table_filter)
+
+
+
+    if False:
+        ##########
+        # Organize preliminary information.
+        features_all = copy.deepcopy(table_filter.columns.to_list())
+        features_all.remove(index_observations)
+        observations_all = copy.deepcopy(
+            table_filter[index_observations].unique().tolist()
+        )
+        pail = organize_preliminary_information_to_prepare_tables(
+            index_features=index_features,
+            index_observations=index_observations, # assigned in new tables
+            features_all=features_all,
+            observations_all=observations_all,
+            features_inclusion=features_inclusion,
+            observations_inclusion=observations_inclusion,
+            groups_features=groups_features,
+            groups_observations=groups_observations,
+            names_groups_features_sequence=names_groups_features_sequence,
+            names_groups_observations_sequence=(
+                names_groups_observations_sequence
+            ),
+            translations_features=translations_features,
+            translations_observations=translations_observations,
+            report=report,
+        )
 
 
     pass
@@ -1367,6 +1399,7 @@ def prepare_tables_signals_for_features_sets_in_observations_groups(
 
 #############################
 # Below here can move to "plot_subject.py"
+
 
 ##########
 # 4. Histograms
@@ -1401,14 +1434,14 @@ def create_plot_chart_histogram(
     table = table.copy(deep=True)
 
     # Extract nonmissing values from column in table.
-    # partner.organization.extract_organize_values_from_series()
+    # partner.organization.extract_filter_array_values_from_series()
     values_raw = table[column_feature].to_numpy(
         dtype="float64",
         na_value=numpy.nan,
         copy=True,
     )
     values_nonmissing = numpy.copy(values_raw[~numpy.isnan(values_raw)])
-    mean_values = round(numpy.nanmean(pail_values["values_nonmissing"]), 3)
+    mean_values = round(numpy.nanmean(values_nonmissing), 3)
 
     ##########
     # Create plot chart.
@@ -1418,7 +1451,7 @@ def create_plot_chart_histogram(
     colors = pplot.define_color_properties()
     # Create figure.
     figure = pplot.plot_distribution_histogram(
-        array=pail_values["values_nonmissing"],
+        array=values_nonmissing,
         title="",
         bin_method="count",
         bin_count=20,
@@ -1747,17 +1780,21 @@ def drive_manage_plot_write_principal_component_scatter_charts(
 # Procedure
 
 
-# TODO: TCW; 5 December 2024
-# DONE
-# 1. write out lists of the IDs for Olink signals from Adipose, Plasma, and Muscle
-# 2. place these file lists of Olink IDs in parameter directory "sets_olink"
+# TODO: TCW; 6 December 2024
+#
 
-# TODO
-# 3. calculate correlations between...
+
+# 1. calculate correlations between...
 #   - subject continuous traits and Olink signals
 #   - pairwise Olink signals
 #   - subject continuous traits and PCs on Olink signals
 #   -
+
+# IDEA: TCW; 6 December 2024
+# - implement a main parameter table for this procedure as in "transcriptomics.compare_sets_groups"
+# - it would not be reasonable to compare PCs side-by-side for different groups of observations
+# - hence filters on observations should be more or less central before calculating the PCs
+
 
 
 # table = table_subject
@@ -1873,7 +1910,7 @@ def execute_procedure(
     # TODO: include another "selection" column in the parameter table to
     # designate features for logarithmic scale. Then will need to include
     # those is a new column list in the "parse" function.
-    if False:
+    if True:
         pail_columns_histogram = dict()
         pail_columns_histogram["other"] = copy.deepcopy(
             pail_parse["columns_continuous"]
@@ -1895,12 +1932,7 @@ def execute_procedure(
         )
         pass
 
-
-    ######################################
-    # TODO: TCW; 30 November 2024
-    # TODO: stratify the subjects by sex and age group before calculating
-    # principal components
-    #######################################
+    ##########
     # Filter rows in table by specific categorical values of specific columns.
     columns_categories = dict()
     columns_categories["cohort_age_text"] = ["younger", "elder",]
@@ -1930,14 +1962,13 @@ def execute_procedure(
     pail_columns_decomposition["olink_plasma"] = columns_olink_plasma
     pail_columns_decomposition["olink_muscle"] = columns_olink_muscle
     pail_columns_decomposition["olink_adipose"] = columns_olink_adipose
-    if True:
+    if False:
         pail_reduction = drive_manage_calculate_principal_components(
                 table=table_subject,
                 index_rows="subject_visit",
                 sets_columns=pail_columns_decomposition,
                 report=report,
         )
-    else:
         pail_pca_test = (
             pdecomp.calculate_principal_components_table_columns_selection(
                 table=table_subject,
@@ -1967,72 +1998,155 @@ def execute_procedure(
         )
 
     ##########
+    # Prepare parameters for the preparation of derivative tables.
+    names_groups_features_sequence = list()
+    names_groups_features_sequence.append("olink_plasma")
+    names_groups_features_sequence.append("olink_muscle")
+    names_groups_features_sequence.append("olink_adipose")
+
+    names_groups_observations_sequence = list()
+    names_groups_observations_sequence.append("younger_female")
+    names_groups_observations_sequence.append("younger_male")
+    names_groups_observations_sequence.append("elder_female")
+    names_groups_observations_sequence.append("elder_male")
+
+    groups_features = dict()
+    groups_features["olink_plasma"] = columns_olink_plasma
+    groups_features["olink_muscle"] = columns_olink_muscle
+    groups_features["olink_adipose"] = columns_olink_adipose
+
+    features_inclusion = list()
+    for group_features in groups_features.keys():
+        features_inclusion.extend(groups_features[group_features])
+
+
+    groups_observations = dict()
+    groups_observations["younger_female"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_subject,
+            column_identifier="subject_visit",
+            name="younger_female", # or "name_instance"
+            columns_categories={
+                "study_clinic_visit": ["first",],
+                "cohort_age_text": ["younger",],
+                "sex_text": ["female",],
+            },
+            report=report,
+    ))
+    groups_observations["younger_male"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_subject,
+            column_identifier="subject_visit",
+            name="younger_male", # or "name_instance"
+            columns_categories={
+                "study_clinic_visit": ["first",],
+                "cohort_age_text": ["younger",],
+                "sex_text": ["male",],
+            },
+            report=report,
+    ))
+    groups_observations["elder_female"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_subject,
+            column_identifier="subject_visit",
+            name="elder_female", # or "name_instance"
+            columns_categories={
+                "study_clinic_visit": ["first",],
+                "cohort_age_text": ["elder",],
+                "sex_text": ["female",],
+            },
+            report=report,
+    ))
+    groups_observations["elder_male"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_subject,
+            column_identifier="subject_visit",
+            name="elder_male", # or "name_instance"
+            columns_categories={
+                "study_clinic_visit": ["first",],
+                "cohort_age_text": ["elder",],
+                "sex_text": ["male",],
+            },
+            report=report,
+    ))
+    observations_inclusion = list()
+    for group_observations in groups_observations.keys():
+        observations_inclusion.extend(groups_observations[group_observations])
+
+    ##########
     # 8. Prepare derivative tables of information about features and sets of
     # features across observations and groups of observations.
     pail_tables = (
         prepare_tables_signals_for_features_sets_in_observations_groups(
             table=table_subject,
-            index_features=None,
-            index_observations=None,
-            features_inclusion=None,
-            observations_inclusion=None,
-            groups_features=None,
-            groups_observations=None,
-            names_groups_features_sequence=None,
-            names_groups_observations_sequence=None,
-            translations_features=None,
-            translations_observations=None,
-            report=None,
+            index_features="features",
+            index_observations="subject_visit",
+            features_inclusion=features_inclusion,
+            observations_inclusion=observations_inclusion,
+            groups_features=groups_features,
+            groups_observations=groups_observations,
+            names_groups_features_sequence=names_groups_features_sequence,
+            names_groups_observations_sequence=(
+                names_groups_observations_sequence
+            ),
+            translations_features=None, # <-- keep None for now
+            translations_observations=None, # <-- keep None for now
+            report=report,
     ))
 
 
-    ##########
-    # Collect information.
-    # Collections of files.
+    print("!!!!!!!!!!!!Got past the new stuff")
 
-    pail_write_lists = dict()
-    pail_write_lists["olink_all"] = columns_olink_all
-    pail_write_lists["olink_plasma"] = columns_olink_plasma
-    pail_write_lists["olink_muscle"] = columns_olink_muscle
-    pail_write_lists["olink_adipose"] = columns_olink_adipose
-    pail_write_tables = dict()
-    pail_write_tables[str("table_subject")] = pail_reduction["table"]
-    pail_write_objects = dict()
 
-    #pail_write_objects[str("samples")]
-
-    ##########
-    # Write product information to file.
-    putly.write_lists_to_file_text(
-        pail_write=pail_write_lists,
-        path_directory=paths["out_procedure_data_lists"],
-        delimiter="\n",
-    )
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data_tables"],
-        reset_index_rows=False,
-        write_index_rows=False,
-        write_index_columns=True,
-        type="text",
-        delimiter="\t",
-        suffix=".tsv",
-    )
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data_tables"],
-        reset_index_rows=None,
-        write_index_rows=None,
-        write_index_columns=None,
-        type="pickle",
-        delimiter=None,
-        suffix=".pickle",
-    )
     if False:
-        putly.write_objects_to_file_pickle(
-            pail_write=pail_write_objects,
-            path_directory=paths["out_procedure_data"],
+
+        ##########
+        # Collect information.
+        # Collections of files.
+
+        pail_write_lists = dict()
+        pail_write_lists["olink_all"] = columns_olink_all
+        pail_write_lists["olink_plasma"] = columns_olink_plasma
+        pail_write_lists["olink_muscle"] = columns_olink_muscle
+        pail_write_lists["olink_adipose"] = columns_olink_adipose
+        pail_write_tables = dict()
+        pail_write_tables[str("table_subject")] = pail_reduction["table"]
+        pail_write_objects = dict()
+
+        #pail_write_objects[str("samples")]
+
+        ##########
+        # Write product information to file.
+        putly.write_lists_to_file_text(
+            pail_write=pail_write_lists,
+            path_directory=paths["out_procedure_data_lists"],
+            delimiter="\n",
         )
+        putly.write_tables_to_file(
+            pail_write=pail_write_tables,
+            path_directory=paths["out_procedure_data_tables"],
+            reset_index_rows=False,
+            write_index_rows=False,
+            write_index_columns=True,
+            type="text",
+            delimiter="\t",
+            suffix=".tsv",
+        )
+        putly.write_tables_to_file(
+            pail_write=pail_write_tables,
+            path_directory=paths["out_procedure_data_tables"],
+            reset_index_rows=None,
+            write_index_rows=None,
+            write_index_columns=None,
+            type="pickle",
+            delimiter=None,
+            suffix=".pickle",
+        )
+        if False:
+            putly.write_objects_to_file_pickle(
+                pail_write=pail_write_objects,
+                path_directory=paths["out_procedure_data"],
+            )
 
     pass
 
