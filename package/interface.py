@@ -1,7 +1,7 @@
 """
 Manage execution of procedures.
 
-This module 'interface' is part of the 'exercise' package.
+This module 'interface' is part of the 'age_exercise' package.
 
 Author:
 
@@ -12,28 +12,29 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 ###############################################################################
 # Notes
+
 
 ###############################################################################
 # Installation and importation
@@ -46,12 +47,12 @@ import textwrap
 
 # Custom.
 
-import exercise.scratch
-import exercise.transcriptomics.organize_sample
-import exercise.transcriptomics.organize_signal
-import exercise.transcriptomics.select_gene_sets
-import exercise.transcriptomics.compare_sets_groups
-import exercise.proteomics.organize_subject
+import age_exercise.scratch
+import age_exercise.transcriptomics.organize_sample
+import age_exercise.transcriptomics.organize_signal
+import age_exercise.transcriptomics.select_gene_sets
+import age_exercise.transcriptomics.compare_sets_groups
+import age_exercise.proteomics.organize_subject
 
 #dir()
 #importlib.reload()
@@ -86,17 +87,17 @@ def define_interface_parsers():
     subparsers = parser.add_subparsers(title="procedures")
     #parser_main = define_main_subparser(subparsers=subparsers)
     parser_main = define_subparser_main(
-        project="exercise",
+        project="age_exercise",
         routine="main",
         subparsers=subparsers,
     )
     parser_transcriptomics = define_subparser_transcriptomics(
-        project="exercise",
+        project="age_exercise",
         routine="transcriptomics",
         subparsers=subparsers,
     )
     parser_proteomics = define_subparser_proteomics(
-        project="exercise",
+        project="age_exercise",
         routine="proteomics",
         subparsers=subparsers,
     )
@@ -123,7 +124,7 @@ def define_main_description():
         --------------------------------------------------
         Description of main project package
 
-        Welcome to the interface of the "exercise" package in Python.
+        Welcome to the interface of the 'age_exercise' package in Python.
         This package supports project-specific wrangling, processing,
         and analysis of data from transcriptomics and proteomics
         technologies.
@@ -449,11 +450,11 @@ def evaluate_parameters_main(arguments):
     if arguments.scratch:
         # Report status.
         print(
-           "... executing exercise.scratch " +
+           "... executing age_exercise.scratch " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.scratch.execute_procedure(
+        age_exercise.scratch.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 
@@ -479,41 +480,41 @@ def evaluate_parameters_transcriptomics(arguments):
     if arguments.organize_sample:
         # Report status.
         print(
-           "... executing exercise.transcriptomics.organize_sample " +
+           "... executing age_exercise.transcriptomics.organize_sample " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.transcriptomics.organize_sample.execute_procedure(
+        age_exercise.transcriptomics.organize_sample.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
     if arguments.organize_signal:
         # Report status.
         print(
-           "... executing exercise.transcriptomics.organize_signal " +
+           "... executing age_exercise.transcriptomics.organize_signal " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.transcriptomics.organize_signal.execute_procedure(
+        age_exercise.transcriptomics.organize_signal.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
     if arguments.select_gene_sets:
         # Report status.
         print(
-           "... executing exercise.transcriptomics.select_gene_sets " +
+           "... executing age_exercise.transcriptomics.select_gene_sets " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.transcriptomics.select_gene_sets.execute_procedure(
+        age_exercise.transcriptomics.select_gene_sets.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
     if arguments.compare_sets_groups:
         # Report status.
         print(
-           "... executing exercise.transcriptomics.compare_sets_groups " +
+           "... executing age_exercise.transcriptomics.compare_sets_groups " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.transcriptomics.compare_sets_groups.execute_procedure(
+        age_exercise.transcriptomics.compare_sets_groups.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 
@@ -539,11 +540,11 @@ def evaluate_parameters_proteomics(arguments):
     if arguments.organize_subject:
         # Report status.
         print(
-           "... executing exercise.proteomics.organize_subject " +
+           "... executing age_exercise.proteomics.organize_subject " +
            "procedure ..."
         )
         # Execute procedure.
-        exercise.proteomics.organize_subject.execute_procedure(
+        age_exercise.proteomics.organize_subject.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 

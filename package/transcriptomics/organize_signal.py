@@ -2,7 +2,7 @@
 Supply functionality for process and analysis of data from transcriptomics.
 
 This module 'organize_signal' is part of the 'transcriptomics' package within
-the 'exercise' package.
+the 'age_exercise' package.
 
 Author:
 
@@ -13,24 +13,24 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
@@ -78,7 +78,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.transcriptomics.organize_sample as extr_sample
+import age_exercise.transcriptomics.organize_sample as extr_sample
 
 ###############################################################################
 # Functionality
@@ -181,7 +181,7 @@ def initialize_directories_trunk(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: initialize_directories_trunk()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -254,7 +254,7 @@ def initialize_directories_before_branch(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: initialize_directories_before_branch()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -341,7 +341,7 @@ def initialize_directories_branch_tissue(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: initialize_directories_branch_tissue()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -435,7 +435,7 @@ def initialize_directories_branch_instance(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: initialize_directories_branch()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -528,7 +528,7 @@ def read_organize_source_parameter_instances(
 
     # Define paths to child files.
     path_file_table_parameter = os.path.join(
-        paths["in_parameters_private"], "exercise", "transcriptomics",
+        paths["in_parameters_private"], "age_exercise", "transcriptomics",
         "table_differential_expressions_genes_samples.tsv",
     )
 
@@ -645,7 +645,7 @@ def read_organize_source_parameter_instances(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: read_organize_source_parameter_instances()")
         putly.print_terminal_partition(level=5)
         print("parameter table:")
@@ -747,7 +747,7 @@ def read_source_sample(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: read_source_sample()")
         putly.print_terminal_partition(level=5)
         count_rows = (pail["table_sample"].shape[0])
@@ -825,7 +825,7 @@ def read_source_main(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: read_source()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -900,7 +900,7 @@ def read_source_signal_for_description(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: read_source_signal_for_description()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -981,7 +981,7 @@ def read_organize_write_summary_instances_tissue(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: read_organize_write_summary_instances()")
         putly.print_terminal_partition(level=5)
         print("table summary of counts of samples in each set:")
@@ -1167,7 +1167,7 @@ def select_sets_identifier_table_sample(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: select_sets_identifier_table_sample_primary()")
         print("name_instance: " + str(name_instance))
         print("tissue: " + tissue)
@@ -1251,7 +1251,7 @@ def extract_source_columns_for_tertiles(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: extract_source_columns_for_tertiles()")
         putly.print_terminal_partition(level=5)
         print("columns of feature variables for tertiles:")
@@ -1352,7 +1352,7 @@ def organize_describe_summarize_table_sample_tertiles(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: organize_table_sample_tertiles()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
@@ -1520,7 +1520,7 @@ def determine_subject_pairs_nest_category_levels(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: determine_subject_pairs_nest_category_levels()")
         putly.print_terminal_partition(level=4)
         for level in levels_subjects.keys():
@@ -1675,7 +1675,7 @@ def select_sets_final_identifier_table_sample(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: select_sets_final_identifier_table_sample()")
         print("name_instance: " + str(name_instance))
         print("tissue: " + tissue)
@@ -1854,7 +1854,7 @@ def organize_table_main(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: organize_table_main()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -2228,7 +2228,7 @@ def filter_table_main(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: filter_table_main()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -2358,7 +2358,7 @@ def separate_table_main_columns(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: separate_table_main_columns()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -2488,7 +2488,7 @@ def scale_normalize_values_intensity_signal_table(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: scale_values_intensity_signal_table()")
         putly.print_terminal_partition(level=4)
         print(table_normal)
@@ -2656,7 +2656,7 @@ def combine_organize_table_signal_genes_samples(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: combine_organize_table_signal_genes_samples()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=5)
@@ -2762,7 +2762,7 @@ def rank_genes_by_mean_signal(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: rank_genes_by_mean_signal()")
         putly.print_terminal_partition(level=5)
         print("table in rank order")
@@ -2853,7 +2853,7 @@ def check_coherence_table_sample_table_signal(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: check_coherence_table_sample_table_signal()")
         print("tissue: " + tissue)
         print("name_instance: " + name_instance)
@@ -3879,7 +3879,7 @@ def execute_procedure(
 
     ##########
     # Parameters.
-    project="exercise"
+    project="age_exercise"
     routine="transcriptomics"
     procedure="organize_signal"
     report = True
@@ -3888,7 +3888,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")

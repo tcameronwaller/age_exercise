@@ -2,7 +2,7 @@
 Supply functionality for process and analysis of data from proteomics.
 
 This module 'plot_subject' is part of the 'proteomics' package within
-the 'exercise' package.
+the 'age_exercise' package.
 
 Author:
 
@@ -13,24 +13,24 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
@@ -72,7 +72,7 @@ import partner.description as pdesc
 import partner.decomposition as pdecomp
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.transcriptomics.organize_sample as extr_sample
+import age_exercise.transcriptomics.organize_sample as extr_sample
 
 ###############################################################################
 # Functionality
@@ -170,7 +170,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_subject.py")
+        print("module: age_exercise.proteomics.organize_subject.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -212,7 +212,7 @@ def execute_procedure(
 
     ##########
     # Parameters.
-    project="exercise"
+    project="age_exercise"
     routine="proteomics"
     procedure="plot_subject"
     report = True
@@ -221,7 +221,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.plot_subject.py")
+        print("module: age_exercise.proteomics.plot_subject.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")

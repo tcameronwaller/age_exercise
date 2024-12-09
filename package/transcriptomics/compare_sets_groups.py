@@ -2,7 +2,7 @@
 Supply functionality for process and analysis of data from transcriptomics.
 
 This module 'compare_sets_groups' is part of the 'transcriptomics' package
-within the 'exercise' package.
+within the 'age_exercise' package.
 
 Author:
 
@@ -13,24 +13,24 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
@@ -72,10 +72,10 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.transcriptomics.organize_sample as extr_sample
-import exercise.transcriptomics.organize_signal as extr_signal
-import exercise.transcriptomics.select_gene_sets as extr_select
-import exercise.proteomics.organize_subject as aexpr_sub
+import age_exercise.transcriptomics.organize_sample as extr_sample
+import age_exercise.transcriptomics.organize_signal as extr_signal
+import age_exercise.transcriptomics.select_gene_sets as extr_select
+import age_exercise.proteomics.organize_subject as aexpr_sub
 
 ###############################################################################
 # Functionality
@@ -179,7 +179,7 @@ def initialize_directories_trunk(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: initialize_directories_trunk()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -297,7 +297,7 @@ def read_source(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: read_source()")
         putly.print_terminal_partition(level=5)
         print("tissue: " + str(tissue))
@@ -381,7 +381,7 @@ def read_organize_source_parameter_instances(
 
     # Define paths to child files.
     path_file_table_parameter = os.path.join(
-        paths["in_parameters_private"], "exercise", "transcriptomics",
+        paths["in_parameters_private"], "age_exercise", "transcriptomics",
         "table_comparisons_gene_sets_between_sample_groups.tsv",
     )
 
@@ -491,7 +491,7 @@ def read_organize_source_parameter_instances(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: read_organize_source_parameter_instances()")
         putly.print_terminal_partition(level=5)
         print("parameter table:")
@@ -592,7 +592,7 @@ def prepare_sets_gene(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: prepare_sets_gene()")
         putly.print_terminal_partition(level=5)
         print("only use custom combination set 'main' for total inclusion.")
@@ -696,7 +696,7 @@ def determine_gene_sets_allocation(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: determine_gene_sets_allocation()")
         putly.print_terminal_partition(level=5)
         print(table)
@@ -790,7 +790,7 @@ def sort_table_rows_gene_sets_allocation(
         )
 
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: sort_table_rows_gene_sets_allocation()")
         putly.print_terminal_partition(level=4)
         print(
@@ -2147,7 +2147,7 @@ def execute_procedure(
 
     ##########
     # Parameters.
-    project="exercise"
+    project="age_exercise"
     routine="transcriptomics"
     procedure="compare_sets_groups"
     report = True
@@ -2156,7 +2156,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.compare_sets_groups.py")
+        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")

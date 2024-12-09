@@ -2,7 +2,7 @@
 Supply functionality for process and analysis of data from transcriptomics.
 
 This module 'select_gene_sets' is part of the 'transcriptomics' package within
-the 'exercise' package.
+the 'age_exercise' package.
 
 Author:
 
@@ -13,24 +13,24 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
@@ -71,7 +71,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.transcriptomics.organize_signal as exrosig
+import age_exercise.transcriptomics.organize_signal as exrosig
 
 ###############################################################################
 # Functionality
@@ -124,7 +124,7 @@ def preinitialize_directories(
         paths["dock"], "in_parameters_private",
     )
     paths["in_sets_gene"] = os.path.join(
-        paths["in_parameters_private"], "exercise", "transcriptomics",
+        paths["in_parameters_private"], "age_exercise", "transcriptomics",
         "sets_gene",
     )
     paths["out_project"] = os.path.join(
@@ -177,7 +177,7 @@ def preinitialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
+        print("module: age_exercise.transcriptomics.select_gene_sets.py")
         print("function: preinitialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -279,7 +279,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
+        print("module: age_exercise.transcriptomics.select_gene_sets.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -452,7 +452,7 @@ def read_source(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
+        print("module: age_exercise.transcriptomics.select_gene_sets.py")
         print("function: read_source()")
         print("tissue: " + tissue)
         putly.print_terminal_partition(level=4)
@@ -509,7 +509,7 @@ def read_extract_set_genes(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
+        print("module: age_exercise.transcriptomics.select_gene_sets.py")
         function = "read_extract_gene_set"
         print(str("function: " + function + "()"))
         putly.print_terminal_partition(level=4)
@@ -592,7 +592,7 @@ def read_extract_combine_custom_sets_genes(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
+        print("module: age_exercise.transcriptomics.select_gene_sets.py")
         function = "read_extract_combine_custom_sets_genes"
         print(str("function: " + function + "()"))
         putly.print_terminal_partition(level=4)
@@ -824,7 +824,7 @@ def organize_table_change_deseq2(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: organize_table_change_deseq2()")
         putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
@@ -945,7 +945,7 @@ def select_sets_differential_expression_gene(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: select_sets_differential_expression_gene()")
         putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
@@ -1072,7 +1072,7 @@ def organize_rank_list_gene(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_signal.py")
+        print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: organize_rank_list_gene()")
         putly.print_terminal_partition(level=5)
         print("tissue: " + tissue)
@@ -1613,7 +1613,7 @@ def execute_procedure(
 
     ##########
     # Parameters.
-    project="exercise"
+    project="age_exercise"
     routine="transcriptomics"
     procedure="select_gene_sets"
     report = True
@@ -1622,7 +1622,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.select_gene_sets.py")
+        print("module: age_exercise.transcriptomics.select_gene_sets.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")

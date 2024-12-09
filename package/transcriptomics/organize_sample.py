@@ -2,7 +2,7 @@
 Supply functionality for process and analysis of data from transcriptomics.
 
 This module 'organize_sample' is part of the 'transcriptomics' package within
-the 'exercise' package.
+the 'age_exercise' package.
 
 Author:
 
@@ -13,24 +13,24 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2024 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
@@ -71,7 +71,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.proteomics.organize_subject as aexpr_sub
+import age_exercise.proteomics.organize_subject as aexpr_sub
 
 ###############################################################################
 # Functionality
@@ -163,7 +163,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -302,7 +302,7 @@ def read_source(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: read_source()")
         putly.print_terminal_partition(level=5)
         print("table of properties for subjects: ")
@@ -477,7 +477,7 @@ def organize_table_subject_property(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: organize_table_subject_property()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
@@ -786,7 +786,7 @@ def organize_table_sample_file(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: organize_table_sample_file()")
         putly.print_terminal_partition(level=5)
         print("table of matches between samples and files: ")
@@ -866,7 +866,7 @@ def combine_table_subject_sample_file_property(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: combine_table_subject_sample_file_property()")
         putly.print_terminal_partition(level=5)
         print("table of files and attributes for samples: ")
@@ -986,7 +986,7 @@ def organize_table_sample_interaction_combinations(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.proteomics.organize_sample_olink.py")
+        print("module: age_exercise.proteomics.organize_sample_olink.py")
         print("function: organize_table_sample_interaction_combinations()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
@@ -1043,7 +1043,7 @@ def describe_table_sample_factors(
     # Report.
     if report:
         putly.print_terminal_partition(level=2)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: describe_table_sample_factors()")
         putly.print_terminal_partition(level=4)
         print("tissue: adipose")
@@ -1286,7 +1286,7 @@ def describe_table_sample_sets(
     # Report.
     if report:
         putly.print_terminal_partition(level=2)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: describe_table_sample_sets()")
         putly.print_terminal_partition(level=5)
         print("count of selections: " + str(len(selections)))
@@ -1338,7 +1338,7 @@ def describe_table_sample_sets(
     # Report.
     if report:
         putly.print_terminal_partition(level=2)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: describe_table_sample_sets()")
         putly.print_terminal_partition(level=5)
         print("description complete")
@@ -1370,7 +1370,7 @@ def execute_procedure(
 
     ##########
     # Parameters.
-    project="exercise"
+    project="age_exercise"
     routine="transcriptomics"
     procedure="organize_sample"
     report = True
@@ -1379,7 +1379,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.transcriptomics.organize_sample.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
