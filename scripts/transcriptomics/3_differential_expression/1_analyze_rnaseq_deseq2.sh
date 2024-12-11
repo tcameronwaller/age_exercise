@@ -22,7 +22,7 @@
 # Organize paths.
 
 # Project.
-project_main="exercise"
+project_main="age_exercise"
 
 # Directories.
 cd ~
@@ -31,8 +31,8 @@ path_directory_tools=$(<"$path_directory_paths/path_directory_tools.txt")
 path_directory_repository_partner=$(<"$path_directory_paths/path_directory_repository_partner.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
 path_directory_dock="$path_directory_process/dock"
-path_directory_parameters_private="$path_directory_dock/in_parameters_private/exercise/transcriptomics"
-path_directory_product_parent="$path_directory_dock/out_exercise/transcriptomics/deseq2"
+path_directory_parameters_private="$path_directory_dock/in_parameters_private/age_exercise/transcriptomics"
+path_directory_product_parent="$path_directory_dock/out_age_exercise/transcriptomics/deseq2"
 
 # Files.
 path_file_table_parameter="$path_directory_parameters_private/table_differential_expressions_genes_samples.tsv"
@@ -144,7 +144,7 @@ do
     ##########
     # Organize paths for current instance.
     # Directories.
-    path_directory_source="$path_directory_dock/out_exercise/transcriptomics/organize_signal/parts/${raw_tissue}/${name_instance}/data"
+    path_directory_source="$path_directory_dock/out_age_exercise/transcriptomics/organize_signal/parts/${raw_tissue}/${name_instance}/data"
     path_directory_product="$path_directory_product_parent/${raw_tissue}/${raw_group}"
     # Files.
     path_file_source_table_sample="${path_directory_source}/table_sample.tsv"

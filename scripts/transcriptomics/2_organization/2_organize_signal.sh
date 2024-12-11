@@ -22,7 +22,7 @@
 # Organize paths.
 
 # Project.
-project_main="exercise"
+project_main="age_exercise"
 
 # Directories.
 cd ~
