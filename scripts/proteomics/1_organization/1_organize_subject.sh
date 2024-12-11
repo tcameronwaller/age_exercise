@@ -78,18 +78,10 @@ set +v # disable print input to standard error
 
 # Activate Python virtual environment.
 source "${path_environment_main}/bin/activate"
-# Set paths for local packages and modules.
-#echo "Python path variable before update"
 
-#echo $PYTHONPATH
-#export OLD_PYTHONHOME="$PYTHONHOME"
-#export OLD_PYTHONPATH="$PYTHONPATH"
-#export PYTHONHOME=$PYTHONHOME:"$VIRTUAL_ENV/lib/python3.12/site-packages"
-#export PYTHONHOME=$PYTHONPATH:"$VIRTUAL_ENV/lib/python3.12/site-packages"
-#export PYTHONPATH=$PYTHONPATH:"${path_environment_main}/lib/python3.12/site-packages"
-#export PYTHONPATH=$PYTHONPATH:$path_directory_package
-#export PYTHONPATH=$PYTHONPATH:$path_directory_package_partner
-#export PYTHONPATH=$PYTHONPATH:$path_directory_package_project_main
+# Set paths for local packages and modules.
+export OLD_PYTHONPATH="$PYTHONPATH"
+export PYTHONPATH="$PYTHONPATH:$path_directory_package"
 
 # Regulate concurrent or parallel process threads on node cores.
 # Force Python program (especially SciPy) not to use all available cores on a
@@ -97,12 +89,15 @@ source "${path_environment_main}/bin/activate"
 export MKL_NUM_THREADS=$threads
 export NUMEXPR_NUM_THREADS=$threads
 export OMP_NUM_THREADS=$threads
+
 # Report.
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "Python virtual environment: main"
   echo "path to Python installation:"
   which python3
+  echo "VIRTUAL_ENV variable:"
+  echo $VIRTUAL_ENV
   echo "PYTHONHOME variable:"
   echo $PYTHONHOME
   echo "PYTHONPATH variable:"
@@ -125,8 +120,8 @@ proteomics \
 ###############################################################################
 # Deactivate Python virtual environment.
 
-#export PYTHONHOME="$OLD_PYTHONHOME"
-#export PYTHONPATH="$OLD_PYTHONPATH"
+# Restore paths.
+export PYTHONPATH="$OLD_PYTHONPATH"
 
 # Deactivate Python virtual environment.
 deactivate

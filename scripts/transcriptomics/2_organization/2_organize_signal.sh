@@ -78,12 +78,11 @@ set +v # disable print input to standard error
 
 # Activate Python virtual environment.
 source "${path_environment_main}/bin/activate"
+
 # Set paths for local packages and modules.
-#echo "Python path variable before update"
-#echo $PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$path_directory_package
-export PYTHONPATH=$PYTHONPATH:$path_directory_package_partner
-export PYTHONPATH=$PYTHONPATH:$path_directory_package_project_main
+export OLD_PYTHONPATH="$PYTHONPATH"
+export PYTHONPATH="$PYTHONPATH:$path_directory_package"
+
 # Regulate concurrent or parallel process threads on node cores.
 # Force Python program (especially SciPy) not to use all available cores on a
 # cluster computation node.
@@ -115,6 +114,9 @@ transcriptomics \
 
 ###############################################################################
 # Deactivate Python virtual environment.
+
+# Restore paths.
+export PYTHONPATH="$OLD_PYTHONPATH"
 
 # Deactivate Python virtual environment.
 deactivate

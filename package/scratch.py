@@ -71,8 +71,8 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import exercise.transcriptomics.organize_signal as exrosig
-import exercise.transcriptomics.select_gene_sets as exrosel
+import age_exercise.transcriptomics.organize_signal as exrosig
+import age_exercise.transcriptomics.select_gene_sets as exrosel
 
 ###############################################################################
 # Functionality
