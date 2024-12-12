@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 27 August 2024
-# Date, last execution or modification: 27 August 2024
-# Review: TCW; 27 August 2024
+# Date, first execution: 11 December 2024
+# Date, last execution or modification: 11 December 2024
+# Review: TCW; 11 December 2024
 ###############################################################################
 # Note
 
@@ -114,7 +114,7 @@ fi
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
 proteomics \
---organize_subject \
+--organize_olink \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
@@ -133,8 +133,8 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
   echo "technology: proteomics"
-  echo "procedure: organize_subject"
-  echo "script: 1_organize_subject.sh"
+  echo "procedure: organize_olink"
+  echo "script: 2_organize_olink.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"

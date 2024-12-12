@@ -53,6 +53,7 @@ import age_exercise.transcriptomics.organize_signal
 import age_exercise.transcriptomics.select_gene_sets
 import age_exercise.transcriptomics.compare_sets_groups
 import age_exercise.proteomics.organize_subject
+import age_exercise.proteomics.organize_olink
 
 #dir()
 #importlib.reload()
@@ -354,6 +355,17 @@ def define_subparser_proteomics(
             "and O-Link technology."
         )
     )
+    parser_routine.add_argument(
+        "-organize_olink",
+        "--organize_olink",
+        dest="organize_olink",
+        action="store_true",
+        help=(
+            "Organize information about samples at the level of study "
+            "subjects, with special attention to measurements from Olink " +
+            "technology."
+        )
+    )
 
     # Define behavior.
     parser_routine.set_defaults(func=evaluate_parameters_proteomics)
@@ -535,7 +547,7 @@ def evaluate_parameters_proteomics(arguments):
     """
 
     print("--------------------------------------------------")
-    print("... call to transcriptomics routine ...")
+    print("... call to proteomics routine ...")
     # Execute procedure.
     if arguments.organize_subject:
         # Report status.
@@ -545,6 +557,16 @@ def evaluate_parameters_proteomics(arguments):
         )
         # Execute procedure.
         age_exercise.proteomics.organize_subject.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+    if arguments.organize_olink:
+        # Report status.
+        print(
+           "... executing age_exercise.proteomics.organize_olink " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        age_exercise.proteomics.organize_olink.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
 
