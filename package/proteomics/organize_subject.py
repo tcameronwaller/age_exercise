@@ -615,6 +615,51 @@ def determine_cohort_age(
     return designator
 
 
+def determine_intervention_text(
+    intervention_text_raw=None,
+    cohort_age_text=None,
+):
+    """
+    Determines a designator for intervention.
+
+    arguments:
+        intervention_text (str): designator of intervention
+        cohort_age_text (str): designator of cohort by age
+
+    raises:
+
+    returns:
+        (float): designator of intervention
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(intervention_text_raw)) and
+        (len(str(intervention_text_raw).strip()) > 0)
+    ):
+        # Determine designator.
+        designator = str(intervention_text_raw).strip().lower()
+    else:
+        # Fill with parsable term for not applicable.
+        designator = "none"
+        pass
+    # Interpret designator and fill or change as necessary.
+    if (
+        (pandas.notna(cohort_age_text)) and
+        (len(str(cohort_age_text).strip()) > 0) and
+        (
+            (cohort_age_text == "younger") or
+            (designator not in ["placebo", "active",])
+        )
+    ):
+        # Fill with parsable term for not applicable.
+        designator = "none"
+        pass
+    # Return information.
+    return designator
+
+
 def determine_intervention(
     intervention_text=None,
 ):
@@ -854,9 +899,13 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
-    # Determine designations of intervention.
+    # Determine designations of intervention, either placebo or active.
     table["intervention_text"] = table.apply(
-        lambda row: str(row["intervention_text_raw"]).strip().lower(),
+        lambda row:
+            determine_intervention_text(
+                intervention_text_raw=row["intervention_text_raw"],
+                cohort_age_text=row["cohort_age_text"],
+            ),
         axis="columns", # apply function to each row
     )
     table["intervention"] = table.apply(
@@ -962,10 +1011,11 @@ def organize_table_subject_property(
 # Functionality of use in multiple modules of the "age_exercise" package.
 
 
-# Prepare derivative, deliverable, product tables.
+# Prepare derivative, deliverable, product tables for individual signals and
+# their means corresponding to features in sets across observations in groups.
 
 
-def organize_preliminary_information_to_prepare_tables(
+def organize_preliminary_information_to_prepare_tables_signal(
     index_features=None,
     index_observations=None,
     features_all=None,
@@ -1111,6 +1161,7 @@ def organize_preliminary_information_to_prepare_tables(
         elements=features_available_translation,
     )
     pail["features_available_translation"] = features_available_translation
+
     # Ensure that observations are unique.
     observations_selection_unique = putly.collect_unique_elements(
         elements=pail["observations_selection"],
@@ -1462,7 +1513,7 @@ def prepare_tables_signals_features_sets_observations_groups(
     observations_all = copy.deepcopy(
         table_source_format[index_observations].unique().tolist()
     )
-    pail = organize_preliminary_information_to_prepare_tables(
+    pail = organize_preliminary_information_to_prepare_tables_signal(
         index_features=index_features,
         index_observations=index_observations, # assigned in new tables
         features_all=features_all,
@@ -1758,6 +1809,528 @@ def prepare_tables_signals_features_sets_observations_groups(
         pass
     # Return information.
     return pail_return
+
+
+# Prepare derivative, deliverable product tables for correlations between
+# features across observations.
+
+
+# sequence_groups_features_primary <-- STILL NEED
+# sequence_groups_features_secondary <-- STILL NEED
+
+
+def organize_preliminary_information_to_prepare_tables_correlation(
+    index_features=None,
+    index_observations=None,
+    features_all=None,
+    observations_all=None,
+    features_selection=None,
+    observations_selection=None,
+    groups_features=None,
+    names_groups_features_sequence=None,
+    features_primary=None,
+    features_secondary=None,
+    translations_features=None,
+    report=None,
+):
+    """
+    Organize preliminary information for subsequent use in preparation of
+    derivative tables.
+
+    Review: 16 December 2024
+
+    arguments:
+        index_features (str): name for index corresponding to features across
+            columns in the original source table
+        index_observations (str): name for index corresponding to observations
+            across rows in the original source table
+        features_all (list<str>): identifiers of all features in the original
+            source table
+        observations_all (list<str>): identifiers of all observations in the
+            original source table
+        features_selection (list<str>): identifiers of features for which to
+            include and describe values of signal intensity across observations
+        observations_selection (list<str>): identifiers of observations for
+            which to include and describe values of signal intensity across
+            features
+        groups_features (dict<list<str>>): names of groups and identifiers
+            of features that belong to each of these groups; clustering of
+            features will have constraint within these groups
+        names_groups_features_sequence (list<str>): names of groups for
+            features in specific sequence
+        features_primary (list<str>): identifiers of features to become the
+            primary in pairs for correlation
+        features_secondary (list<str>): identifiers of features to become the
+            secondary in pairs for correlation
+        translations_features (dict<str>): translations for names or
+            identifiers of features
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Organize and collect information.
+    pail = organize_preliminary_information_to_prepare_tables_signal(
+        index_features=index_features,
+        index_observations=index_observations, # assigned in new tables
+        features_all=features_all,
+        observations_all=observations_all,
+        features_selection=features_selection,
+        observations_selection=observations_selection,
+        groups_features=groups_features,
+        groups_observations=dict(),
+        names_groups_features_sequence=names_groups_features_sequence,
+        names_groups_observations_sequence=list(),
+        translations_features=translations_features,
+        translations_observations=None,
+        report=report,
+    )
+
+    # Translate identifiers of features in sets.
+    if (pail["translations_features"] is not None):
+        groups_features_translation = dict()
+        for group_features in pail["groups_features"].keys():
+            features_group = pail["groups_features"][group_features]
+            features_group_translation = list(map(
+                lambda feature: (pail["translations_features"][feature]),
+                features_group
+            ))
+            groups_features_translation[group_features] = (
+                features_group_translation
+            )
+            pass
+    else:
+        groups_features_translation = copy.deepcopy(pail["groups_features"])
+        pass
+    pail["groups_features_translation"] = groups_features_translation
+
+    # Copy information.
+    features_primary = copy.deepcopy(features_primary)
+    features_secondary = copy.deepcopy(features_secondary)
+
+    # Prepare source information.
+    # Ensure that features are unique.
+    features_primary_unique = putly.collect_unique_elements(
+        elements=features_primary,
+    )
+    features_secondary_unique = putly.collect_unique_elements(
+        elements=features_secondary,
+    )
+    # Ensure that all features are in the source table.
+    # Consider the selection of features of interest.
+    pail["features_primary_available"] = list(filter(
+        lambda feature: (feature in pail["features_available"]),
+        features_primary_unique
+    ))
+    pail["features_secondary_available"] = list(filter(
+        lambda feature: (feature in pail["features_available"]),
+        features_secondary_unique
+    ))
+    # Translate identifiers of features.
+    pail["features_primary_translation"] = copy.deepcopy(
+        pail["features_primary_available"]
+    )
+    pail["features_secondary_translation"] = copy.deepcopy(
+        pail["features_secondary_available"]
+    )
+    if (pail["translations_features"] is not None):
+        pail["features_primary_translation"] = list(map(
+            lambda feature: (pail["translations_features"][feature]),
+            pail["features_primary_translation"]
+        ))
+        pail["features_secondary_translation"] = list(map(
+            lambda feature: (pail["translations_features"][feature]),
+            pail["features_secondary_translation"]
+        ))
+        # Ensure that features are unique after translation.
+        pail["features_primary_translation"] = putly.collect_unique_elements(
+            elements=pail["features_primary_translation"],
+        )
+        pail["features_secondary_translation"] = putly.collect_unique_elements(
+            elements=pail["features_secondary_translation"],
+        )
+        pass
+
+    # Return information.
+    return pail
+
+
+def prepare_tables_correlations_of_features_across_observations(
+    table=None,
+    index_features=None,
+    index_observations=None,
+    translations_features=None,
+    features_selection=None,
+    observations_selection=None,
+    features_primary=None,
+    features_secondary=None,
+    groups_features_primary=None,
+    groups_features_secondary=None,
+    names_groups_sequence_features_primary=None,
+    names_groups_sequence_features_secondary=None,
+    method_priority=None,
+    report=None,
+):
+    """
+    Prepare derivative tables of information about correlations between
+    features across observations.
+
+    Any translation of identifiers or names of features occurs before the
+    selection of features and observations. This sequence of actions avoids
+    potential problems from translations to overlapping, redundant identifiers
+    or names.
+
+    By intentional design, this function does not apply any transformation of
+    scale or normalization of distribution to the values of signal intensity.
+
+    ----------
+    Format of source table (name: "table_source")
+    ----------
+    Format of source table is in wide format with floating-point values of
+    signal intensities for measurements corresponding to individual features
+    across columns and distinct individual observations across rows. A special
+    header row gives identifiers or names corresponding to each feature across
+    columns, and a special column gives identifiers or names corresponding to
+    each observation across rows. For versatility, this table does not have
+    explicitly defined indices across rows or columns.
+    ----------
+    features        feature_1 feature_2 feature_3 feature_4 feature_5 ...
+    observation
+    observation_1   0.001     0.001     0.001     0.001     0.001     ...
+    observation_2   0.001     0.001     0.001     0.001     0.001     ...
+    observation_3   0.001     0.001     0.001     0.001     0.001     ...
+    observation_4   0.001     0.001     0.001     0.001     0.001     ...
+    observation_5   0.001     0.001     0.001     0.001     0.001     ...
+    ----------
+
+    ----------
+    Format of product table 1 (name: "table_product_1")
+    ----------
+    Format of product table 1 is in long format with information about pairs of
+    features and calculations of their correlations across observations.
+    ----------
+    feature_1 feature_2   observations correlation_pearson probability_pears...
+
+    name_1    name_2      100          0.1                 0.01             ...
+    name_1    name_2      200          0.1                 0.01             ...
+    name_1    name_2      300          0.1                 0.01             ...
+    name_1    name_2      400          0.1                 0.01             ...
+    name_1    name_2      500          0.1                 0.01             ...
+    ----------
+
+    ----------
+    Format of product table 2 (name: "table_product_2")
+    ----------
+    Format of product table 2 is in wide format with information about a single
+    type of correlation coefficient between features across columns and
+    features across rows.
+    ----------
+    feature_2   name_2 name_2 name_2 name_2 name_2
+    feature_1
+    name_1      0.1    0.1    0.1    0.1    0.1
+    name_1      0.1    0.1    0.1    0.1    0.1
+    name_1      0.1    0.1    0.1    0.1    0.1
+    name_1      0.1    0.1    0.1    0.1    0.1
+    name_1      0.1    0.1    0.1    0.1    0.1
+    ----------
+
+    Review: 17 December 2024
+
+
+    table=None,
+    index_features=None,
+    index_observations=None,
+    translations_features=None,
+    features_selection=None,
+    observations_selection=None,
+    features_primary=None,
+    features_secondary=None,
+    groups_features_primary=None,
+    groups_features_secondary=None,
+    names_groups_sequence_features_primary=None,
+    names_groups_sequence_features_secondary=None,
+    method_priority=None,
+    report=None,
+
+
+    arguments:
+        table (object): Pandas data-frame table of values of signal intensity
+            corresponding to features across columns and observations across
+            rows
+        index_features (str): name for index corresponding to features across
+            columns in the original source table
+        index_observations (str): name for index corresponding to observations
+            across rows in the original source table
+
+        translations_features (dict<str>): translations for names or
+            identifiers of features
+
+
+        features_selection (list<str>): identifiers of features for which to
+            include and describe values of signal intensity across observations
+        observations_selection (list<str>): identifiers of observations for
+            which to include and describe values of signal intensity across
+            features
+        groups_features (dict<list<str>>): names of groups and identifiers
+            of features that belong to each of these groups; clustering of
+            features will have constraint within these groups
+
+
+        names_groups_sequence_features_primary (list<str>): names of groups for
+            features in specific sequence
+        features_primary (list<str>): identifiers of features to become the
+            primary in pairs for correlation
+        features_secondary (list<str>): identifiers of features to become the
+            secondary in pairs for correlation
+        method_priority (str): name of method of correlation to prioritize in
+            preparation of the product table in wide format, either 'pearson',
+            'spearman', or 'kendall'
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Copy information.
+    table_source = table.copy(deep=True)
+
+    ##########
+    # Organize preliminary information.
+    features_all = copy.deepcopy(table_source.columns.to_list())
+    features_all.remove(index_observations)
+    observations_all = copy.deepcopy(
+        table_source[index_observations].unique().tolist()
+    )
+    pail = organize_preliminary_information_to_prepare_tables_correlation(
+        index_features=index_features,
+        index_observations=index_observations, # assigned in new tables
+        features_all=features_all,
+        observations_all=observations_all,
+        features_selection=features_selection,
+        observations_selection=observations_selection,
+        groups_features=groups_features,
+        #groups_observations=dict(),
+        names_groups_features_sequence=names_groups_features_sequence,
+        #names_groups_observations_sequence=list(),
+        features_primary=features_primary,
+        features_secondary=features_secondary,
+        translations_features=translations_features,
+        #translations_observations=translations_observations,
+        report=report,
+    )
+
+    # Translate names of features.
+    table_translation = (
+        porg.translate_identifiers_table_indices_columns_rows(
+            table=table_source,
+            index_rows=pail["index_observations"],
+            translations_columns=pail["translations_features"],
+            translations_rows=None,
+            remove_redundancy=True,
+            report=False,
+    ))
+    # Filter specific features and observations from table.
+    table_selection = porg.filter_select_table_columns_rows_by_identifiers(
+        table=table_translation,
+        index_rows=pail["index_observations"],
+        identifiers_columns=pail["features_available_translation"],
+        identifiers_rows=pail["observations_available_translation"],
+        report=False,
+    )
+    # Convert values in columns to float type.
+    features_correlation_all = list()
+    features_correlation_all.extend(copy.deepcopy(
+        pail["features_primary_translation"]
+    ))
+    features_correlation_all.extend(copy.deepcopy(
+        pail["features_secondary_translation"]
+    ))
+    table_source = putly.convert_table_columns_variables_types_float(
+        columns=features_correlation_all,
+        table=table_selection,
+    )
+
+    ##########
+    # Prepare product table 1.
+    # Correlations between pairs of features in long format.
+    # Collect information.
+    records = list()
+    columns_sequence = None
+    # Iterate on pairwise combinations of primary and secondary features.
+    for feature_primary in pail["features_primary_translation"]:
+        for feature_secondary in pail["features_secondary_translation"]:
+            # Calculate correlations.
+            pail_correlation = pdesc.calculate_correlations_table_columns_pair(
+                table=table_selection,
+                column_primary=feature_primary,
+                column_secondary=feature_secondary,
+                count_minimum_observations=10,
+                report=False,
+            )
+            # Collect information.
+            record = dict()
+            record["feature_primary"] = feature_primary
+            record["feature_secondary"] = feature_secondary
+            if (columns_sequence is None):
+                columns_sequence = copy.deepcopy(pail_correlation["names"])
+                pass
+            del pail_correlation["names"]
+            record.update(pail_correlation)
+            records.append(record)
+            pass
+        pass
+    # Organize table.
+    table_correlation_long = pandas.DataFrame(data=records)
+    # Define sequence of columns in table.
+    columns_sequence.insert(0, "feature_secondary",)
+    columns_sequence.insert(0, "feature_primary",)
+    # Filter and sort columns in table.
+    table_correlation_long = porg.filter_sort_table_columns(
+        table=table_correlation_long,
+        columns_sequence=columns_sequence,
+        report=False,
+    )
+    # Copy information.
+    table_product_1 = table_correlation_long.copy(deep=True)
+
+    ##########
+    # Prepare product table 2.
+    # Correlations between pairs of features in wide format.
+    # Copy information.
+    table_correlation_long_temporary = table_correlation_long.copy(deep=True)
+    # Arrange table from full long format to wide format.
+    if (method_priority == "pearson"):
+        table_correlation_wide = table_correlation_long_temporary.pivot(
+            columns=["feature_primary",],
+            index="feature_secondary",
+            values="correlation_pearson",
+        )
+    elif (method_priority == "spearman"):
+        table_correlation_wide = table_correlation_long_temporary.pivot(
+            columns=["feature_primary",],
+            index="feature_secondary",
+            values="correlation_spearman",
+        )
+        pass
+    # Organize indices in table.
+    table_correlation_wide.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    # Determine and fill groups of features across rows.
+    table_correlation_wide = porg.determine_fill_table_groups_rows(
+        table=table_correlation_wide,
+        column_group="group",
+        index_rows="feature_secondary",
+        groups_rows=pail["groups_features_secondary"],
+        report=False,
+    )
+    # Sort rows in table by groups.
+    table_group = porg.sort_table_rows_by_single_column_reference(
+        table=table_group,
+        index_rows=pail["index_observations"],
+        column_reference="group",
+        column_sort_temporary="sort_temporary",
+        reference_sort=pail["sequence_groups_observations"],
+    )
+
+
+
+    # Copy information.
+    table_wide_cluster_group = table_correlation_wide.copy(deep=True)
+    # Add a group column to satisfy requirement for an index with multiple
+    # levels across rows.
+    table_wide_cluster_group["group"] = "group"
+    # Cluster columns in table by groups of features.
+    table_wide_cluster_group = porg.cluster_table_columns_by_external_group(
+        table=table_wide_cluster_group,
+        indices_rows=["feature_secondary", "group",],
+        groups_columns=pail["groups_features_translation"],
+        names_groups_sequence=pail["names_groups_features_sequence"],
+        report=False,
+    )
+    # Remove unnecessary columns.
+    table_wide_cluster_group.drop(
+        labels=["group",],
+        axis="columns",
+        inplace=True
+    )
+    # Copy information.
+    table_product_2 = table_wide_cluster_group.copy(deep=True)
+
+    ##########
+    # Prepare product table 3.
+    # Correlations between pairs of features in wide format.
+    # Copy information.
+    table_wide_cluster = table_correlation_wide.copy(deep=True)
+    # Organize indices in table.
+    table_wide_cluster.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_wide_cluster.set_index(
+        ["feature_secondary",],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    table_wide_cluster.columns.rename(
+        "feature_primary",
+        inplace=True,
+    ) # single-dimensional index
+    # Cluster columns in table.
+    table_wide_cluster = porg.cluster_table_columns(
+        table=table_wide_cluster,
+    )
+    # Organize indices in table.
+    table_wide_cluster.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    table_wide_cluster.columns.rename(
+        None,
+        inplace=True,
+    ) # single-dimensional index
+    # Copy information.
+    table_product_3 = table_wide_cluster.copy(deep=True)
+
+    print("!!!!!!!!!!!!!!!!!!!!!table_correlation_wide")
+    print(table_correlation_wide)
+
+
+    ##########
+    # Collect information.
+    pail_return = dict()
+    pail_return["table_1"] = table_product_1
+    pail_return["table_2"] = table_product_2
+    pail_return["table_3"] = table_product_3
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = str(
+            "prepare_tables_correlations_of_features_across_observations()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail_return
+
+
+
+
 
 
 # Prepare table for allocation of features to sets.
@@ -2141,6 +2714,10 @@ def prepare_table_features_sets_allocation_match_table_signal(
         pass
     # Return information.
     return table_allocation_sort
+
+
+# Prepare
+
 
 
 # Plot charts.

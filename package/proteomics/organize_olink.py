@@ -556,7 +556,7 @@ def drive_manage_calculate_principal_components(
                 columns_selection=sets_columns[name_set],
                 prefix=name_set,
                 separator="_",
-                threshold_proportion=0.02, # float or None to keep all
+                threshold_proportion=0.005, # float or None to keep all
                 report=report,
         ))
         # Copy information in table.
@@ -828,6 +828,209 @@ def prepare_derivative_deliverable_product_tables_signal(
     return pail_return
 
 
+##########
+# 6. Prepare derivative, deliverable, product tables for correlations between
+# features across observations.
+# Tables represent correlations between features for individual Olink targets
+# with measurement signal intensities across observations for separate
+# individual subjects.
+
+
+def prepare_derivative_deliverable_product_tables_correlation(
+    table=None,
+    index_columns=None,
+    index_rows=None,
+    columns_continuous=None,
+    columns_olink_plasma=None,
+    columns_olink_muscle=None,
+    columns_olink_adipose=None,
+    report=None,
+):
+    """
+    Prepare derivative, deliverable, product table 1. Table 1 represents
+    features for individual measurement signal intensities of Olink targets
+    across observations for separate individual subjects.
+
+    Format of source table (name: "table_source")
+    Format of source table is in wide format with floating-point values of
+    signal intensities for measurements of individual Olink targets
+    corresponding to features across columns and distinct individual
+    observations across rows. A special header row gives identifiers or names
+    corresponding to each feature across columns, and a special column gives
+    identifiers or names corresponding to each observation across rows. For
+    versatility, this table does not have explicitly defined indices across
+    rows or columns.
+    ----------
+    features        feature_1 feature_2 feature_3 feature_4 feature_5 ...
+    observation
+    observation_1   0.001     0.001     0.001     0.001     0.001     ...
+    observation_2   0.001     0.001     0.001     0.001     0.001     ...
+    observation_3   0.001     0.001     0.001     0.001     0.001     ...
+    observation_4   0.001     0.001     0.001     0.001     0.001     ...
+    observation_5   0.001     0.001     0.001     0.001     0.001     ...
+    ----------
+
+    Review: 16 December 2024
+
+    arguments:
+        table (object): Pandas data-frame table of values of signal intensity
+            corresponding to features across columns and observations across
+            rows
+        index_columns (str): name for index corresponding to features across
+            columns in the original source table
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        columns_continuous (list<str>): names of columns in original source
+            table for a selection of features on a continuous interval or ratio
+            scale of measurement
+        columns_olink_plasma (list<str>): names of columns in original source
+            table for features corresponding to measurements by Olink
+            technology of peptides in plasma
+        columns_olink_muscle (list<str>): names of columns in original source
+            table for features corresponding to measurements by Olink
+            technology of peptides in muscle
+        columns_olink_adipose (list<str>): names of columns in original source
+            table for features corresponding to measurements by Olink
+            technology of peptides in adipose
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict): collection of information
+
+    """
+
+    ##########
+    # Copy information.
+    table_source = table.copy(deep=True)
+    columns_continuous = copy.deepcopy(columns_continuous)
+    columns_olink_plasma = copy.deepcopy(columns_olink_plasma)
+    columns_olink_muscle = copy.deepcopy(columns_olink_muscle)
+    columns_olink_adipose = copy.deepcopy(columns_olink_adipose)
+
+    ##########
+    # Prepare parameters for the preparation of derivative tables.
+    columns_olink_all = list()
+    columns_olink_all.extend(columns_olink_plasma)
+    columns_olink_all.extend(columns_olink_muscle)
+    columns_olink_all.extend(columns_olink_adipose)
+
+    names_groups_features_sequence = list()
+    names_groups_features_sequence.append("olink_plasma")
+    names_groups_features_sequence.append("olink_muscle")
+    names_groups_features_sequence.append("olink_adipose")
+
+    groups_features = dict()
+    #groups_features["other"] = columns_continuous
+    groups_features["olink_plasma"] = columns_olink_plasma
+    groups_features["olink_muscle"] = columns_olink_muscle
+    groups_features["olink_adipose"] = columns_olink_adipose
+
+    features_selection = list()
+    for group_features in groups_features.keys():
+        features_selection.extend(groups_features[group_features])
+    features_selection.extend(columns_continuous)
+
+    observations_selection = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_source,
+            column_identifier="subject_visit",
+            name="observations", # or "name_instance"
+            columns_categories={
+                "study_clinic_visit": ["first",],
+                "cohort_age_text": ["younger", "elder",],
+                "sex_text": ["female", "male",],
+            },
+            report=report,
+    ))
+
+    ##########
+    # Prepare tables for correlations.
+    pail_correlation = (
+        aexpr_sub.prepare_tables_correlations_of_features_across_observations(
+            table=table_source,
+            index_features=index_columns,
+            index_observations=index_rows,
+            features_selection=features_selection,
+            observations_selection=observations_selection,
+            groups_features=groups_features,
+            names_groups_features_sequence=(
+                names_groups_features_sequence
+            ),
+            features_primary=columns_continuous,
+            features_secondary=columns_olink_all,
+            translations_features=None,
+            method_priority="spearman", # "pearson", "spearman", "kendall",
+            report=None,
+        )
+    )
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!table_3")
+    print(pail_correlation["table_3"])
+
+    if False:
+
+        ##########
+        # Prepare tables for allocation of features to sets.
+        # Notice that "groups_features" here is the same collection of groups or
+        # sets of features for use in clustering the table's columns within those
+        # groups. Alternatively, it would be possible to define a separate
+        # collection of groups or sets of features for use in the allocation.
+        table_allocation_1 = (
+            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+                table_signal=pail_correlation["table_2"],
+                index_columns=index_columns,
+                indices_observations=[index_rows, "group",],
+                groups_features=groups_features,
+                names_groups_features_sequence=(
+                    names_groups_features_sequence
+                ),
+                translations_features=None,
+                report=report,
+            )
+        )
+
+
+    if False:
+
+        table_allocation_2 = (
+            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+                table_signal=pail_signal["table_4"],
+                index_features=index_columns,
+                indices_observations=[index_rows, "group",],
+                groups_features=groups_features,
+                names_groups_features_sequence=(
+                    names_groups_features_sequence
+                ),
+                translations_features=None,
+                report=report,
+            )
+        )
+        pass
+
+    ##########
+    # Collect information.
+    pail_return = dict()
+    pail_return["table_correlation_1"] = pail_correlation["table_1"]
+    pail_return["table_correlation_2"] = pail_correlation["table_2"]
+    pail_return["table_correlation_3"] = pail_correlation["table_3"]
+    #pail_return["table_feature_1"] = table_allocation_1
+    #pail_return["table_feature_2"] = table_allocation_2
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_olink.py")
+        function = str(
+            "prepare_derivative_deliverable_product_tables_correlation()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail_return
 
 ##########
 # _. Plot charts
@@ -1344,9 +1547,6 @@ def plot_write_heatmap_chart_mean(
 ###############################################################################
 # Procedure
 
-# TODO: TCW; 12 December 2024
-# try transforming the Olink signals by "2^" exponentiation.
-
 
 # TODO: TCW; 6 December 2024
 # 1. calculate correlations between...
@@ -1437,7 +1637,38 @@ def execute_procedure(
     #pail_filter_fill["columns_olink_adipose"]
 
     ##########
-    # 4. Calculate principal components on features for Olink measurements.
+    # 4. Transform signals for Olink targets to different scale.
+    if False:
+        # Transform signals to their original, non-logarithmic scale and then
+        # back to logarithmic scale at a different base.
+        columns_transform = list()
+        columns_transform.extend(
+            copy.deepcopy(pail_filter_fill["columns_olink_plasma"])
+        )
+        columns_transform.extend(
+            copy.deepcopy(pail_filter_fill["columns_olink_muscle"])
+        )
+        columns_transform.extend(
+            copy.deepcopy(pail_filter_fill["columns_olink_adipose"])
+        )
+        table_transform = pscl.transform_exponent_by_table_columns(
+            table=pail_filter_fill["table_fill"],
+            columns=columns_transform,
+            base=2.0,
+            report=report,
+        )
+        table_transform = pscl.transform_logarithm_by_table_columns(
+            table=table_transform,
+            columns=columns_transform,
+            base=10.0,
+            report=report,
+        )
+    else:
+        # Copy information.
+        table_transform = pail_filter_fill["table_fill"].copy(deep=True)
+
+    ##########
+    # 5. Calculate principal components on features for Olink measurements.
     # Organize sets of features.
     columns_olink_plasma = copy.deepcopy(
         pail_filter_fill["columns_olink_plasma"]
@@ -1459,7 +1690,7 @@ def execute_procedure(
     pail_columns_decomposition["olink_adipose"] = columns_olink_adipose
     # Calculate principal components.
     pail_reduction = drive_manage_calculate_principal_components(
-            table=pail_filter_fill["table_fill"],
+            table=table_transform,
             index_rows="subject_visit",
             sets_columns=pail_columns_decomposition,
             report=report,
@@ -1467,7 +1698,7 @@ def execute_procedure(
     if False:
         pail_pca_test = (
             pdecomp.calculate_principal_components_table_columns_selection(
-                table=pail_filter_fill["table_fill"],
+                table=table_transform,
                 index_rows="subject_visit",
                 columns_selection=columns_olink_plasma,
                 prefix="olink_plasma_test",
@@ -1479,12 +1710,14 @@ def execute_procedure(
     # of features in each original set are in ascending sort order.
     #pail_reduction["sets_columns"]
 
+
     ##########
-    # 5. Prepare derivative, deliverable product table 1.
-    # Table 1 represents features for individual Olink targets with measurement
-    # signal intensities across observations for separate individual subjects.
+    # 6. Prepare derivative, deliverable product tables for actual signals.
+    # This set of tables represents features and sets of features for
+    # individual Olink targets with measurement signal intensities across
+    # observations and groups of observations for separate individual subjects.
     pail_signal = prepare_derivative_deliverable_product_tables_signal(
-        table=pail_filter_fill["table_fill"],
+        table=pail_reduction["table"],
         index_columns="features",
         index_rows="subject_visit",
         columns_continuous=pail_filter_fill["columns_continuous"],
@@ -1493,87 +1726,126 @@ def execute_procedure(
         columns_olink_adipose=pail_filter_fill["columns_olink_adipose"],
         report=report,
     )
+    if False:
+        # Continue with scores of principal components.
+        pail_signal = prepare_derivative_deliverable_product_tables_signal(
+            table=pail_reduction["table"],
+            index_columns="features",
+            index_rows="subject_visit",
+            columns_continuous=list(),
+            columns_olink_plasma=pail_reduction["sets_columns"]["olink_plasma"],
+            columns_olink_muscle=pail_reduction["sets_columns"]["olink_muscle"],
+            columns_olink_adipose=pail_reduction["sets_columns"]["olink_adipose"],
+            report=report,
+        )
+        pass
 
     ##########
-    # Plot heatmaps of signals.
-    plot_write_heatmap_chart_signal(
-        table_signal=pail_signal["table_signal_1"],
-        table_feature=pail_signal["table_feature_1"],
-        index_columns="features",
-        index_rows="subject_visit",
-        column_group="group",
-        name_file="signal_1",
-        paths=paths,
-        report=report,
-    )
-    plot_write_heatmap_chart_signal(
-        table_signal=pail_signal["table_signal_2"],
-        table_feature=pail_signal["table_feature_2"],
-        index_columns="features",
-        index_rows="subject_visit",
-        column_group="group",
-        name_file="signal_2",
-        paths=paths,
-        report=report,
-    )
-    plot_write_heatmap_chart_mean(
-        table_mean=pail_signal["table_mean"],
-        index_columns="groups",
-        index_rows="feature",
-        name_file="mean",
-        paths=paths,
-        report=report,
-    )
+    # Note about eventual parameter table
+    # 1. information about selection of observations
+    # 2. information about sets of features for correlations (primary and secondary)
+    # 3. sets or groups of features for both primary and secondary contexts
+    #    - reference library of feature sets in private parameters directory
+    # 4. for primary features on horizontal axis of heatmap, whether to
+    #    - represent a few features by explicit name
+    #      or
+    #    - represent many features by sets, similar to vertical axis
 
+    # TODO: TCW; 17 December 2024
+    # Integrate optional "features_groups" for both primary and secondary sets
+    # of features in the correlation procedure.
+    # Keep 1 single "translations_features"
+    # Clean up accross-the-board translation of feature names before proceeding with procedure
+
+
+
+
+    ##########
+    # 7. Prepare derivative, deliverable product tables for correlations
+    # between features across observations.
+    pail_correlation = (
+        prepare_derivative_deliverable_product_tables_correlation(
+            table=pail_reduction["table"],
+            index_columns="features",
+            index_rows="subject_visit",
+            columns_continuous=pail_filter_fill["columns_continuous"],
+            columns_olink_plasma=pail_filter_fill["columns_olink_plasma"],
+            columns_olink_muscle=pail_filter_fill["columns_olink_muscle"],
+            columns_olink_adipose=pail_filter_fill["columns_olink_adipose"],
+            report=report,
+    ))
+    # table_signal=pail_correlation["table_correlation_2"],
+    # table_feature=pail_correlation["table_feature"],
+
+    #pail_correlation["table_correlation_1"]
+    #pail_correlation["table_correlation_2"]
+    #pail_correlation["table_correlation_3"]
+
+
+    # Correlations...
+    # Olink plasma, muscle, and adipose with Olink plasma, muscle, and adipose
+    # Olink plasma, muscle, and adipose with selection of continuous clinical variables (BMI, SI, etc)
+    # Olink PC's with Olink PC's
+    # Olink PC's with selection of continuous clinical variables (BMI, SI, etc)
+
+    # TODO: Plot correlations
+    # need separate functions to plot correlations either in symmetrical heatmaps
+    # or in assymmetrical heatmaps.
+    # Symmetrical heatmaps have sets of features on both horizontal and vertical axes
+    # Assymmetrical heatmaps have sets of features only on vertical axis and names on horizontal axis
+
+
+    ###########################################################3
+
+    ##########
+    # Collect information.
+    # Collections of files.
+
+    pail_write_lists = dict()
+    pail_write_lists["olink_all"] = columns_olink_all
+    pail_write_lists["olink_plasma"] = columns_olink_plasma
+    pail_write_lists["olink_muscle"] = columns_olink_muscle
+    pail_write_lists["olink_adipose"] = columns_olink_adipose
+    pail_write_tables = dict()
+    pail_write_tables[str("table_subject")] = pail_reduction["table"]
+    pail_write_tables[str("table_correlation_1")] = pail_correlation["table_correlation_1"]
+    pail_write_tables[str("table_correlation_2")] = pail_correlation["table_correlation_2"]
+    pail_write_tables[str("table_correlation_3")] = pail_correlation["table_correlation_3"]
+    pail_write_objects = dict()
+
+    #pail_write_objects[str("samples")]
+    ##########
+    # Write product information to file.
+    putly.write_lists_to_file_text(
+        pail_write=pail_write_lists,
+        path_directory=paths["out_procedure_data_lists"],
+        delimiter="\n",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data_tables"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=True,
+        type="text",
+        delimiter="\t",
+        suffix=".tsv",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data_tables"],
+        reset_index_rows=None,
+        write_index_rows=None,
+        write_index_columns=None,
+        type="pickle",
+        delimiter=None,
+        suffix=".pickle",
+    )
     if False:
-
-        ##########
-        # Collect information.
-        # Collections of files.
-
-        pail_write_lists = dict()
-        pail_write_lists["olink_all"] = columns_olink_all
-        pail_write_lists["olink_plasma"] = columns_olink_plasma
-        pail_write_lists["olink_muscle"] = columns_olink_muscle
-        pail_write_lists["olink_adipose"] = columns_olink_adipose
-        pail_write_tables = dict()
-        pail_write_tables[str("table_subject")] = pail_reduction["table"]
-        pail_write_objects = dict()
-
-        #pail_write_objects[str("samples")]
-
-        ##########
-        # Write product information to file.
-        putly.write_lists_to_file_text(
-            pail_write=pail_write_lists,
-            path_directory=paths["out_procedure_data_lists"],
-            delimiter="\n",
+        putly.write_objects_to_file_pickle(
+            pail_write=pail_write_objects,
+            path_directory=paths["out_procedure_data"],
         )
-        putly.write_tables_to_file(
-            pail_write=pail_write_tables,
-            path_directory=paths["out_procedure_data_tables"],
-            reset_index_rows=False,
-            write_index_rows=False,
-            write_index_columns=True,
-            type="text",
-            delimiter="\t",
-            suffix=".tsv",
-        )
-        putly.write_tables_to_file(
-            pail_write=pail_write_tables,
-            path_directory=paths["out_procedure_data_tables"],
-            reset_index_rows=None,
-            write_index_rows=None,
-            write_index_columns=None,
-            type="pickle",
-            delimiter=None,
-            suffix=".pickle",
-        )
-        if False:
-            putly.write_objects_to_file_pickle(
-                pail_write=pail_write_objects,
-                path_directory=paths["out_procedure_data"],
-            )
 
 
     ##########
@@ -1600,6 +1872,39 @@ def execute_procedure(
             report=report,
         )
         pass
+
+    if False:
+
+        ##########
+        # Plot heatmaps of signals.
+        plot_write_heatmap_chart_signal(
+            table_signal=pail_signal["table_signal_1"],
+            table_feature=pail_signal["table_feature_1"],
+            index_columns="features",
+            index_rows="subject_visit",
+            column_group="group",
+            name_file="signal_1",
+            paths=paths,
+            report=report,
+        )
+        plot_write_heatmap_chart_signal(
+            table_signal=pail_signal["table_signal_2"],
+            table_feature=pail_signal["table_feature_2"],
+            index_columns="features",
+            index_rows="subject_visit",
+            column_group="group",
+            name_file="signal_2",
+            paths=paths,
+            report=report,
+        )
+        plot_write_heatmap_chart_mean(
+            table_mean=pail_signal["table_mean"],
+            index_columns="groups",
+            index_rows="feature",
+            name_file="mean",
+            paths=paths,
+            report=report,
+        )
 
     ##########
     # Plot scatter charts to represent principal components on sets of features
