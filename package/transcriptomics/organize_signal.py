@@ -2199,13 +2199,29 @@ def filter_table_main(
             pass
         pass
 
+    # Note about table's format.
+    # At this point, table "table_filter" does not have explicit, named indices
+    # across either columns (with exception of column headers) or rows.
+
     ##########
     # Filter rows within table on basis of signal validity.
+    rows_selection = copy.deepcopy(
+        table_filter["identifier_gene"].unique().tolist()
+    )
     if filter_rows_signal:
+        # Set any negative values of read counts to zero.
+        # Iterate on columns.
+        for name_column in samples_all:
+            table_filter[name_column] = table_filter[name_column].clip(lower=0)
+            pass
+        # Filter rows in table.
         table_filter = (
             porg.filter_table_rows_by_proportion_nonmissing_threshold(
                 table=table_filter,
-                columns=samples_all,
+                index_columns="samples",
+                index_rows="identifier_gene",
+                columns_selection=samples_all,
+                rows_selection=rows_selection,
                 threshold_low=threshold_signal_low,
                 threshold_high=threshold_signal_high,
                 proportion=proportion_signal_all,
@@ -3478,6 +3494,10 @@ def control_procedure_part_branch_signal(
         report=report,
     )
 
+    # Note about table's format.
+    # At this point, table "table_filter" does not have explicit, named indices
+    # across either columns (with exception of column headers) or rows.
+
     # Separate tables for information of distinct types.
     pail_separate = separate_table_main_columns(
         table_main=table_filter,
@@ -3487,13 +3507,53 @@ def control_procedure_part_branch_signal(
         report=report,
     )
 
+    # Organize indices in table.
+    pail_separate["table_signal"].reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+    pail_separate["table_signal"].columns.rename(
+        None,
+        inplace=True,
+    ) # single-dimensional index
     # Fill missing values of signal intensity.
+    columns_selection = copy.deepcopy(
+        pail_separate["table_signal"].columns.to_list()
+    )
+    columns_selection.remove("identifier_gene")
+    rows_selection = copy.deepcopy(
+        pail_separate["table_signal"]["identifier_gene"].unique().tolist()
+    )
     table_signal = porg.fill_missing_values_table_by_row(
         table=pail_separate["table_signal"],
-        columns=samples,
-        method="zero",
+        index_columns="identifier_signal",
+        index_rows="identifier_gene",
+        columns_selection=columns_selection, # samples???
+        rows_selection=rows_selection,
+        method="half_minimum",
         report=report,
     )
+    # Organize indices in table.
+    table_signal.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_signal.set_index(
+        "identifier_gene",
+        append=False,
+        drop=True,
+        inplace=True
+    )
+    table_signal.columns.rename(
+        "identifier_signal",
+        inplace=True,
+    ) # single-dimensional index
+
+    # Note about table's format.
+    # At this point, table "table_signal" has explicit, named indices across
+    # both columns (in addition to column headers) and rows.
 
     # Determine whether to adjust the scale of signals and combine with
     # supplemental information about genes.
