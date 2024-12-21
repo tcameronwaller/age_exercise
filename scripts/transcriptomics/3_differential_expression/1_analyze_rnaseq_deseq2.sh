@@ -41,7 +41,7 @@ path_file_table_parameter="$path_directory_parameters_private/table_differential
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"
 
 # Executable handles.
-path_execution_r="${path_directory_tools}/r/r-4.4.1/bin/Rscript"
+path_execution_r="${path_directory_tools}/r/r-4.4.2/bin/Rscript"
 
 # Initialize directory.
 rm -r $path_directory_product_parent # caution

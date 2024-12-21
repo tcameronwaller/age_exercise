@@ -479,9 +479,12 @@ def define_sequence_columns_novel_subject_feature():
         #"cohort_age_letter",
         "intervention",
         "intervention_text",
+        "intervention_text_active_other",
+        "intervention_text_placebo_other",
         #"identifier_subject",
         #"study_clinic_visit_relative",
         "study_clinic_visit",
+        "study_clinic_visit_younger_second",
         "subject_visit",
         "date_visit_text",
         #"date_visit_text_raw",
@@ -866,24 +869,6 @@ def organize_table_subject_property(
         axis="index",
     )
 
-    # Determine designation for subject's first or second clinical visit of the
-    # study.
-    table["study_clinic_visit"] = table.apply(
-        lambda row:
-            determine_subject_study_clinic_visit(
-                visit_relative=row["study_clinic_visit_relative"],
-            ),
-        axis="columns", # apply function to each row
-    )
-
-    # Determine combination designation for subject and visit.
-    table["subject_visit"] = table.apply(
-        lambda row: str(
-            row["identifier_subject"] + "_" + row["study_clinic_visit"]
-        ),
-        axis="columns", # apply function to each row
-    )
-
     # Determine designations of cohort by age.
     table["cohort_age_text"] = table.apply(
         lambda row:
@@ -899,6 +884,33 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
+
+    # Determine designation for subject's first or second clinical visit of the
+    # study.
+    table["study_clinic_visit"] = table.apply(
+        lambda row:
+            determine_subject_study_clinic_visit(
+                visit_relative=row["study_clinic_visit_relative"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["study_clinic_visit_younger_second"] = table.apply(
+        lambda series_row: (
+            str("second")
+            if (series_row["cohort_age_text"] == "younger")
+            else series_row["study_clinic_visit"]
+        ),
+        axis="columns", # apply function to each row
+    )
+
+    # Determine combination designation for subject and visit.
+    table["subject_visit"] = table.apply(
+        lambda row: str(
+            row["identifier_subject"] + "_" + row["study_clinic_visit"]
+        ),
+        axis="columns", # apply function to each row
+    )
+
     # Determine designations of intervention, either placebo or active.
     table["intervention_text"] = table.apply(
         lambda row:
@@ -915,6 +927,23 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
+    table["intervention_text_active_other"] = table.apply(
+        lambda series_row: (
+            str("other")
+            if (series_row["intervention_text"] in ["placebo", "none",])
+            else series_row["intervention_text"]
+        ),
+        axis="columns", # apply function to each row
+    )
+    table["intervention_text_placebo_other"] = table.apply(
+        lambda series_row: (
+            str("other")
+            if (series_row["intervention_text"] in ["active", "none",])
+            else series_row["intervention_text"]
+        ),
+        axis="columns", # apply function to each row
+    )
+
     # Determine designations of sex.
     table["sex_text"] = table.apply(
         lambda row:

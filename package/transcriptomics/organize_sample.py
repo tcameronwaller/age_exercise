@@ -910,6 +910,8 @@ def define_interaction_combination_categorical_factor():
         "active_by_second"
     )
     columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
+
+    columns_sequence["cohort_age_text_by_intervention_text"] = "elder_by_active" # other: elder_by_placebo, younger_by_none
     # Return information.
     return columns_sequence
 
