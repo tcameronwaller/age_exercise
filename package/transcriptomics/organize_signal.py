@@ -3961,7 +3961,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Initialize directories.
         paths = initialize_directories_trunk(
             project=project,
@@ -3992,7 +3992,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to describe tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Control procedure for description of signal data as a whole.
         control_procedure_whole_trunk_description(
             tissue="muscle",

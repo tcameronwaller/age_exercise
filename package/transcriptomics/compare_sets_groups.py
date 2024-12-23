@@ -147,7 +147,7 @@ def initialize_directories_trunk(
     # Specific.
     paths["in_sets_gene"] = os.path.join(
         paths["in_parameters_private"], project, routine,
-        "sets_gene_2024-11-21",
+        "sets_gene",
     )
     paths["out_procedure_data"] = os.path.join(
         paths["out_procedure"], "data",
@@ -302,13 +302,13 @@ def read_source(
         putly.print_terminal_partition(level=5)
         print("tissue: " + str(tissue))
         putly.print_terminal_partition(level=5)
-        count_rows = (pail["table_demonstration"].shape[0])
-        count_columns = (pail["table_demonstration"].shape[1])
-        print("demonstration table: ")
-        print("count of rows in table: " + str(count_rows))
-        print("Count of columns in table: " + str(count_columns))
-        print(pail["table_demonstration"])
-        putly.print_terminal_partition(level=5)
+        #count_rows = (pail["table_demonstration"].shape[0])
+        #count_columns = (pail["table_demonstration"].shape[1])
+        #print("demonstration table: ")
+        #print("count of rows in table: " + str(count_rows))
+        #print("Count of columns in table: " + str(count_columns))
+        #print(pail["table_demonstration"])
+        #putly.print_terminal_partition(level=5)
         pass
     # Return information.
     return pail
@@ -343,15 +343,17 @@ def define_column_types_table_parameter_instances():
     types_columns["instance"] = "string"
     types_columns["selection_samples_primary"] = "string"
     types_columns["selection_samples_secondary"] = "string"
-    types_columns["name_set_gene_inclusion"] = "string"
+    types_columns["directory_sets_gene"] = "string"
+    types_columns["names_sets_gene_inclusion"] = "string"
     types_columns["names_sets_gene_cluster"] = "string"
     types_columns["names_sets_gene_allocation"] = "string"
+    types_columns["review"] = "string"
     types_columns["note"] = "string"
     # Return information.
     return types_columns
 
 
-def read_organize_source_parameter_instances(
+def read_organize_source_parameter_groups_instances(
     paths=None,
     report=None,
 ):
@@ -432,6 +434,7 @@ def read_organize_source_parameter_instances(
                     text=row["selection_samples_secondary"],
                 )
             )["features_values"]
+            pail["directory_sets_gene"] = str(row["directory_sets_gene"])
             pail["names_sets_gene_inclusion"] = (
                 putly.parse_extract_text_keys_values_semicolon_colon_comma(
                     text=row["names_sets_gene_inclusion"],
@@ -462,12 +465,6 @@ def read_organize_source_parameter_instances(
                     text=row["names_sets_gene_allocation"],
                 )
             )["features"]
-            # Extract names of columns corresponding to feature variables for
-            # which to calculate tertiles.
-            #columns_tertile = extract_source_columns_for_tertiles(
-            #    selection_samples_set=pail["selection_samples_secondary"],
-            #    report=report,
-            #)
             # Collect names of unique features or columns relevant to current
             # instance.
             features = list()
@@ -492,7 +489,7 @@ def read_organize_source_parameter_instances(
     if report:
         putly.print_terminal_partition(level=3)
         print("module: age_exercise.transcriptomics.compare_sets_groups.py")
-        print("function: read_organize_source_parameter_instances()")
+        print("function: read_organize_source_parameter_groups_instances()")
         putly.print_terminal_partition(level=5)
         print("parameter table:")
         print(table)
@@ -501,6 +498,7 @@ def read_organize_source_parameter_instances(
         #print(instances)
         print("instance[0]:")
         print(instances[0])
+        putly.print_terminal_partition(level=5)
         pass
     # Return information.
     return instances
@@ -508,103 +506,6 @@ def read_organize_source_parameter_instances(
 
 ##########
 # 3. Organize information from source.
-
-
-def prepare_sets_gene(
-    names_sets_gene_inclusion=None,
-    names_sets_gene_cluster=None,
-    names_sets_gene_allocation=None,
-    genes_available=None,
-    paths=None,
-    report=None,
-):
-    """
-    Prepare sets of genes for analysis and description.
-
-    arguments:
-        names_sets_gene_inclusion (dict<list<str>>): names of sets of genes to
-            include within a single custom combination set with custom name;
-            this is the set of total genes for inclusion in description and
-            visual representation
-        names_sets_gene_cluster (dict<list<str>>): names of sets of genes to
-            include within custom combination sets with custom names; these are
-            the sets or groups within which to cluster signals for individual
-            genes across samples; the sets must include all of the total
-            inclusion genes, and each set must be mutually exclusive
-        names_sets_gene_allocation (dict<list<str>>): names of sets of genes to
-            include within custom combination sets with custom names; these are
-            the sets or groups within which to allocate the total inclusion
-            genes for visual representation
-        genes_available (list<str>): identifiers of genes with available
-            signals
-        paths : (dict<str>): collection of paths to directories for procedure's
-            files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    ##########
-    # Copy information.
-    names_sets_gene_inclusion = copy.deepcopy(names_sets_gene_inclusion)
-    names_sets_gene_cluster = copy.deepcopy(names_sets_gene_cluster)
-    names_sets_gene_allocation = copy.deepcopy(names_sets_gene_allocation)
-    genes_available = copy.deepcopy(genes_available)
-
-    ##########
-    # Genes for inclusion.
-    sets_gene_inclusion = extr_select.read_extract_combine_custom_sets_genes(
-        names_sets=names_sets_gene_inclusion,
-        genes_available=genes_available,
-        path_directory=paths["in_sets_gene"],
-        report=report,
-    )
-    # From the sets of genes for inclusion, only use the combination custom set
-    # with name "main".
-
-    ##########
-    # Genes for clustering.
-    sets_gene_cluster = extr_select.read_extract_combine_custom_sets_genes(
-        names_sets=names_sets_gene_cluster,
-        genes_available=genes_available,
-        path_directory=paths["in_sets_gene"],
-        report=report,
-    )
-
-    ##########
-    # Genes for allocation.
-    sets_gene_allocation = extr_select.read_extract_combine_custom_sets_genes(
-        names_sets=names_sets_gene_allocation,
-        genes_available=genes_available,
-        path_directory=paths["in_sets_gene"],
-        report=report,
-    )
-
-    # Collect information.
-    pail = dict()
-    pail["sets_gene_inclusion"] = sets_gene_inclusion
-    pail["sets_gene_cluster"] = sets_gene_cluster
-    pail["sets_gene_allocation"] = sets_gene_allocation
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
-        print("function: prepare_sets_gene()")
-        putly.print_terminal_partition(level=5)
-        print("only use custom combination set 'main' for total inclusion.")
-        count_inclusion = (len(pail["sets_gene_inclusion"]["main"]))
-        print(
-            "count of genes for total inclusion: " + str(count_inclusion)
-        )
-        putly.print_terminal_partition(level=5)
-
-        pass
-    # Return information.
-    return pail
 
 
 ##########
@@ -977,20 +878,21 @@ def control_procedure_part_branch(
         table_signal[index_genes].unique().tolist()
     )
     # Prepare information about genes in sets.
-    pail_gene_sets = prepare_sets_gene(
-        names_sets_gene_inclusion=(
+    pail_gene_sets = aexpr_sub.read_organize_feature_sets(
+        names_sets_inclusion=(
             instances_group[0]["names_sets_gene_inclusion"]
         ),
-        names_sets_gene_cluster=instances_group[0]["names_sets_gene_cluster"],
-        names_sets_gene_allocation=(
+        names_sets_cluster=instances_group[0]["names_sets_gene_cluster"],
+        names_sets_allocation=(
             instances_group[0]["names_sets_gene_allocation"]
         ),
-        genes_available=genes_signal,
-        paths=paths,
+        features_available=genes_signal,
+        directory_child=instances_group[0]["directory_sets_gene"],
+        path_directory_parent=paths["in_sets_gene"],
         report=report,
     )
     genes_inclusion = copy.deepcopy(
-        pail_gene_sets["sets_gene_inclusion"]["main"]
+        pail_gene_sets["sets_inclusion"]["main"]
     )
 
     # Prepare translations for genes
@@ -1044,109 +946,111 @@ def control_procedure_part_branch(
         elements=samples_inclusion,
     )
 
-    ##########
-    # Prepare basic tables.
-    # Prepare tables for signals.
-    pail_tables = (
-        aexpr_sub.prepare_tables_signals_features_sets_observations_groups(
-            table=table_signal,
-            transpose_source_table=True,
+    if False:
+
+        ##########
+        # Prepare basic tables.
+        # Prepare tables for signals.
+        pail_tables = (
+            aexpr_sub.prepare_tables_signals_features_sets_observations_groups(
+                table=table_signal,
+                transpose_source_table=True,
+                index_features=index_genes,
+                index_observations=index_samples, # assigned in new tables
+                features_selection=genes_inclusion,
+                observations_selection=samples_inclusion,
+                groups_features=pail_gene_sets["sets_cluster"],
+                groups_observations=groups_samples,
+                names_groups_features_sequence=(
+                    instances_group[0]["sequence_sets_gene_cluster"]
+                ),
+                names_groups_observations_sequence=(
+                    names_groups_samples_sequence
+                ),
+                translations_features=translations_gene,
+                translations_observations=None,
+                report=report,
+            )
+        )
+
+        # Prepare tables for allocation of features (genes) to sets.
+        table_allocation_3 = (
+            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+                table_signal=pail_tables["table_3"],
+                index_features=index_genes,
+                indices_observations=[index_samples, "group",],
+                groups_features=pail_gene_sets["sets_allocation"],
+                names_groups_features_sequence=(
+                    instances_group[0]["sequence_sets_gene_allocation"]
+                ),
+                translations_features=None,
+                report=report,
+            )
+        )
+        table_allocation_4 = (
+            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+                table_signal=pail_tables["table_4"],
+                index_features=index_genes,
+                indices_observations=[index_samples, "group",],
+                groups_features=pail_gene_sets["sets_allocation"],
+                names_groups_features_sequence=(
+                    instances_group[0]["sequence_sets_gene_allocation"]
+                ),
+                translations_features=None,
+                report=report,
+            )
+        )
+
+        ##########
+        # Prepare plot charts.
+        pail_plot = manage_plot_charts(
+            table_box=pail_tables["table_2_translation"],
+            table_heatmap_individual_1=pail_tables["table_3"],
+            table_heatmap_individual_2=pail_tables["table_4"],
+            table_heatmap_mean=pail_tables["table_7"],
+            table_allocation_1=table_allocation_3,
+            table_allocation_2=table_allocation_4,
+            box_features=genes_inclusion_translation,
             index_features=index_genes,
-            index_observations=index_samples, # assigned in new tables
-            features_selection=genes_inclusion,
-            observations_selection=samples_inclusion,
-            groups_features=pail_gene_sets["sets_gene_cluster"],
-            groups_observations=groups_samples,
-            names_groups_features_sequence=(
-                instances_group[0]["sequence_sets_gene_cluster"]
-            ),
-            names_groups_observations_sequence=(
-                names_groups_samples_sequence
-            ),
-            translations_features=translations_gene,
-            translations_observations=None,
+            index_observations=index_samples,
+            box=True,
+            heatmap_individual=True,
+            heatmap_mean=True,
             report=report,
         )
-    )
 
-    # Prepare tables for allocation of features (genes) to sets.
-    table_allocation_3 = (
-        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
-            table_signal=pail_tables["table_3"],
-            index_features=index_genes,
-            indices_observations=[index_samples, "group",],
-            groups_features=pail_gene_sets["sets_gene_allocation"],
-            names_groups_features_sequence=(
-                instances_group[0]["sequence_sets_gene_allocation"]
-            ),
-            translations_features=None,
-            report=report,
-        )
-    )
-    table_allocation_4 = (
-        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
-            table_signal=pail_tables["table_4"],
-            index_features=index_genes,
-            indices_observations=[index_samples, "group",],
-            groups_features=pail_gene_sets["sets_gene_allocation"],
-            names_groups_features_sequence=(
-                instances_group[0]["sequence_sets_gene_allocation"]
-            ),
-            translations_features=None,
-            report=report,
-        )
-    )
-
-    ##########
-    # Prepare plot charts.
-    pail_plot = manage_plot_charts(
-        table_box=pail_tables["table_2_translation"],
-        table_heatmap_individual_1=pail_tables["table_3"],
-        table_heatmap_individual_2=pail_tables["table_4"],
-        table_heatmap_mean=pail_tables["table_7"],
-        table_allocation_1=table_allocation_3,
-        table_allocation_2=table_allocation_4,
-        box_features=genes_inclusion_translation,
-        index_features=index_genes,
-        index_observations=index_samples,
-        box=True,
-        heatmap_individual=True,
-        heatmap_mean=True,
-        report=report,
-    )
-
-    ##########
-    # Collect information.
-    pail_write_plot = dict()
-    if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
-        for record_box in pail_plot["box"]:
-            pail_write_plot[record_box["name"]] = record_box["figure"]
+        ##########
+        # Collect information.
+        pail_write_plot = dict()
+        if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
+            for record_box in pail_plot["box"]:
+                pail_write_plot[record_box["name"]] = record_box["figure"]
+                pass
             pass
-        pass
-    pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
-    pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
-    pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
+        pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
+        pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
+        pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
 
-    ##########
-    # _. Write product information to file.
-    #paths["out_data"]
-    #paths["out_plot"]
+        ##########
+        # _. Write product information to file.
+        #paths["out_data"]
+        #paths["out_plot"]
 
-    # Define paths to directories.
-    path_directory_plot_group = os.path.join(
-        paths["out_procedure_plot"], str(name_group_instances),
-    )
-    # Create directories.
-    putly.create_directories(
-        path=path_directory_plot_group,
-    )
-    # Write figures to file.
-    pplot.write_product_plots_parent_directory(
-        pail_write=pail_write_plot,
-        format="jpg", # jpg, png, svg
-        resolution=300,
-        path_directory=path_directory_plot_group,
-    )
+        # Define paths to directories.
+        path_directory_plot_group = os.path.join(
+            paths["out_procedure_plot"], str(name_group_instances),
+        )
+        # Create directories.
+        putly.create_directories(
+            path=path_directory_plot_group,
+        )
+        # Write figures to file.
+        pplot.write_product_plots_parent_directory(
+            pail_write=pail_write_plot,
+            format="jpg", # jpg, png, svg
+            resolution=300,
+            path_directory=path_directory_plot_group,
+        )
     pass
 
 
@@ -1205,7 +1109,7 @@ def execute_procedure(
     ##########
     # 2.1. Read and count unique genes in sets.
     path_directory_sets_gene = os.path.join(
-        paths["in_sets_gene"],
+        paths["in_sets_gene"], "sets_gene_2024-12-23",
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(
@@ -1218,7 +1122,7 @@ def execute_procedure(
 
     ##########
     # 2.2. Read and organize information about parameters for instances.
-    instances = read_organize_source_parameter_instances(
+    instances = read_organize_source_parameter_groups_instances(
         paths=paths,
         report=report,
     )

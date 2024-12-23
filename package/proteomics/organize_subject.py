@@ -2068,23 +2068,6 @@ def prepare_tables_correlations_of_features_across_observations(
 
     Review: 17 December 2024
 
-
-    table=None,
-    index_features=None,
-    index_observations=None,
-    translations_features=None,
-    features_selection=None,
-    observations_selection=None,
-    features_primary=None,
-    features_secondary=None,
-    groups_features_primary=None,
-    groups_features_secondary=None,
-    names_groups_sequence_features_primary=None,
-    names_groups_sequence_features_secondary=None,
-    method_priority=None,
-    report=None,
-
-
     arguments:
         table (object): Pandas data-frame table of values of signal intensity
             corresponding to features across columns and observations across
@@ -2358,8 +2341,296 @@ def prepare_tables_correlations_of_features_across_observations(
     return pail_return
 
 
+# Read and organize sets of features.
 
 
+def read_extract_set_features(
+    name_set=None,
+    suffix_file=None,
+    path_directory=None,
+    report=None,
+):
+    """
+    Read and extract from a source file the identifiers of features in a set.
+
+    arguments:
+        name_set (str): name for a set of features that corresponds to the name
+            of a file in the source directory
+        suffix_file (str): suffix in name of file
+        path_directory (str): path to directory within which to find files of
+            sets of features
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (list<str>): identifiers of features in a set from file
+
+    """
+
+    # Determine whether parameter is valid.
+    if (
+        (name_set is not None) and
+        (str(name_set).strip().lower() != "none")
+    ):
+        # Define paths to files.
+        path_file = os.path.join(
+            path_directory, str(name_set + suffix_file),
+        )
+        # Read information from file.
+        features_set = putly.read_file_text_list(
+            delimiter="\n",
+            path_file=path_file,
+        )
+    else:
+        features_set = list()
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = "read_extract_set_features"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        count_items = len(features_set)
+        print("count of items in set or list: " + str(count_items))
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return features_set
+
+
+def read_extract_combine_custom_feature_sets(
+    names_sets=None,
+    features_available=None,
+    path_directory=None,
+    report=None,
+):
+    """
+    Reads and extracts from a source file the identifiers of genes in a set.
+
+    Review: TCW; 23 December 2024
+
+    arguments:
+        names_sets (dict<list<str>>): names of sets of genes to include within
+            custom combination sets with custom names
+        features_available (list<str>): identifiers of features with available
+            signals
+        path_directory (str): path to directory from which to find and read
+            files for sets of features
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<list<str>>): identifiers of genes within custom combination sets
+
+    """
+
+    # Copy information.
+    names_sets = copy.deepcopy(names_sets)
+    features_available = copy.deepcopy(features_available)
+    # Iterate on features and values for sets of genes.
+    if (
+        (names_sets is not None) and
+        (str(names_sets).strip().lower() != "none")
+    ):
+        sets_features = dict()
+        for name_merge in names_sets.keys():
+            features_set_collection = list()
+            for name_set in names_sets[name_merge]:
+                if (
+                    (name_set is not None) and
+                    (str(name_set).strip().lower() != "none")
+                ):
+                    # Read and extract identifiers of genes in set.
+                    features_set_temporary = read_extract_set_features(
+                        name_set=name_set,
+                        suffix_file=".txt",
+                        path_directory=path_directory,
+                        report=False,
+                    )
+                    # Collect information.
+                    features_set_collection.extend(features_set_temporary)
+                    pass
+                pass
+            # Organize custom combination set of genes.
+            # Collect unique names of genes in set.
+            features_set_collection = putly.collect_unique_elements(
+                elements=features_set_collection,
+            )
+            # Ensure that all genes in set are in the table of signals.
+            features_set_collection = list(filter(
+                lambda feature: (feature in features_available),
+                features_set_collection
+            ))
+            # Collect genes in custom set.
+            sets_features[name_merge] = copy.deepcopy(features_set_collection)
+            pass
+        pass
+    else:
+        sets_features = None
+        pass
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = "read_extract_combine_custom_feature_sets"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        # Iterate on custom sets of genes.
+        if (sets_features is not None):
+            for name_set in sets_features.keys():
+                count_set = len(sets_features[name_set])
+                print(
+                    "count of items in set " +
+                    str(name_set) + ": " +
+                    str(count_set)
+                )
+            pass
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return sets_features
+
+
+def read_organize_feature_sets(
+    names_sets_inclusion=None,
+    names_sets_cluster=None,
+    names_sets_allocation=None,
+    features_available=None,
+    directory_child=None,
+    path_directory_parent=None,
+    report=None,
+):
+    """
+    Prepare sets of genes for analysis and description.
+
+    arguments:
+        names_sets_inclusion (dict<list<str>>): names of sets of genes to
+            include within a single custom combination set with custom name;
+            this is the set of total genes for inclusion in description and
+            visual representation
+        names_sets_cluster (dict<list<str>>): names of sets of genes to
+            include within custom combination sets with custom names; these are
+            the sets or groups within which to cluster signals for individual
+            genes across samples; the sets must include all of the total
+            inclusion genes, and each set must be mutually exclusive
+        names_sets_allocation (dict<list<str>>): names of sets of genes to
+            include within custom combination sets with custom names; these are
+            the sets or groups within which to allocate the total inclusion
+            genes for visual representation
+        features_available (list<str>): identifiers of features with available
+            signals
+        directory_child (str): name of child directory from which to read
+            sets of features
+        path_directory_parent : (str): path to parent directory within which to
+            find child directory from which to read files for sets of features
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    ##########
+    # Copy information.
+    names_sets_inclusion = copy.deepcopy(names_sets_inclusion)
+    names_sets_cluster = copy.deepcopy(names_sets_cluster)
+    names_sets_allocation = copy.deepcopy(names_sets_allocation)
+    features_available = copy.deepcopy(features_available)
+
+    # Define paths to child files.
+    path_directory_sets_gene = os.path.join(
+        path_directory_parent, directory_child,
+    )
+
+    ##########
+    # Genes for inclusion.
+    sets_inclusion = read_extract_combine_custom_feature_sets(
+        names_sets=names_sets_inclusion,
+        features_available=features_available,
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    # Determine whether set "main" already exists in the sets for inclusion.
+    # If set "main" does not already exist, then define set "main" as the
+    # unique union of all other sets.
+    if ("main" not in sets_inclusion.keys()):
+        sets_inclusion["main"] = list()
+        for name_set in sets_inclusion.keys():
+            genes_set = copy.deepcopy(sets_inclusion[name_set])
+            sets_inclusion["main"].extend(genes_set)
+            pass
+        # Collect unique names of genes in set.
+        sets_inclusion["main"] = putly.collect_unique_elements(
+            elements=sets_inclusion["main"],
+        )
+        # Ensure that all genes in set are in the table of signals.
+        sets_inclusion["main"] = list(filter(
+            lambda gene: (gene in features_available),
+            sets_inclusion["main"]
+        ))
+        pass
+    # From the sets of genes for inclusion, only use the combination custom set
+    # with name "main".
+
+    ##########
+    # Genes for clustering.
+    sets_cluster = read_extract_combine_custom_feature_sets(
+        names_sets=names_sets_cluster,
+        features_available=features_available,
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    # Determine whether there were any valid sets of genes for constraint on
+    # the clustering operation.
+    # If there were not any sets of genes for clustering constraint, then use
+    # set "main" from the sets for inclusion.
+    # Notice that any sets for constraint on clustering operation must be
+    # mutually exclusive while being all inclusive of the available genes.
+    if (sets_cluster is None):
+        sets_cluster = dict()
+        sets_cluster["main"] = copy.deepcopy(sets_inclusion["main"])
+        pass
+
+    ##########
+    # Genes for allocation.
+    sets_allocation = read_extract_combine_custom_feature_sets(
+        names_sets=names_sets_allocation,
+        features_available=features_available,
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+
+    # Collect information.
+    pail = dict()
+    pail["sets_inclusion"] = sets_inclusion
+    pail["sets_cluster"] = sets_cluster
+    pail["sets_allocation"] = sets_allocation
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = str(
+            "read_organize_feature_sets()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        print("use special combination set 'main' for total inclusion")
+        count_inclusion = (len(pail["sets_inclusion"]["main"]))
+        print(
+            "count of features for total inclusion: " + str(count_inclusion)
+        )
+        putly.print_terminal_partition(level=5)
+
+        pass
+    # Return information.
+    return pail
 
 
 # Prepare table for allocation of features to sets.
