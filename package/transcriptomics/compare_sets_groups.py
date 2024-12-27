@@ -253,10 +253,6 @@ def read_source(
     #paths["in_parameters"]
 
     # Define paths to child files.
-    path_file_table_demonstration = os.path.join(
-        paths["in_demonstration"], "partner",
-        "table_columns_features_rows_observations_groups.tsv",
-    )
     path_file_table_sample = os.path.join(
         paths["out_routine"], "organize_sample", "data",
         "table_sample.pickle",
@@ -274,16 +270,6 @@ def read_source(
     pail = dict()
     # Read information from file.
     #types_columns = define_column_types_table_demonstration()
-    pail["table_demonstration"] = pandas.read_csv(
-        path_file_table_demonstration,
-        sep="\t",
-        header=0,
-        #dtype=types_columns,
-        na_values=[
-            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
-        ],
-        encoding="utf-8",
-    )
     pail["table_sample"] = pandas.read_pickle(
         path_file_table_sample,
     )
@@ -631,9 +617,11 @@ def manage_plot_charts(
     table_box=None,
     table_heatmap_individual_1=None,
     table_heatmap_individual_2=None,
+    table_heatmap_individual_3=None,
     table_heatmap_mean=None,
     table_allocation_1=None,
     table_allocation_2=None,
+    table_allocation_3=None,
     box_features=None,
     index_features=None,
     index_observations=None,
@@ -656,6 +644,9 @@ def manage_plot_charts(
         table_heatmap_individual_2 (object): Pandas data-frame table of values
             of signal intensity for features across columns and sample
             observations in groups across rows
+        table_heatmap_individual_3 (object): Pandas data-frame table of values
+            of signal intensity for features across columns and sample
+            observations in groups across rows
         table_heatmap_mean (object): Pandas data-frame table of descriptive
             statistics for values of signal intensity for features across
             rows and groups of sample observations across columns
@@ -668,6 +659,10 @@ def manage_plot_charts(
             allocation of genes to sets in a sort sequence that matches the
             sequence of genes across columns in table
             'table_heatmap_individual_2'
+        table_allocation_3 (object): Pandas data-frame table of indications of
+            allocation of genes to sets in a sort sequence that matches the
+            sequence of genes across columns in table
+            'table_heatmap_individual_3'
         box_features (list<str>): identifiers of features for which to create
             box charts
         index_features (str): name for index corresponding to features
@@ -690,9 +685,11 @@ def manage_plot_charts(
     table_box = table_box.copy(deep=True)
     table_heatmap_individual_1 = table_heatmap_individual_1.copy(deep=True)
     table_heatmap_individual_2 = table_heatmap_individual_2.copy(deep=True)
+    table_heatmap_individual_3 = table_heatmap_individual_3.copy(deep=True)
     table_heatmap_mean = table_heatmap_mean.copy(deep=True)
     table_allocation_1 = table_allocation_1.copy(deep=True)
     table_allocation_2 = table_allocation_2.copy(deep=True)
+    table_allocation_3 = table_allocation_3.copy(deep=True)
     # Copy other information.
     box_features = copy.deepcopy(box_features)
 
@@ -723,7 +720,7 @@ def manage_plot_charts(
     # Heatmap Individual
     if heatmap_individual:
         figure_heatmap_individual_1 = (
-            aexpr_sub.plot_heatmap_signal_features_sets_observations_groups(
+            aexpr_sub.plot_heatmap_features_sets_observations_groups(
                 table_signal=table_heatmap_individual_1,
                 table_feature=table_allocation_1,
                 index_columns=index_features,
@@ -732,9 +729,18 @@ def manage_plot_charts(
                 report=report,
         ))
         figure_heatmap_individual_2 = (
-            aexpr_sub.plot_heatmap_signal_features_sets_observations_groups(
+            aexpr_sub.plot_heatmap_features_sets_observations_groups(
                 table_signal=table_heatmap_individual_2,
                 table_feature=table_allocation_2,
+                index_columns=index_features,
+                index_rows=index_observations,
+                column_group="group",
+                report=report,
+        ))
+        figure_heatmap_individual_3 = (
+            aexpr_sub.plot_heatmap_features_sets_observations_groups(
+                table_signal=table_heatmap_individual_3,
+                table_feature=table_allocation_3,
                 index_columns=index_features,
                 index_rows=index_observations,
                 column_group="group",
@@ -743,6 +749,7 @@ def manage_plot_charts(
     else:
         figure_heatmap_individual_1 = None
         figure_heatmap_individual_2 = None
+        figure_heatmap_individual_3 = None
         pass
 
 
@@ -750,7 +757,7 @@ def manage_plot_charts(
     # Heatmap Mean
     if heatmap_mean:
         figure_heatmap_mean = (
-            aexpr_sub.plot_heatmap_signal_mean(
+            aexpr_sub.plot_heatmap_features_observations_labels(
                 table=table_heatmap_mean,
                 index_columns="group_observations",
                 index_rows="feature",
@@ -766,6 +773,7 @@ def manage_plot_charts(
     pail["box"] = figures_box
     pail["heatmap_individual_1"] = figure_heatmap_individual_1
     pail["heatmap_individual_2"] = figure_heatmap_individual_2
+    pail["heatmap_individual_3"] = figure_heatmap_individual_3
     pail["heatmap_mean"] = figure_heatmap_mean
 
     # Report.
@@ -891,6 +899,13 @@ def control_procedure_part_branch(
         path_directory_parent=paths["in_sets_gene"],
         report=report,
     )
+    if (instances_group[0]["sequence_sets_gene_cluster"] is None):
+        sequence_sets_gene_cluster = ["main",]
+    else:
+        sequence_sets_gene_cluster = (
+            instances_group[0]["sequence_sets_gene_cluster"]
+        )
+        pass
     genes_inclusion = copy.deepcopy(
         pail_gene_sets["sets_inclusion"]["main"]
     )
@@ -947,110 +962,133 @@ def control_procedure_part_branch(
     )
 
     if False:
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print(table_signal)
+        print("!!!!!!!!!!!!!!!!! groups_features")
+        print(pail_gene_sets["sets_cluster"])
 
-        ##########
-        # Prepare basic tables.
-        # Prepare tables for signals.
-        pail_tables = (
-            aexpr_sub.prepare_tables_signals_features_sets_observations_groups(
-                table=table_signal,
-                transpose_source_table=True,
-                index_features=index_genes,
-                index_observations=index_samples, # assigned in new tables
-                features_selection=genes_inclusion,
-                observations_selection=samples_inclusion,
-                groups_features=pail_gene_sets["sets_cluster"],
-                groups_observations=groups_samples,
-                names_groups_features_sequence=(
-                    instances_group[0]["sequence_sets_gene_cluster"]
-                ),
-                names_groups_observations_sequence=(
-                    names_groups_samples_sequence
-                ),
-                translations_features=translations_gene,
-                translations_observations=None,
-                report=report,
-            )
-        )
+        print("!!!!!!!!!!!!!!!!!!!!!!!!! groups_samples")
+        print(groups_samples)
 
-        # Prepare tables for allocation of features (genes) to sets.
-        table_allocation_3 = (
-            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
-                table_signal=pail_tables["table_3"],
-                index_features=index_genes,
-                indices_observations=[index_samples, "group",],
-                groups_features=pail_gene_sets["sets_allocation"],
-                names_groups_features_sequence=(
-                    instances_group[0]["sequence_sets_gene_allocation"]
-                ),
-                translations_features=None,
-                report=report,
-            )
-        )
-        table_allocation_4 = (
-            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
-                table_signal=pail_tables["table_4"],
-                index_features=index_genes,
-                indices_observations=[index_samples, "group",],
-                groups_features=pail_gene_sets["sets_allocation"],
-                names_groups_features_sequence=(
-                    instances_group[0]["sequence_sets_gene_allocation"]
-                ),
-                translations_features=None,
-                report=report,
-            )
-        )
-
-        ##########
-        # Prepare plot charts.
-        pail_plot = manage_plot_charts(
-            table_box=pail_tables["table_2_translation"],
-            table_heatmap_individual_1=pail_tables["table_3"],
-            table_heatmap_individual_2=pail_tables["table_4"],
-            table_heatmap_mean=pail_tables["table_7"],
-            table_allocation_1=table_allocation_3,
-            table_allocation_2=table_allocation_4,
-            box_features=genes_inclusion_translation,
+    ##########
+    # Prepare basic tables.
+    # Prepare tables for signals.
+    pail_tables = (
+        aexpr_sub.prepare_tables_signals_features_sets_observations_groups(
+            table=table_signal,
+            transpose_source_table=True,
             index_features=index_genes,
-            index_observations=index_samples,
-            box=True,
-            heatmap_individual=True,
-            heatmap_mean=True,
+            index_observations=index_samples, # assigned in new tables
+            features_selection=genes_inclusion,
+            observations_selection=samples_inclusion,
+            groups_features=pail_gene_sets["sets_cluster"],
+            groups_observations=groups_samples,
+            names_groups_features_sequence=(
+                sequence_sets_gene_cluster
+            ),
+            names_groups_observations_sequence=(
+                names_groups_samples_sequence
+            ),
+            translations_features=translations_gene,
+            translations_observations=None,
+            report=False,
+        )
+    )
+
+    # Prepare tables for allocation of features (genes) to sets.
+    table_allocation_3 = (
+        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+            table_signal=pail_tables["table_3"],
+            index_features=index_genes,
+            indices_observations=[index_samples, "group",],
+            groups_features=pail_gene_sets["sets_allocation"],
+            names_groups_features_sequence=(
+                instances_group[0]["sequence_sets_gene_allocation"]
+            ),
+            translations_features=None,
             report=report,
         )
+    )
+    table_allocation_4 = (
+        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+            table_signal=pail_tables["table_4"],
+            index_features=index_genes,
+            indices_observations=[index_samples, "group",],
+            groups_features=pail_gene_sets["sets_allocation"],
+            names_groups_features_sequence=(
+                instances_group[0]["sequence_sets_gene_allocation"]
+            ),
+            translations_features=None,
+            report=report,
+        )
+    )
+    table_allocation_5 = (
+        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+            table_signal=pail_tables["table_5"],
+            index_features=index_genes,
+            indices_observations=[index_samples, "group",],
+            groups_features=pail_gene_sets["sets_allocation"],
+            names_groups_features_sequence=(
+                instances_group[0]["sequence_sets_gene_allocation"]
+            ),
+            translations_features=None,
+            report=report,
+        )
+    )
 
-        ##########
-        # Collect information.
-        pail_write_plot = dict()
-        if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
-            for record_box in pail_plot["box"]:
-                pail_write_plot[record_box["name"]] = record_box["figure"]
-                pass
+    ##########
+    # Prepare plot charts.
+    pail_plot = manage_plot_charts(
+        table_box=pail_tables["table_2_translation"],
+        table_heatmap_individual_1=pail_tables["table_3"],
+        table_heatmap_individual_2=pail_tables["table_4"],
+        table_heatmap_individual_3=pail_tables["table_5"],
+        table_heatmap_mean=pail_tables["table_8"],
+        table_allocation_1=table_allocation_3,
+        table_allocation_2=table_allocation_4,
+        table_allocation_3=table_allocation_5,
+        box_features=genes_inclusion_translation,
+        index_features=index_genes,
+        index_observations=index_samples,
+        box=True,
+        heatmap_individual=True,
+        heatmap_mean=True,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    pail_write_plot = dict()
+    if (pail_plot["box"] is not None) and (len(pail_plot["box"]) > 0):
+        for record_box in pail_plot["box"]:
+            pail_write_plot[record_box["name"]] = record_box["figure"]
             pass
-        pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
-        pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
-        pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
+        pass
+    pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
+    pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
+    pail_write_plot["heatmap_individual_3"] = pail_plot["heatmap_individual_3"]
+    pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
 
-        ##########
-        # _. Write product information to file.
-        #paths["out_data"]
-        #paths["out_plot"]
+    ##########
+    # _. Write product information to file.
+    #paths["out_data"]
+    #paths["out_plot"]
 
-        # Define paths to directories.
-        path_directory_plot_group = os.path.join(
-            paths["out_procedure_plot"], str(name_group_instances),
-        )
-        # Create directories.
-        putly.create_directories(
-            path=path_directory_plot_group,
-        )
-        # Write figures to file.
-        pplot.write_product_plots_parent_directory(
-            pail_write=pail_write_plot,
-            format="jpg", # jpg, png, svg
-            resolution=300,
-            path_directory=path_directory_plot_group,
-        )
+    # Define paths to directories.
+    path_directory_plot_group = os.path.join(
+        paths["out_procedure_plot"], str(name_group_instances),
+    )
+    # Create directories.
+    putly.create_directories(
+        path=path_directory_plot_group,
+    )
+    # Write figures to file.
+    pplot.write_product_plots_parent_directory(
+        pail_write=pail_write_plot,
+        format="jpg", # jpg, png, svg
+        resolution=300,
+        path_directory=path_directory_plot_group,
+    )
     pass
 
 
@@ -1109,7 +1147,7 @@ def execute_procedure(
     ##########
     # 2.1. Read and count unique genes in sets.
     path_directory_sets_gene = os.path.join(
-        paths["in_sets_gene"], "sets_gene_2024-12-23",
+        paths["in_sets_gene"], "sets_gene_2024-12-24",
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(
