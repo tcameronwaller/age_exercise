@@ -3243,7 +3243,6 @@ def prepare_table_features_sets_allocation_match_table_signal(
 # Plot charts.
 
 
-
 def plot_heatmap_features_sets_observations_groups(
     table_signal=None,
     table_feature=None,
@@ -3258,7 +3257,7 @@ def plot_heatmap_features_sets_observations_groups(
     Original source table must not have an explicitly defined index across
     rows.
 
-    Review: TCW; 17 October 2024
+    Review: TCW; 27 December 2024
 
     arguments:
         table_signal (object): Pandas data-frame table of floating-point values
@@ -3306,8 +3305,11 @@ def plot_heatmap_features_sets_observations_groups(
     )
     # Extract minimal and maximal values of signal intensity.
     matrix = numpy.copy(table_signal_extract.to_numpy())
-    value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
-    value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+    #value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
+    #value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+    round_offset = (numpy.nanmin(matrix) * 0.10)
+    value_minimum = round((numpy.nanmin(matrix) - round_offset), 3)
+    value_maximum = round((numpy.nanmax(matrix) + round_offset), 3)
 
     ##########
     # Create plot chart.
@@ -3316,10 +3318,6 @@ def plot_heatmap_features_sets_observations_groups(
     # Define colors.
     colors = pplot.define_color_properties()
     # Create figure.
-    #features_sets_in_observations_groups
-
-    # plot_heatmap_signal_label_features_groups_of_observations
-
     figure = pplot.plot_heatmap_signal_features_sets_observations_groups(
         table_signal=table_signal,
         table_feature_sets=table_feature,
@@ -3333,33 +3331,24 @@ def plot_heatmap_features_sets_observations_groups(
         constrain_signal_values=True,
         value_minimum=value_minimum,
         value_maximum=value_maximum,
-        show_labels_ordinate=False,
-        show_labels_abscissa=False,
-        labels_ordinate_categories=None,
-        labels_abscissa_categories=None,
-        show_scale_bar=True, # whether to show scale bar on individual figures
         title_ordinate="",
         title_abscissa="",
         title_bar="signal (z-score)",
-        size_title_ordinate="eight", # ten
-        size_title_abscissa="eight", # ten
-        size_label_ordinate="seventeen", # multi-panel: ten; individual: twelve
-        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
-        size_title_bar="thirteen", # twelve
-        size_label_bar="fifteen", # thirteen for whole; five for bar itself
-        aspect="portrait", # square, portrait, landscape, ...
+        size_title_ordinate="ten",
+        size_title_abscissa="ten",
+        size_title_bar="thirteen",
+        size_label_feature_set="thirteen",
+        size_label_legend_observation_group="thirteen",
+        size_label_bar="fifteen",
+        show_scale_bar=True,
+        aspect="portrait",
         fonts=fonts,
         colors=colors,
         report=report,
     )
-
     # Return information.
     return figure
 
-
-# TODO: TCW; 26 December 2024
-# Still need to figure out arguments for the new (not yet existent) function...
-# TODO: begin work here on 27 December 2024
 
 def plot_heatmap_features_sets_observations_labels(
     table_signal=None,
@@ -3421,8 +3410,11 @@ def plot_heatmap_features_sets_observations_labels(
     )
     # Extract minimal and maximal values of signal intensity.
     matrix = numpy.copy(table_signal_extract.to_numpy())
-    value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
-    value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+    #value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
+    #value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+    round_offset = (numpy.nanmin(matrix) * 0.10)
+    value_minimum = round((numpy.nanmin(matrix) - round_offset), 3)
+    value_maximum = round((numpy.nanmax(matrix) + round_offset), 3)
 
     ##########
     # Create plot chart.
@@ -3431,46 +3423,37 @@ def plot_heatmap_features_sets_observations_labels(
     # Define colors.
     colors = pplot.define_color_properties()
     # Create figure.
-    #features_sets_in_observations_groups
-
-    # plot_heatmap_signal_label_features_groups_of_observations
-
     figure = pplot.plot_heatmap_signal_features_sets_observations_labels(
         table_signal=table_signal,
         table_feature_sets=table_feature,
-        format_table=1, # 1: features in rows, observations or groups in columns
+        format_table_signal=1, # 1: features in rows, observations or groups in columns
         index_columns=index_columns,
         index_rows=index_rows,
-        column_group=column_group,
         transpose_table=False,
         fill_missing=True,
         value_missing_fill=0.0,
         constrain_signal_values=True,
         value_minimum=value_minimum,
         value_maximum=value_maximum,
-        show_labels_ordinate=False,
-        show_labels_abscissa=False,
-        labels_ordinate_categories=None,
-        labels_abscissa_categories=None,
-        show_scale_bar=True, # whether to show scale bar on individual figures
         title_ordinate="",
         title_abscissa="",
         title_bar="signal (z-score)",
-        size_title_ordinate="eight", # ten
-        size_title_abscissa="eight", # ten
-        size_label_ordinate="seventeen", # multi-panel: ten; individual: twelve
-        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
-        size_title_bar="thirteen", # twelve
-        size_label_bar="fifteen", # thirteen for whole; five for bar itself
-        aspect="portrait", # square, portrait, landscape, ...
+        labels_abscissa_categories=None,
+        size_title_ordinate="eight",
+        size_title_abscissa="eight",
+        size_title_bar="thirteen",
+        size_label_feature_set="fourteen",
+        size_label_abscissa="eleven",
+        size_label_bar="fifteen",
+        show_labels_abscissa=False,
+        show_scale_bar=True, # whether to show scale bar on individual figures
+        aspect="square", # square, portrait, landscape, ...
         fonts=fonts,
         colors=colors,
         report=report,
     )
-
     # Return information.
     return figure
-
 
 
 def plot_heatmap_features_observations_labels(
@@ -3485,7 +3468,7 @@ def plot_heatmap_features_observations_labels(
     Original source table must not have an explicitly defined index across
     rows.
 
-    Review: TCW; 17 October 2024
+    Review: TCW; 27 December 2024
 
     arguments:
         table (object): Pandas data-frame table of floating-point values of a
@@ -3529,8 +3512,11 @@ def plot_heatmap_features_observations_labels(
     )
     # Extract minimal and maximal values of signal intensity.
     matrix = numpy.copy(table_extract.to_numpy())
-    value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
-    value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+    #value_minimum = round((numpy.nanmin(matrix) - 0.005), 2)
+    #value_maximum = round((numpy.nanmax(matrix) + 0.005), 2)
+    round_offset = (numpy.nanmin(matrix) * 0.10)
+    value_minimum = round((numpy.nanmin(matrix) - round_offset), 3)
+    value_maximum = round((numpy.nanmax(matrix) + round_offset), 3)
 
     ##########
     # Create plot chart.
@@ -3550,26 +3536,25 @@ def plot_heatmap_features_observations_labels(
         constrain_signal_values=True,
         value_minimum=value_minimum,
         value_maximum=value_maximum,
-        show_labels_ordinate=True,
-        #show_labels_abscissa=True,
-        labels_ordinate_categories=None,
-        labels_abscissa_categories=None,
-        show_scale_bar=True, # whether to show scale bar on individual figures
         title_ordinate="",
         title_abscissa="",
-        title_bar="target signal (z-score)",
-        size_title_ordinate="eight", # ten
-        size_title_abscissa="eight", # ten
-        size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
-        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
-        size_title_bar="twelve", # twelve
-        size_label_bar="thirteen", # thirteen for whole; five for bar itself
+        title_bar="mean signal (z-score)",
+        labels_ordinate_categories=None,
+        labels_abscissa_categories=None,
+        size_title_ordinate="eight",
+        size_title_abscissa="eight",
+        size_title_bar="twelve",
+        size_label_ordinate=None, # determine automatically if "None"
+        size_label_abscissa=None, # determine automatically if "None"
+        size_label_bar="thirteen",
+        show_labels_ordinate=True,
+        show_labels_abscissa=True,
+        show_scale_bar=True,
         aspect="square", # square, portrait, landscape, ...
         fonts=fonts,
         colors=colors,
         report=report,
     )
-
     # Return information.
     return figure
 
@@ -3659,11 +3644,14 @@ def manage_plot_charts_demonstration(
         report=report,
     )
 
+    print("!!!!!!!!!!!!!!!!!!!!!!! table_summary_translation")
+    print(pail_table["table_summary_translation"])
+
+
     print("!!!!!!!!!!!!!!!!!!!!!!! table_summary")
     print(pail_table["table_summary"])
     print("!!!!!!!!!!!!!!!!!!!! table_set ")
     print(table_set_summary)
-
 
     # Create heatmaps.
     figure_heatmap_mean_set = plot_heatmap_features_sets_observations_labels(
