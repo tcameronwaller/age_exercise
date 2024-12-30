@@ -3333,12 +3333,12 @@ def plot_heatmap_features_sets_observations_groups(
         value_maximum=value_maximum,
         title_ordinate="",
         title_abscissa="",
-        title_bar="signal (z-score)",
+        title_bar="individual signal (z-score)",
         size_title_ordinate="ten",
         size_title_abscissa="ten",
         size_title_bar="thirteen",
         size_label_feature_set="thirteen",
-        size_label_legend_observation_group="thirteen",
+        size_label_legend_observation_group="fourteen",
         size_label_bar="fifteen",
         show_scale_bar=True,
         aspect="portrait",
@@ -3437,15 +3437,15 @@ def plot_heatmap_features_sets_observations_labels(
         value_maximum=value_maximum,
         title_ordinate="",
         title_abscissa="",
-        title_bar="signal (z-score)",
+        title_bar="mean signal (z-score)",
         labels_abscissa_categories=None,
         size_title_ordinate="eight",
         size_title_abscissa="eight",
-        size_title_bar="thirteen",
-        size_label_feature_set="fourteen",
+        size_title_bar="twelve",
+        size_label_feature_set="thirteen",
         size_label_abscissa="eleven",
-        size_label_bar="fifteen",
-        show_labels_abscissa=False,
+        size_label_bar="fourteen",
+        show_labels_abscissa=True,
         show_scale_bar=True, # whether to show scale bar on individual figures
         aspect="square", # square, portrait, landscape, ...
         fonts=fonts,
@@ -3643,15 +3643,6 @@ def manage_plot_charts_demonstration(
         values_sort_sequence=features_sequence,
         report=report,
     )
-
-    print("!!!!!!!!!!!!!!!!!!!!!!! table_summary_translation")
-    print(pail_table["table_summary_translation"])
-
-
-    print("!!!!!!!!!!!!!!!!!!!!!!! table_summary")
-    print(pail_table["table_summary"])
-    print("!!!!!!!!!!!!!!!!!!!! table_set ")
-    print(table_set_summary)
 
     # Create heatmaps.
     figure_heatmap_mean_set = plot_heatmap_features_sets_observations_labels(
