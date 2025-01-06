@@ -558,8 +558,10 @@ def define_sequence_columns_novel_subject_feature():
         #"cohort_age_letter",
         "intervention",
         "intervention_text",
-        "intervention_text_active_other",
         "intervention_text_placebo_other",
+        "intervention_text_placebo_other_after_only",
+        "intervention_text_active_other",
+        "intervention_text_active_other_after_only",
         #"identifier_subject",
         #"study_clinic_visit_relative",
         "study_clinic_visit",
@@ -1006,6 +1008,22 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
+    table["intervention_text_placebo_other"] = table.apply(
+        lambda series_row: (
+            str("other")
+            if (series_row["intervention_text"] in ["active", "none",])
+            else series_row["intervention_text"]
+        ),
+        axis="columns", # apply function to each row
+    )
+    table["intervention_text_placebo_other_after_only"] = table.apply(
+        lambda series_row: (
+            str("other")
+            if (series_row["study_clinic_visit"] in ["first",])
+            else series_row["intervention_text_placebo_other"]
+        ),
+        axis="columns", # apply function to each row
+    )
     table["intervention_text_active_other"] = table.apply(
         lambda series_row: (
             str("other")
@@ -1014,11 +1032,11 @@ def organize_table_subject_property(
         ),
         axis="columns", # apply function to each row
     )
-    table["intervention_text_placebo_other"] = table.apply(
+    table["intervention_text_active_other_after_only"] = table.apply(
         lambda series_row: (
             str("other")
-            if (series_row["intervention_text"] in ["active", "none",])
-            else series_row["intervention_text"]
+            if (series_row["study_clinic_visit"] in ["first",])
+            else series_row["intervention_text_active_other"]
         ),
         axis="columns", # apply function to each row
     )
@@ -1364,7 +1382,7 @@ def prepare_table_signal_summaries_features_observation_groups(
     feature_5 0.01    0.001   0.001   0.015
     ----------
 
-    Review: 26 December 2024
+    Review: 30 December 2024
 
     arguments:
         table (object): Pandas data-frame table of values of signal intensity
@@ -1405,10 +1423,12 @@ def prepare_table_signal_summaries_features_observation_groups(
     # observations in groups.
     table_long = pdesc.describe_table_features_by_groups(
         table=table_source,
-        column_group="group",
+        column_group=column_group,
         columns_features=columns_features,
+        index_feature=index_columns,
         report=False,
     )
+
     # Organize indices in table.
     table_long.reset_index(
         level=None,
@@ -1417,7 +1437,7 @@ def prepare_table_signal_summaries_features_observation_groups(
     )
     table_wide = table_long.pivot(
         columns=[column_group,],
-        index="feature",
+        index=index_columns,
         values=summary,
     )
     # Organize indices in table.
@@ -1427,7 +1447,7 @@ def prepare_table_signal_summaries_features_observation_groups(
         drop=False, # remove index; do not move to regular columns
     )
     table_wide.set_index(
-        ["feature",],
+        [index_columns,],
         append=False,
         drop=True,
         inplace=True,
@@ -1452,7 +1472,7 @@ def prepare_table_signal_summaries_features_observation_groups(
     ) # single-dimensional index
     # Filter and sort columns in table.
     columns_sequence = copy.deepcopy(names_groups_observations_sequence)
-    columns_sequence.insert(0, "feature")
+    columns_sequence.insert(0, index_columns)
     table_product = porg.filter_sort_table_columns(
         table=table_wide,
         columns_sequence=columns_sequence,
@@ -1462,7 +1482,7 @@ def prepare_table_signal_summaries_features_observation_groups(
     table_product_translation = (
         porg.translate_identifiers_table_indices_columns_rows(
             table=table_product,
-            index_rows="feature",
+            index_rows=index_columns,
             translations_columns=None,
             translations_rows=translations_features,
             remove_redundancy=True,
@@ -2675,7 +2695,7 @@ def read_extract_combine_custom_feature_sets(
                     (name_set is not None) and
                     (str(name_set).strip().lower() != "none")
                 ):
-                    # Read and extract identifiers of genes in set.
+                    # Read and extract identifiers of features in set.
                     features_set_temporary = read_extract_set_features(
                         name_set=name_set,
                         suffix_file=".txt",
@@ -3136,7 +3156,7 @@ def prepare_table_features_sets_allocation_match_table_signal(
     observation_5   group_3   0.001     0.001     0.001     0.001     0.001
     ----------
 
-    Review: 12 December 2024
+    Review: 30 December 2024
 
     arguments:
         table_signal (object): Pandas data-frame table of values of signal
@@ -3337,7 +3357,7 @@ def plot_heatmap_features_sets_observations_groups(
         size_title_ordinate="ten",
         size_title_abscissa="ten",
         size_title_bar="thirteen",
-        size_label_feature_set="thirteen",
+        size_label_feature_set="fourteen",
         size_label_legend_observation_group="fourteen",
         size_label_bar="fifteen",
         show_scale_bar=True,
@@ -3772,69 +3792,67 @@ def execute_procedure(
         report=report,
     )
 
+    ##########
+    # 3. Organize table of properties for study subjects.
+    columns_original = pail_source["columns_all"]
+    columns_novel = define_sequence_columns_novel_subject_feature()
+    pail_organization = organize_table_subject_property(
+        table=pail_source["table_subject_property"],
+        translations_column=pail_source["translations_column"],
+        columns_original=columns_original,
+        columns_novel=columns_novel,
+        report=report,
+    )
+
+    # TODO: TCW; 27 November 2024
+    # TODO: include another "selection" column in the parameter table to
+    # designate features for logarithmic scale. Then will need to include
+    # those is a new column list in the "parse" function.
+
+
+    ##########
+    # 4. Collect information.
+    # Collections of files.
+
+    #pail_write_lists = dict()
+    pail_write_tables = dict()
+    pail_write_tables[str("table_subject")] = pail_organization["table"]
+    pail_write_objects = dict()
+    #pail_write_objects[str("samples")]
+
+    ##########
+    # 5. Write product information to file.
     if False:
-
-        ##########
-        # 3. Organize table of properties for study subjects.
-        columns_original = pail_source["columns_all"]
-        columns_novel = define_sequence_columns_novel_subject_feature()
-        pail_organization = organize_table_subject_property(
-            table=pail_source["table_subject_property"],
-            translations_column=pail_source["translations_column"],
-            columns_original=columns_original,
-            columns_novel=columns_novel,
-            report=report,
+        putly.write_lists_to_file_text(
+            pail_write=pail_write_lists,
+            path_directory=paths["out_procedure_data_lists"],
+            delimiter="\n",
         )
-
-        # TODO: TCW; 27 November 2024
-        # TODO: include another "selection" column in the parameter table to
-        # designate features for logarithmic scale. Then will need to include
-        # those is a new column list in the "parse" function.
-
-
-        ##########
-        # 4. Collect information.
-        # Collections of files.
-
-        #pail_write_lists = dict()
-        pail_write_tables = dict()
-        pail_write_tables[str("table_subject")] = pail_organization["table"]
-        pail_write_objects = dict()
-        #pail_write_objects[str("samples")]
-
-        ##########
-        # 5. Write product information to file.
-        if False:
-            putly.write_lists_to_file_text(
-                pail_write=pail_write_lists,
-                path_directory=paths["out_procedure_data_lists"],
-                delimiter="\n",
-            )
-        putly.write_tables_to_file(
-            pail_write=pail_write_tables,
-            path_directory=paths["out_procedure_data_tables"],
-            reset_index_rows=False,
-            write_index_rows=False,
-            write_index_columns=True,
-            type="text",
-            delimiter="\t",
-            suffix=".tsv",
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data_tables"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=True,
+        type="text",
+        delimiter="\t",
+        suffix=".tsv",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data_tables"],
+        reset_index_rows=None,
+        write_index_rows=None,
+        write_index_columns=None,
+        type="pickle",
+        delimiter=None,
+        suffix=".pickle",
+    )
+    if False:
+        putly.write_objects_to_file_pickle(
+            pail_write=pail_write_objects,
+            path_directory=paths["out_procedure_data"],
         )
-        putly.write_tables_to_file(
-            pail_write=pail_write_tables,
-            path_directory=paths["out_procedure_data_tables"],
-            reset_index_rows=None,
-            write_index_rows=None,
-            write_index_columns=None,
-            type="pickle",
-            delimiter=None,
-            suffix=".pickle",
-        )
-        if False:
-            putly.write_objects_to_file_pickle(
-                pail_write=pail_write_objects,
-                path_directory=paths["out_procedure_data"],
-            )
 
     pass
 

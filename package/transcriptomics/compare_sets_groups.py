@@ -618,10 +618,12 @@ def manage_plot_charts(
     table_heatmap_individual_1=None,
     table_heatmap_individual_2=None,
     table_heatmap_individual_3=None,
-    table_heatmap_mean=None,
+    table_heatmap_mean_set=None,
+    table_heatmap_mean_label=None,
     table_allocation_1=None,
     table_allocation_2=None,
     table_allocation_3=None,
+    table_allocation_4=None,
     box_features=None,
     index_features=None,
     index_observations=None,
@@ -647,9 +649,12 @@ def manage_plot_charts(
         table_heatmap_individual_3 (object): Pandas data-frame table of values
             of signal intensity for features across columns and sample
             observations in groups across rows
-        table_heatmap_mean (object): Pandas data-frame table of descriptive
-            statistics for values of signal intensity for features across
-            rows and groups of sample observations across columns
+        table_heatmap_mean_set (object): Pandas data-frame table of
+            descriptive statistics for values of signal intensity for features
+            across rows and groups of sample observations across columns
+        table_heatmap_mean_label (object): Pandas data-frame table of
+            descriptive statistics for values of signal intensity for features
+            across rows and groups of sample observations across columns
         table_allocation_1 (object): Pandas data-frame table of indications of
             allocation of genes to sets in a sort sequence that matches the
             sequence of genes across columns in table
@@ -663,6 +668,10 @@ def manage_plot_charts(
             allocation of genes to sets in a sort sequence that matches the
             sequence of genes across columns in table
             'table_heatmap_individual_3'
+        table_allocation_4 (object): Pandas data-frame table of indications of
+            allocation of genes to sets in a sort sequence that matches the
+            sequence of genes across columns in table
+            'table_heatmap_mean_set'
         box_features (list<str>): identifiers of features for which to create
             box charts
         index_features (str): name for index corresponding to features
@@ -686,10 +695,12 @@ def manage_plot_charts(
     table_heatmap_individual_1 = table_heatmap_individual_1.copy(deep=True)
     table_heatmap_individual_2 = table_heatmap_individual_2.copy(deep=True)
     table_heatmap_individual_3 = table_heatmap_individual_3.copy(deep=True)
-    table_heatmap_mean = table_heatmap_mean.copy(deep=True)
+    table_heatmap_mean_set = table_heatmap_mean_set.copy(deep=True)
+    table_heatmap_mean_label = table_heatmap_mean_label.copy(deep=True)
     table_allocation_1 = table_allocation_1.copy(deep=True)
     table_allocation_2 = table_allocation_2.copy(deep=True)
     table_allocation_3 = table_allocation_3.copy(deep=True)
+    table_allocation_4 = table_allocation_4.copy(deep=True)
     # Copy other information.
     box_features = copy.deepcopy(box_features)
 
@@ -714,7 +725,6 @@ def manage_plot_charts(
     else:
         figures_box = None
         pass
-
 
     ##########
     # Heatmap Individual
@@ -752,19 +762,36 @@ def manage_plot_charts(
         figure_heatmap_individual_3 = None
         pass
 
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!compare manage plots")
+    print(table_heatmap_mean_set)
+    print(table_allocation_4)
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!compare manage plots")
+    print(table_heatmap_mean_label)
+
 
     ##########
     # Heatmap Mean
     if heatmap_mean:
-        figure_heatmap_mean = (
-            aexpr_sub.plot_heatmap_features_observations_labels(
-                table=table_heatmap_mean,
+        # Create heatmaps.
+        figure_heatmap_mean_set = (
+            aexpr_sub.plot_heatmap_features_sets_observations_labels(
+                table_signal=table_heatmap_mean_set,
+                table_feature=table_allocation_4,
                 index_columns="group_observations",
-                index_rows="feature",
+                index_rows=index_features,
+                report=False,
+        ))
+        figure_heatmap_mean_label = (
+            aexpr_sub.plot_heatmap_features_observations_labels(
+                table=table_heatmap_mean_label,
+                index_columns="group_observations",
+                index_rows=index_features,
                 report=False,
         ))
     else:
-        figure_heatmap_mean = None
+        figure_heatmap_mean_set = None
+        figure_heatmap_mean_label = None
         pass
 
     ##########
@@ -774,7 +801,8 @@ def manage_plot_charts(
     pail["heatmap_individual_1"] = figure_heatmap_individual_1
     pail["heatmap_individual_2"] = figure_heatmap_individual_2
     pail["heatmap_individual_3"] = figure_heatmap_individual_3
-    pail["heatmap_mean"] = figure_heatmap_mean
+    pail["heatmap_mean_set"] = figure_heatmap_mean_set
+    pail["heatmap_mean_label"] = figure_heatmap_mean_label
 
     # Report.
     if report:
@@ -851,7 +879,6 @@ def control_procedure_part_branch(
 
     ##########
     # Read and organize source information from file.
-
     pail_source = read_source(
         tissue=instances_group[0]["tissue"],
         paths=paths,
@@ -961,15 +988,6 @@ def control_procedure_part_branch(
         elements=samples_inclusion,
     )
 
-    if False:
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print(table_signal)
-        print("!!!!!!!!!!!!!!!!! groups_features")
-        print(pail_gene_sets["sets_cluster"])
-
-        print("!!!!!!!!!!!!!!!!!!!!!!!!! groups_samples")
-        print(groups_samples)
-
     ##########
     # Prepare basic tables.
     # Prepare tables for signals.
@@ -994,8 +1012,8 @@ def control_procedure_part_branch(
             report=False,
         )
     )
-
-    # Prepare tables for allocation of features (genes) to sets.
+    # Prepare tables for allocation of features (genes) to sets with sequence
+    # of features that matches those in tables of signals.
     table_allocation_3 = (
         aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
             table_signal=pail_tables["table_3"],
@@ -1035,6 +1053,17 @@ def control_procedure_part_branch(
             report=report,
         )
     )
+    # Prepare allocation to feature sets in sort sequence that matches table of
+    # mean signals.
+    features_sequence = copy.deepcopy(
+        pail_tables["table_8"][index_genes].tolist()
+    )
+    table_allocation_8 = aexpr_sub.sort_check_table_rows_sequence_custom(
+        table=table_allocation_3,
+        index_rows=index_genes,
+        values_sort_sequence=features_sequence,
+        report=report,
+    )
 
     ##########
     # Prepare plot charts.
@@ -1043,10 +1072,12 @@ def control_procedure_part_branch(
         table_heatmap_individual_1=pail_tables["table_3"],
         table_heatmap_individual_2=pail_tables["table_4"],
         table_heatmap_individual_3=pail_tables["table_5"],
-        table_heatmap_mean=pail_tables["table_8"],
+        table_heatmap_mean_set=pail_tables["table_8"],
+        table_heatmap_mean_label=pail_tables["table_8_translation"],
         table_allocation_1=table_allocation_3,
         table_allocation_2=table_allocation_4,
         table_allocation_3=table_allocation_5,
+        table_allocation_4=table_allocation_8,
         box_features=genes_inclusion_translation,
         index_features=index_genes,
         index_observations=index_samples,
@@ -1067,7 +1098,8 @@ def control_procedure_part_branch(
     pail_write_plot["heatmap_individual_1"] = pail_plot["heatmap_individual_1"]
     pail_write_plot["heatmap_individual_2"] = pail_plot["heatmap_individual_2"]
     pail_write_plot["heatmap_individual_3"] = pail_plot["heatmap_individual_3"]
-    pail_write_plot["heatmap_mean"] = pail_plot["heatmap_mean"]
+    pail_write_plot["heatmap_mean_set"] = pail_plot["heatmap_mean_set"]
+    pail_write_plot["heatmap_mean_label"] = pail_plot["heatmap_mean_label"]
 
     ##########
     # _. Write product information to file.

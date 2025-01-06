@@ -71,7 +71,9 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
+import age_exercise.proteomics.organize_subject as aexpr_sub
 import age_exercise.transcriptomics.organize_signal as exrosig
+
 
 ###############################################################################
 # Functionality
@@ -1172,13 +1174,15 @@ def control_procedure_part_branch(
     ##########
     # 3. Prepare information about genes in sets of interest.
     # Read and extract identifiers of genes in sets.
-    genes_set_emphasis = read_extract_set_genes(
+    genes_set_emphasis = aexpr_sub.read_extract_set_features(
         name_set=name_set_gene_emphasis,
+        suffix_file=".txt",
         path_directory=paths["in_sets_gene"],
         report=report,
     )
-    genes_set_exclusion = read_extract_set_genes(
+    genes_set_exclusion = aexpr_sub.read_extract_set_features(
         name_set=name_set_gene_exclusion,
+        suffix_file=".txt",
         path_directory=paths["in_sets_gene"],
         report=report,
     )

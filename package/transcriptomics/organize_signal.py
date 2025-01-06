@@ -496,6 +496,33 @@ def define_column_types_table_parameter_instances():
     return types_columns
 
 
+
+def define_features_special_derivation_after_selection():
+    """
+    Defines names of columns in sequence by which to filter and sort columns in
+    a table.
+
+    This list represents the columns that are novel derivations of the original
+    columns.
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): names of columns in sequence by which to filter and sort
+            columns in table
+
+    """
+
+    # Specify sequence of columns within table.
+    features = [
+        "identifier_subject_nest_intervention",
+    ]
+    # Return information.
+    return features
+
+
 def read_organize_source_parameter_instances(
     paths=None,
     report=None,
@@ -616,12 +643,29 @@ def read_organize_source_parameter_instances(
                 lambda column: (":" not in str(column)),
                 columns_formula
             ))
+            # Combine names of columns for features of samples.
             columns.extend(columns_formula)
             columns = putly.collect_unique_elements(
                 elements=columns,
             )
             columns.remove("inclusion")
+            # Identify and handle any special features.
+            features_after_selection = (
+                define_features_special_derivation_after_selection()
+            )
+            features_after_selection_instance = copy.deepcopy(list(filter(
+                lambda feature: (feature in str(columns)),
+                features_after_selection
+            )))
+            columns = list(filter(
+                lambda column: (column not in features_after_selection),
+                columns
+            ))
+            # Collect names of columns for features.
             pail["columns_set"] = columns
+            pail["features_after_selection"] = (
+                features_after_selection_instance
+            )
             # Collect information and parameters for selection of genes that
             # are relevant to current instance.
             # set: selection_genes
@@ -1549,6 +1593,7 @@ def select_sets_final_identifier_table_sample(
     tissue=None,
     continuity_scale=None,
     columns_set=None,
+    features_after_selection=None,
     report=None,
 ):
     """
@@ -1572,6 +1617,8 @@ def select_sets_final_identifier_table_sample(
             for which to standardize the scale by z score
         columns_set (list<str>): names of columns for feature variables that
             are relevant to the current set or instance of parameters
+        features_after_selection (list<str>): names of special features
+            that require derivation after all selections of samples
         report (bool): whether to print reports
 
     raises:
@@ -1607,7 +1654,7 @@ def select_sets_final_identifier_table_sample(
     # It is necessary to determine these nested identifiers after selection of
     # the sample observations for the specific cohort.
     feature_nest = "identifier_subject_nest_intervention"
-    if (feature_nest in columns_set):
+    if (feature_nest in features_after_selection):
         table_selection = determine_subject_pairs_nest_category_levels(
             table=table_selection,
             columns_set=columns_set,
@@ -1619,14 +1666,6 @@ def select_sets_final_identifier_table_sample(
         )
         pass
 
-    # Filter rows in table for non-missing values across relevant columns.
-    table_selection.dropna(
-        axis="index",
-        how="any",
-        subset=columns_set,
-        inplace=True,
-    )
-
     # Filter and sort columns within table.
     # Here it is necessary to filter to unique names of columns because
     # otherwise the column "tissue" has a redundant occurrence due to the
@@ -1635,6 +1674,8 @@ def select_sets_final_identifier_table_sample(
     columns_sequence.insert(0, "tissue")
     columns_sequence.insert(0, "inclusion")
     columns_sequence.insert(0, "identifier_signal")
+    if (feature_nest in features_after_selection):
+        columns_sequence.append(feature_nest)
     columns_sequence = putly.collect_unique_elements(
         elements=columns_sequence,
     )
@@ -1644,6 +1685,14 @@ def select_sets_final_identifier_table_sample(
             columns_sequence=columns_sequence,
             report=report,
         )
+
+    # Filter rows in table for non-missing values across relevant columns.
+    table_selection.dropna(
+        axis="index",
+        how="any",
+        subset=columns_sequence,
+        inplace=True,
+    )
 
     # Organize indices in table.
     table_selection.reset_index(
@@ -3330,6 +3379,7 @@ def control_procedure_part_branch_sample(
     selection_samples_secondary=None,
     continuity_scale=None,
     columns_set=None,
+    features_after_selection=None,
     project=None,
     routine=None,
     procedure=None,
@@ -3355,6 +3405,8 @@ def control_procedure_part_branch_sample(
             for which to standardize the scale by z score
         columns_set (list<str>): names of columns for feature variables that
             are relevant to the current set or instance of parameters
+        features_after_selection (list<str>): names of special features
+            that require derivation after all selections of samples
         project (str): name of project
         routine (str): name of routine, either 'transcriptomics' or
             'proteomics'
@@ -3410,6 +3462,7 @@ def control_procedure_part_branch_sample(
         tissue=tissue,
         continuity_scale=continuity_scale,
         columns_set=columns_set,
+        features_after_selection=features_after_selection,
         report=report,
     )
     # Summarize the counts of samples corresponding to each set of parameters.
@@ -3606,6 +3659,7 @@ def control_procedure_part_branch(
     selection_samples_secondary=None,
     continuity_scale=None,
     columns_set=None,
+    features_after_selection=None,
     selection_genes=None,
     name_set_gene_emphasis=None,
     name_set_gene_exclusion=None,
@@ -3634,6 +3688,8 @@ def control_procedure_part_branch(
             for which to standardize the scale by z score
         columns_set (list<str>): names of columns for feature variables that
             are relevant to the current set or instance of parameters
+        features_after_selection (list<str>): names of special features
+            that require derivation after all selections of samples
         selection_genes (dict<list<str>>): filters on rows in table for
             selection of genes relevant to analysis
         name_set_gene_emphasis (str): name corresponding to a file in text
@@ -3683,6 +3739,7 @@ def control_procedure_part_branch(
         selection_samples_secondary=selection_samples_secondary,
         continuity_scale=continuity_scale,
         columns_set=columns_set,
+        features_after_selection=features_after_selection,
         project=project,
         routine=routine,
         procedure=procedure,
@@ -3791,6 +3848,8 @@ def control_parallel_instance(
                 for which to standardize the scale by z score
             columns_set (list<str>): names of columns for feature variables
                 that are relevant to the current set or instance of parameters
+            features_after_selection (list<str>): names of special features
+                that require derivation after all selections of samples
             selection_genes (dict<list<str>>): filters on rows in table for
                 selection of genes relevant to analysis
             name_set_gene_emphasis (str): name corresponding to a file in text
@@ -3827,6 +3886,7 @@ def control_parallel_instance(
     selection_samples_secondary = instance["selection_samples_secondary"]
     continuity_scale = instance["continuity_scale"]
     columns_set = instance["columns_set"]
+    features_after_selection = instance["features_after_selection"]
     selection_genes = instance["selection_genes"]
     name_set_gene_emphasis = instance["name_set_gene_emphasis"]
     name_set_gene_exclusion = instance["name_set_gene_exclusion"]
@@ -3848,6 +3908,7 @@ def control_parallel_instance(
         selection_samples_secondary=selection_samples_secondary,
         continuity_scale=continuity_scale,
         columns_set=columns_set,
+        features_after_selection=features_after_selection,
         selection_genes=selection_genes,
         name_set_gene_emphasis=name_set_gene_emphasis,
         name_set_gene_exclusion=name_set_gene_exclusion,
