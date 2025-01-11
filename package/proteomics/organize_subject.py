@@ -1134,6 +1134,17 @@ def organize_table_subject_property(
 
 
 ##########
+# 4. Describe features for groups of observations.
+
+# define feature variables and their values for groups of observations
+# 1.  assign names to these groups of observations
+# 2. for a list of continuous variables, calculate descriptive statistics in groups
+#      describe_table_features_by_groups()
+# 3. return report table
+
+
+
+##########
 # Functionality of use in multiple modules of the "age_exercise" package.
 
 
@@ -2712,10 +2723,12 @@ def read_extract_combine_custom_feature_sets(
                 elements=features_set_collection,
             )
             # Ensure that all genes in set are in the table of signals.
-            features_set_collection = list(filter(
-                lambda feature: (feature in features_available),
-                features_set_collection
-            ))
+            if (features_available is not None):
+                features_set_collection = list(filter(
+                    lambda feature: (feature in features_available),
+                    features_set_collection
+                ))
+                pass
             # Collect genes in custom set.
             sets_features[name_merge] = copy.deepcopy(features_set_collection)
             pass
@@ -3357,7 +3370,7 @@ def plot_heatmap_features_sets_observations_groups(
         size_title_ordinate="ten",
         size_title_abscissa="ten",
         size_title_bar="thirteen",
-        size_label_feature_set="fourteen",
+        size_label_feature_set="fifteen",
         size_label_legend_observation_group="fourteen",
         size_label_bar="fifteen",
         show_scale_bar=True,
@@ -3462,7 +3475,7 @@ def plot_heatmap_features_sets_observations_labels(
         size_title_ordinate="eight",
         size_title_abscissa="eight",
         size_title_bar="twelve",
-        size_label_feature_set="thirteen",
+        size_label_feature_set="fifteen",
         size_label_abscissa="eleven",
         size_label_bar="fourteen",
         show_labels_abscissa=True,

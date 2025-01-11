@@ -1118,9 +1118,81 @@ def control_procedure_part_branch(
     pplot.write_product_plots_parent_directory(
         pail_write=pail_write_plot,
         format="jpg", # jpg, png, svg
-        resolution=300,
+        resolution=600,
         path_directory=path_directory_plot_group,
     )
+
+    # TODO: TCW; 9 January 2025
+    # Organize this special operation below within a function
+    # arguments:
+    # table=pail_tables["table_8"], <-- mean of signals for features within groups of observations
+    # group_first="younger_control",  <-- corresponds to name of column in table
+    # group_second="elder_omega3", <-- corresponds to name of column in table
+    # threshold_z=0.1,
+    #
+
+    ##########
+    # Filter tables and extract sets of features.
+    if True:
+        # Parameters.
+        threshold_z = float(0.2)
+        # Copy information.
+        table_mean_set = pail_tables["table_8"].copy(deep=True)
+        # Filter rows in table for features of which mean signals are lesser or
+        # greater in both "younger" and "elder-omega3" groups of observations
+        # in comparison to "elder-placebo" and "elder-before" groups of
+        # observations.
+        table_same = table_mean_set.loc[
+            (
+                (
+                    (table_mean_set["younger_control"] < float(-1*threshold_z)) &
+                    (table_mean_set["elder_omega3"] < float(-1*threshold_z))
+                ) |
+                (
+                    (table_mean_set["younger_control"] > threshold_z) &
+                    (table_mean_set["elder_omega3"] > threshold_z)
+                )
+            ), :
+        ].copy(deep=True)
+        table_opposite = table_mean_set.loc[
+            (
+                (
+                    (table_mean_set["younger_control"] < float(-1*threshold_z)) &
+                    (table_mean_set["elder_omega3"] > threshold_z)
+                ) |
+                (
+                    (table_mean_set["younger_control"] > threshold_z) &
+                    (table_mean_set["elder_omega3"] < float(-1*threshold_z))
+                )
+            ), :
+        ].copy(deep=True)
+        table_match = table_same
+        # Extract identifiers of features corresponding to genes.
+        genes_match_younger_elder_omega3 = copy.deepcopy(
+            table_match[index_genes].unique().tolist()
+        )
+        # Collect information.
+        # Collections of files.
+        pail_write_lists = dict()
+        pail_write_lists[str(name_group_instances)] = (
+            genes_match_younger_elder_omega3
+        )
+        # Define paths to directories.
+        path_directory_data_sets = os.path.join(
+            paths["out_procedure_data"],
+            "sets_subjective_match_directionality_younger_elder_omega3",
+        )
+        # Create directories.
+        putly.create_directories(
+            path=path_directory_data_sets,
+        )
+        # Write product information to file.
+        putly.write_lists_to_file_text(
+            pail_write=pail_write_lists,
+            path_directory=path_directory_data_sets,
+            delimiter="\n",
+        )
+        pass
     pass
 
 
@@ -1179,7 +1251,7 @@ def execute_procedure(
     ##########
     # 2.1. Read and count unique genes in sets.
     path_directory_sets_gene = os.path.join(
-        paths["in_sets_gene"], "sets_gene_2024-12-24",
+        paths["in_sets_gene"], "sets_gene_2025-01-09",
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(

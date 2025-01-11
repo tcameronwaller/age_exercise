@@ -52,6 +52,7 @@ import age_exercise.transcriptomics.organize_sample
 import age_exercise.transcriptomics.organize_signal
 import age_exercise.transcriptomics.select_gene_sets
 import age_exercise.transcriptomics.compare_sets_groups
+import age_exercise.transcriptomics.operate_sets
 import age_exercise.proteomics.organize_subject
 import age_exercise.proteomics.organize_olink
 
@@ -296,6 +297,15 @@ def define_subparser_transcriptomics(
             "samples."
         )),
     )
+    parser_routine.add_argument(
+        "-operate_sets",
+        "--operate_sets",
+        dest="operate_sets",
+        action="store_true",
+        help=(str(
+            "Combine and filter sets of features by inclusion or exclusion."
+        )),
+    )
 
     # Define behavior.
     parser_routine.set_defaults(func=evaluate_parameters_transcriptomics)
@@ -529,6 +539,17 @@ def evaluate_parameters_transcriptomics(arguments):
         age_exercise.transcriptomics.compare_sets_groups.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
+    if arguments.operate_sets:
+        # Report status.
+        print(
+           "... executing age_exercise.transcriptomics.operate_sets " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        age_exercise.transcriptomics.operate_sets.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+
 
     pass
 
