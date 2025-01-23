@@ -875,8 +875,8 @@ def organize_rank_list_gene(
 
     # Define relevant columns in sequence.
     columns_sequence = [
-        column_identifier,
-        #column_name,
+        #column_identifier,
+        column_name,
         column_rank,
     ]
 
@@ -906,15 +906,33 @@ def organize_rank_list_gene(
         inplace=True,
     )
 
+    # Remove redundant rows from table on basis of gene identifier.
+    table.drop_duplicates(
+        subset=[
+            #column_identifier,
+            column_name,
+        ],
+        keep="first",
+        inplace=True,
+        ignore_index=True,
+    )
+
     # Sort rows within table.
     table.sort_values(
         by=[
-            "rank_fold_p",
+            column_rank,
         ],
         axis="index",
         ascending=True,
         na_position="last",
         inplace=True,
+    )
+
+    # Organize indices in table.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
     )
 
     # Filter and sort columns within table.

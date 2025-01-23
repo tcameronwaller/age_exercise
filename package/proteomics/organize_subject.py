@@ -887,6 +887,11 @@ def determine_date_visit_text(
 # TODO: include another "selection" column in the parameter table to
 # designate features for logarithmic scale. Then will need to include
 # those is a new column list in the "parse" function.
+# <-- I dunno if that's necessary... how many would need log transform?
+
+# TODO: TCW; 22 January 2025
+# Include another "selection" in the parameter table to designate variables for
+# features on quantitative, continuous scales
 
 
 def organize_table_subject_property(
@@ -1141,6 +1146,18 @@ def organize_table_subject_property(
 # 2. for a list of continuous variables, calculate descriptive statistics in groups
 #      describe_table_features_by_groups()
 # 3. return report table
+
+
+# Prepare
+# stratified groups of samples for box plots
+# 1. younger
+# 2. older-before
+# 3. older-placebo
+# 4. older-omega3
+
+# list of features for which to create box plots
+
+
 
 
 
@@ -3267,10 +3284,6 @@ def prepare_table_features_sets_allocation_match_table_signal(
         pass
     # Return information.
     return table_allocation_sort
-
-
-# Prepare
-
 
 
 # Plot charts.

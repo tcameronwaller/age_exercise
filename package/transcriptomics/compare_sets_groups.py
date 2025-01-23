@@ -1066,6 +1066,41 @@ def control_procedure_part_branch(
     )
 
     ##########
+    # Write product information to file for tables.
+    # Collect information.
+    # Collections of files.
+    pail_write_data = dict()
+    pail_write_data[str("table_group_mean")] = (
+        pail_tables["table_8"]
+    )
+    pail_write_data[str("table_group_mean_translation")] = (
+        pail_tables["table_8_translation"]
+    )
+    # Define paths to directories.
+    path_directory_data_tables = os.path.join(
+        paths["out_procedure_data"], "tables_groups",
+        str(name_group_instances),
+    )
+    # Create directories.
+    putly.create_directories(
+        path=path_directory_data_tables,
+    )
+
+    ##########
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_data,
+        path_directory=path_directory_data_tables,
+        reset_index_rows=False,
+        write_index_rows=True,
+        write_index_columns=True,
+        type="text",
+        delimiter="\t",
+        suffix=".tsv",
+    )
+
+
+    ##########
     # Prepare plot charts.
     pail_plot = manage_plot_charts(
         table_box=pail_tables["table_2_translation"],
@@ -1102,7 +1137,7 @@ def control_procedure_part_branch(
     pail_write_plot["heatmap_mean_label"] = pail_plot["heatmap_mean_label"]
 
     ##########
-    # _. Write product information to file.
+    # Write product information to file for plot charts.
     #paths["out_data"]
     #paths["out_plot"]
 
@@ -1133,7 +1168,7 @@ def control_procedure_part_branch(
 
     ##########
     # Filter tables and extract sets of features.
-    if True:
+    if False:
         # Parameters.
         threshold_z = float(0.2)
         # Copy information.
