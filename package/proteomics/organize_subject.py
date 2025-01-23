@@ -289,8 +289,7 @@ def define_type_columns_table_subject_feature_organization():
 
     # Specify variable types of columns within table.
     types_columns = dict()
-    types_columns["inclusion_transcriptomics"] = "int32"
-    types_columns["inclusion_proteomics"] = "int32"
+    types_columns["inclusion"] = "int32"
     types_columns["selection_continuous"] = "int32"
     types_columns["category_raw"] = "string"
     types_columns["category"] = "string"
@@ -495,7 +494,7 @@ def read_source(
     )
     pail_parse = parse_extract_table_sample_feature_organization(
         table=pail["table_feature_organization"],
-        inclusion="inclusion_proteomics",
+        inclusion="inclusion",
         report=report,
     )
     pail["columns_all"] = pail_parse["columns_all"]
@@ -539,7 +538,8 @@ def define_sequence_columns_novel_subject_feature():
     a table.
 
     This list represents the columns that are novel derivations of the original
-    columns.
+    columns. These features are not in the source table
+    "table_subject_sample_feature_organization".
 
     arguments:
 
@@ -883,15 +883,121 @@ def determine_date_visit_text(
     # Return information.
     return designator
 
-# TODO: TCW; 27 November 2024
-# TODO: include another "selection" column in the parameter table to
-# designate features for logarithmic scale. Then will need to include
-# those is a new column list in the "parse" function.
-# <-- I dunno if that's necessary... how many would need log transform?
 
-# TODO: TCW; 22 January 2025
-# Include another "selection" in the parameter table to designate variables for
-# features on quantitative, continuous scales
+def wrangle_messy_features(
+    table=None,
+    columns_original=None,
+    columns_novel=None,
+    report=None,
+):
+    """
+    Wrangle, parse, clean, or organize information for features that are messy
+    or otherwise need extra help.
+
+    arguments:
+        table (object): Pandas data-frame table of subjects, samples, and their
+            attribute features
+        translations_column (dict<str>): translations for names of columns in a
+            table
+        columns_original (list<str>): names of original columns in sequence by
+            which to filter and sort columns in table
+        columns_novel (list<str>): names of original columns in sequence by
+            which to filter and sort columns in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    # Copy information.
+    table = table.copy(deep=True)
+    columns_original = copy.deepcopy(columns_original)
+    columns_novel = copy.deepcopy(columns_novel)
+
+    # Combine original and novel columns.
+    columns_all = copy.deepcopy(columns_original)
+    columns_all.extend(columns_novel)
+
+    # Clean values for counts of white blood cells.
+    if ("white_blood_cell" in columns_all):
+        table["white_blood_cell"] = pandas.to_numeric(
+            table["white_blood_cells"],
+            errors="coerce", # force any parse error values to missing "NaN"
+            downcast="float", # cast type to smallest float type
+        )
+        pass
+
+    # Clean values for counts of eosinophils.
+    # Use the half minimum method of imputation.
+    # Imputation seems justifiable since there is more information than just a
+    # missing value.
+    if ("eosinophils" in columns_all):
+        table["eosinophils"] = table.apply(
+            lambda row:
+                str(row["eosinophils"]).replace(
+                    "<.03", "0.015"
+                ).replace("<0.03", "0.015"),
+            axis="columns", # apply function to each row
+        )
+        table["eosinophils"] = table["eosinophils"].astype("float32")
+        pass
+
+    # Clean values for counts of basophils.
+    # Use the half minimum method of imputation.
+    # Imputation seems justifiable since there is more information than just a
+    # missing value.
+    if ("basophils" in columns_all):
+        table["basophils"] = table.apply(
+            lambda row:
+                str(row["basophils"]).replace(
+                    "<.03", "0.015"
+                ).replace("<0.03", "0.015"),
+            axis="columns", # apply function to each row
+        )
+        table["basophils"] = table["basophils"].astype("float32")
+        pass
+
+    # Clean values for C-reactive protein variable.
+    # Use the half minimum method of imputation.
+    # Imputation seems justifiable since there is more information than just a
+    # missing value.
+    if ("c_react_protein" in columns_all):
+        table["c_react_protein"] = table.apply(
+            lambda row:
+                str(row["c_react_protein"]).replace(
+                    "<.2", "0.1"
+                ).replace("<0.2", "0.1"),
+            axis="columns", # apply function to each row
+        )
+        table["c_react_protein"] = table["c_react_protein"].astype("float32")
+        pass
+
+    # Replace values of zero for oxygen consumption with missing values.
+    # Use the values of maximal oxygen consumption adjusted to lean body mass.
+    if ("oxygen_consumption" in columns_all):
+        table["oxygen_consumption"] = table["oxygen_consumption"].replace(
+            to_replace=0,
+            value=pandas.NA,
+        )
+        pass
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        print("function: wrangle_messy_features()")
+        putly.print_terminal_partition(level=5)
+        print("table of attributes for samples: ")
+        print(pail["table"].iloc[0:10, 0:])
+        print(pail["table"])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table
 
 
 def organize_table_subject_property(
@@ -953,6 +1059,15 @@ def organize_table_subject_property(
     table.dropna(
         how="all",
         axis="index",
+    )
+
+    # Wrangle, parse, clean, or organize information for features that are
+    # messy or otherwise need extra help.
+    table = wrangle_messy_features(
+        table=table,
+        columns_original=columns_original,
+        columns_novel=columns_novel,
+        report=False,
     )
 
     # Determine designations of cohort by age.
@@ -1069,22 +1184,6 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
-    # Replace values of zero for oxygen consumption with missing values.
-    # Use the values of maximal oxygen consumption adjusted to lean body mass.
-    table["oxygen_consumption"] = table["oxygen_consumption"].replace(
-        to_replace=0,
-        value=pandas.NA,
-    )
-
-    # Clean values for C-reactive protein variable.
-    table["c_react_protein"] = table.apply(
-        lambda row:
-            str(row["c_react_protein"]).replace(
-                "<.2", "0.1"
-            ).replace("<0.2", "0.1"),
-        axis="columns", # apply function to each row
-    )
-    table["c_react_protein"] = table["c_react_protein"].astype("float32")
 
     # Transform values to logarithmic scale for a selection of features on a
     # quantitative continuous interval or ratio scale of measurement.
@@ -1154,6 +1253,8 @@ def organize_table_subject_property(
 # 2. older-before
 # 3. older-placebo
 # 4. older-omega3
+# after stratification, determine if any of these groups has too few observations
+# if < 5 observations, drop the group from the box plot
 
 # list of features for which to create box plots
 
@@ -3830,10 +3931,13 @@ def execute_procedure(
         report=report,
     )
 
-    # TODO: TCW; 27 November 2024
-    # TODO: include another "selection" column in the parameter table to
-    # designate features for logarithmic scale. Then will need to include
-    # those is a new column list in the "parse" function.
+    ##########
+    # 4. Plot chart representations of features on continuous, quantitative
+    # measurement scales between groups of observations.
+    # pail_source["columns_continuous"]
+
+
+
 
 
     ##########
