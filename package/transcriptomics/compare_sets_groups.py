@@ -529,61 +529,12 @@ def create_plot_chart_box(
 
     ##########
     # Organize information for plot.
-
-    # Copy information in table.
-    table = table.copy(deep=True)
-    # Extract names and indices of groups to preserve their original sequence.
-    groups_sequence = copy.deepcopy(table[column_group].unique().tolist())
-    sequence_groups = dict()
-    index = 0
-    for name in groups_sequence:
-        sequence_groups[name] = index
-        index += 1
-        pass
-    # Organize indices in table.
-    table.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
+    pail_extract = porg.extract_array_values_from_table_column_by_groups_rows(
+        table=table,
+        column_group=column_group,
+        column_feature=column_feature,
+        report=False,
     )
-    table.set_index(
-        [column_group],
-        append=False,
-        drop=True,
-        inplace=True
-    )
-    # Split rows within table by factor columns.
-    groups = table.groupby(
-        level=column_group,
-    )
-    # Collect information.
-    names_groups = list()
-    values_groups = list()
-    # Iterate on groups, apply operations, and collect information from each.
-    for name_group, table_group in groups:
-        # Copy information in table.
-        table_group = table_group.copy(deep=True)
-        # Extract information.
-        values = table_group[column_feature].dropna().to_numpy(
-            dtype="float64",
-            na_value=numpy.nan,
-            copy=True,
-        )
-        # Collect information.
-        names_groups.append(name_group)
-        values_groups.append(values)
-        pass
-    # Sort information for groups and values.
-    sequence_sort = list()
-    for name in names_groups:
-        sequence_sort.append(sequence_groups[name])
-        pass
-    names_groups_sort = [
-        y for _,y in sorted(zip(sequence_sort, names_groups))
-    ]
-    values_groups_sort = [
-        y for _,y in sorted(zip(sequence_sort, values_groups))
-    ]
 
     ##########
     # Create plot chart.
@@ -593,10 +544,10 @@ def create_plot_chart_box(
     colors = pplot.define_color_properties()
     # Create figure.
     figure = pplot.plot_boxes_groups(
-        values_groups=values_groups_sort,
+        values_groups=pail_extract["values_groups"],
         title_ordinate="scale-normal(gene signal)",
         title_abscissa="",
-        titles_abscissa_groups=names_groups_sort,
+        titles_abscissa_groups=pail_extract["names_groups"],
         colors_groups=None,
         label_top_center="",
         label_top_left="",

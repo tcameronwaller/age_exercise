@@ -290,7 +290,7 @@ def define_type_columns_table_subject_feature_organization():
     # Specify variable types of columns within table.
     types_columns = dict()
     types_columns["inclusion"] = "int32"
-    types_columns["selection_continuous"] = "int32"
+    types_columns["selection_quantitative"] = "int32"
     types_columns["category_raw"] = "string"
     types_columns["category"] = "string"
     types_columns["name_source"] = "string"
@@ -346,7 +346,7 @@ def parse_extract_table_sample_feature_organization(
     )
     types_columns = series_types_columns.to_dict()
 
-    # Extract information for translation of names of columns.
+    # Extract information for forward translation of names of columns.
     table_name_product = table_inclusion.loc[
         (table_inclusion["name_product"].str.len() > 0), :
     ].copy(deep=True)
@@ -358,7 +358,21 @@ def parse_extract_table_sample_feature_organization(
         table_translations["name_product"].to_list(),
         index=table_translations["name_intermediate"],
     )
-    translations_column = series_translations.to_dict()
+    translations_feature_forward = series_translations.to_dict()
+
+    # Extract information for reverse translation of names of columns.
+    table_name_product = table_inclusion.loc[
+        (table_inclusion["name_product"].str.len() > 0), :
+    ].copy(deep=True)
+    table_translations = table_name_product.filter(
+        items=["name_source", "name_product",],
+        axis="columns",
+    )
+    series_translations = pandas.Series(
+        table_translations["name_source"].to_list(),
+        index=table_translations["name_product"],
+    )
+    translations_feature_reverse = series_translations.to_dict()
 
     # Extract product names of all columns.
     columns_all = copy.deepcopy(
@@ -367,15 +381,15 @@ def parse_extract_table_sample_feature_organization(
 
     # Determine names of columns for feature variables on quantitative
     # continuous interval or ratio scales of measurement.
-    table_continuous = table.loc[
+    table_quantitative = table.loc[
         (
             (table[inclusion] == 1) &
-            (table["selection_continuous"] == 1) &
+            (table["selection_quantitative"] == 1) &
             (~table["category"].str.contains("olink_"))
         ), :
     ].copy(deep=True)
-    columns_continuous = copy.deepcopy(
-        table_continuous["name_product"].to_list()
+    columns_quantitative = copy.deepcopy(
+        table_quantitative["name_product"].to_list()
     )
 
     # Extract names of columns corresponding to O-Link measurements in each
@@ -400,10 +414,10 @@ def parse_extract_table_sample_feature_organization(
         print(types_columns)
         putly.print_terminal_partition(level=5)
         print(
-            "translations for columns after initial, intermediate " +
+            "forward translations for columns after initial, intermediate " +
             "translation:"
         )
-        print(translations_column)
+        print(translations_feature_forward)
         putly.print_terminal_partition(level=5)
         print("Counts of each category of columns")
         print(table_inclusion["category"].value_counts(dropna=False))
@@ -429,9 +443,10 @@ def parse_extract_table_sample_feature_organization(
     # Collect information.
     pail = dict()
     pail["types_columns"] = types_columns
-    pail["translations_column"] = translations_column
+    pail["translations_feature_forward"] = translations_feature_forward
+    pail["translations_feature_reverse"] = translations_feature_reverse
     pail["columns_all"] = columns_all
-    pail["columns_continuous"] = columns_continuous
+    pail["columns_quantitative"] = columns_quantitative
     pail["columns_olink_plasma"] = columns_olink_plasma
     pail["columns_olink_muscle"] = columns_olink_muscle
     pail["columns_olink_adipose"] = columns_olink_adipose
@@ -497,8 +512,14 @@ def read_source(
         inclusion="inclusion",
         report=report,
     )
+    pail["translations_feature_forward"] = (
+        pail_parse["translations_feature_forward"]
+    )
+    pail["translations_feature_reverse"] = (
+        pail_parse["translations_feature_reverse"]
+    )
     pail["columns_all"] = pail_parse["columns_all"]
-    pail["translations_column"] = pail_parse["translations_column"]
+    pail["columns_quantitative"] = pail_parse["columns_quantitative"]
 
     # Table of attributes for samples.
     pail["table_subject_property"] = pandas.read_csv(
@@ -897,8 +918,6 @@ def wrangle_messy_features(
     arguments:
         table (object): Pandas data-frame table of subjects, samples, and their
             attribute features
-        translations_column (dict<str>): translations for names of columns in a
-            table
         columns_original (list<str>): names of original columns in sequence by
             which to filter and sort columns in table
         columns_novel (list<str>): names of original columns in sequence by
@@ -922,8 +941,8 @@ def wrangle_messy_features(
     columns_all.extend(columns_novel)
 
     # Clean values for counts of white blood cells.
-    if ("white_blood_cell" in columns_all):
-        table["white_blood_cell"] = pandas.to_numeric(
+    if ("white_blood_cells" in columns_all):
+        table["white_blood_cells"] = pandas.to_numeric(
             table["white_blood_cells"],
             errors="coerce", # force any parse error values to missing "NaN"
             downcast="float", # cast type to smallest float type
@@ -958,6 +977,11 @@ def wrangle_messy_features(
             axis="columns", # apply function to each row
         )
         table["basophils"] = table["basophils"].astype("float32")
+        table["basophils"].where(
+            table["basophils"] <= 100,
+            other=pandas.NA,
+            inplace=True,
+        )
         pass
 
     # Clean values for C-reactive protein variable.
@@ -973,6 +997,11 @@ def wrangle_messy_features(
             axis="columns", # apply function to each row
         )
         table["c_react_protein"] = table["c_react_protein"].astype("float32")
+        table["c_react_protein"].where(
+            table["c_react_protein"] <= 30,
+            other=pandas.NA,
+            inplace=True,
+        )
         pass
 
     # Replace values of zero for oxygen consumption with missing values.
@@ -1237,29 +1266,465 @@ def organize_table_subject_property(
     return pail
 
 
+
 ##########
-# 4. Describe features for groups of observations.
-
-# define feature variables and their values for groups of observations
-# 1.  assign names to these groups of observations
-# 2. for a list of continuous variables, calculate descriptive statistics in groups
-#      describe_table_features_by_groups()
-# 3. return report table
+# 4. Describe quantitative features in groups of observations.
 
 
-# Prepare
-# stratified groups of samples for box plots
-# 1. younger
-# 2. older-before
-# 3. older-placebo
-# 4. older-omega3
-# after stratification, determine if any of these groups has too few observations
-# if < 5 observations, drop the group from the box plot
+def define_selection_groups_observations_age_omega3(
+    table=None,
+    index_rows=None,
+    report=None,
+):
+    """
+    Defines groups of observations.
 
-# list of features for which to create box plots
+    arguments:
+        table (object): Pandas data-frame table of values of signal intensity
+            corresponding to features across columns and observations across
+            rows
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict): collection of information
+
+    """
+
+    # Copy information.
+    table_source = table.copy(deep=True)
+
+    # Collect information.
+    pail = dict()
+
+    # Names of groups in sequence for sort order.
+    pail["names_groups_observations_sequence"] = list()
+    pail["names_groups_observations_sequence"].append("younger_control")
+    pail["names_groups_observations_sequence"].append("older_control")
+    pail["names_groups_observations_sequence"].append("older_placebo")
+    pail["names_groups_observations_sequence"].append("older_omega3")
+
+    # Prepare reference to sort rows by group in a subsequent table.
+    # Option 1.
+    pail["sequence_groups_observations"] = dict(zip(
+        pail["names_groups_observations_sequence"],
+        range(len(pail["names_groups_observations_sequence"]))
+    ))
+
+    # Selections of observations in groups.
+    pail["groups_observations"] = dict()
+    pail["groups_observations"]["younger_control"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_source,
+            column_identifier=index_rows,
+            name="younger_control", # or "name_instance"
+            columns_categories={
+                #"tissue": ["adipose",], # column "tissue" not in original subject table
+                "cohort_age_text": ["younger",],
+                "sex_text": ["female","male",],
+                "study_clinic_visit": ["first",],
+            },
+            report=report,
+    ))
+    pail["groups_observations"]["older_control"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_source,
+            column_identifier=index_rows,
+            name="older_control", # or "name_instance"
+            columns_categories={
+                #"tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "sex_text": ["female","male",],
+                "study_clinic_visit": ["first",],
+            },
+            report=report,
+    ))
+    pail["groups_observations"]["older_placebo"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_source,
+            column_identifier=index_rows,
+            name="older_placebo", # or "name_instance"
+            columns_categories={
+                #"tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "sex_text": ["female","male",],
+                "study_clinic_visit": ["second",],
+                "intervention_text": ["placebo",],
+            },
+            report=report,
+    ))
+    pail["groups_observations"]["older_omega3"] = (
+        porg.filter_extract_table_row_identifiers_by_columns_categories(
+            table=table_source,
+            column_identifier=index_rows,
+            name="older_omega3", # or "name_instance"
+            columns_categories={
+                #"tissue": ["adipose",],
+                "cohort_age_text": ["elder",],
+                "sex_text": ["female","male",],
+                "study_clinic_visit": ["second",],
+                "intervention_text": ["active",],
+            },
+            report=report,
+    ))
+
+    # Total selection of observations.
+    pail["observations_selection"] = list()
+    for group_observations in pail["groups_observations"].keys():
+        pail["observations_selection"].extend(
+            pail["groups_observations"][group_observations]
+        )
+        pass
+
+    # Return information.
+    return pail
 
 
+def manage_plot_write_groups_observations_box(
+    table=None,
+    column_feature=None,
+    column_group=None,
+    translations_feature=None,
+    paths=None,
+    report=None,
+):
+    """
+    Plot chart representations of values of signal intensity for features
+    across sample observations or groups of sample observations.
 
+    arguments:
+        table (object): Pandas data-frame table of values of signal intensity
+            corresponding to features across columns and observations across
+            rows
+        column_feature (str): name of column in original source table for a
+            feature on a quantitative, continuous, interval, or ratio scale of
+            measurement
+        column_group (str): name of column in table to use for groups
+        translations_feature (dict<str>): translations for names of features
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+
+    """
+
+    ##########
+    # Organize information for plot.
+    pail_extract = porg.extract_array_values_from_table_column_by_groups_rows(
+        table=table,
+        column_group=column_group,
+        column_feature=column_feature,
+        report=False,
+    )
+    # Determine title.
+    if (
+        (translations_feature is not None) and
+        (column_feature in translations_feature.keys())
+    ):
+        title = translations_feature[column_feature]
+    else:
+        title = column_feature
+        pass
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Extract parameters for colors.
+    colors_names_groups = [
+        "purple_violet",
+        "blue_sky",
+        "yellow_sunshine",
+        "green_mint",
+    ]
+    if (
+        (colors_names_groups is not None) and
+        (len(colors_names_groups) > 0)
+    ):
+        colors_groups = list(map(
+            lambda color_name: copy.deepcopy(colors[color_name]),
+            colors_names_groups
+        ))
+    else:
+        colors_groups = None
+        pass
+
+    # Create figure.
+    figure = pplot.plot_boxes_groups(
+        values_groups=pail_extract["values_nonmissing_groups"],
+        title_ordinate="measurement",
+        title_abscissa="",
+        titles_abscissa_groups=pail_extract["names_groups"],
+        title_chart_top_center=title,
+        colors_groups=colors_groups,
+        label_top_center="",
+        label_top_left="",
+        label_top_right="",
+        aspect="landscape",
+        orientation_box="vertical",
+        axis_linear_minimum=0.0,
+        fonts=fonts,
+        colors=colors,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    pail_write_plot = dict()
+    pail_write_plot[column_feature] = figure
+
+    ##########
+    # _. Write product information to file.
+    #paths["out_data"]
+    #paths["out_plot"]
+
+    # Define paths to directories.
+    path_directory_plot = os.path.join(
+        paths["out_procedure_plot"], "feature_box",
+    )
+    # Create directories.
+    putly.create_directories(
+        path=path_directory_plot,
+    )
+    # Write figures to file.
+    pplot.write_product_plots_parent_directory(
+        pail_write=pail_write_plot,
+        format="jpg", # jpg, png, svg
+        resolution=300,
+        path_directory=path_directory_plot,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = str(
+            "manage_plot_write_groups_observations_box()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=4)
+
+    # Return information.
+    pass
+
+
+def describe_quantitative_features_by_observations_groups(
+    table=None,
+    index_columns=None,
+    index_rows=None,
+    columns_quantitative=None,
+    translations_feature=None,
+    paths=None,
+    report=None,
+):
+    """
+    Describe features on a quantitative, continuous, interval or ratio scale of
+    measurement in terms of their values within and between groups of
+    observations. For each feature, this function prepares a table of summary,
+    descriptive, statistical measurements and a box plot chart.
+
+    Format of source table (name: "table_source")
+    Format of source table is in wide format with floating-point values of
+    signal intensities for measurements of individual Olink targets
+    corresponding to features across columns and distinct individual
+    observations across rows. A special header row gives identifiers or names
+    corresponding to each feature across columns, and a special column gives
+    identifiers or names corresponding to each observation across rows. For
+    versatility, this table does not have explicitly defined indices across
+    rows or columns.
+    ----------
+    features        feature_1 feature_2 feature_3 feature_4 feature_5 ...
+    observation
+    observation_1   0.001     0.001     0.001     0.001     0.001     ...
+    observation_2   0.001     0.001     0.001     0.001     0.001     ...
+    observation_3   0.001     0.001     0.001     0.001     0.001     ...
+    observation_4   0.001     0.001     0.001     0.001     0.001     ...
+    observation_5   0.001     0.001     0.001     0.001     0.001     ...
+    ----------
+
+    ----------
+    Format of product table (name: "table_product")
+    ----------
+    Format of product table is in partial long format with summary statistics
+    and measures across columns and features across rows. A special column
+    gives identifiers corresponding to each feature across rows. Another
+    special column provides names of categorical groups of observations. For
+    versatility, this table does not have explicity defined indices across
+    columns or rows.
+    ----------
+    detail    group   mean standard_error standard_deviation median interqua...
+    feature
+    feature_1 group_1 0.01 0.001          0.001              0.015  0.5
+    feature_1 group_2 0.01 0.001          0.001              0.015  0.5
+    feature_1 group_3 0.01 0.001          0.001              0.015  0.5
+    feature_1 group_4 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_1 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_2 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_3 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_4 0.01 0.001          0.001              0.015  0.5
+    ----------
+
+    ...
+
+    Format of product table (name: "table_product") <-- nope... but another option
+    ----------
+    group                group_1   group_2   group_3   group_4   ...
+    measure
+    mean                 0.001     0.001     0.001     0.001     ...
+    standard_error       0.001     0.001     0.001     0.001     ...
+    standard_deviation   0.001     0.001     0.001     0.001     ...
+    95_confidence_low    0.001     0.001     0.001     0.001     ...
+    95_confidence_high   0.001     0.001     0.001     0.001     ...
+    minimum              0.001     0.001     0.001     0.001     ...
+    maximum              0.001     0.001     0.001     0.001     ...
+    median               0.001     0.001     0.001     0.001     ...
+    count_total          30        30        30        30        ...
+    count_valid          25        25        25        25        ...
+    ----------
+
+    Review: 29 January 2025
+
+    arguments:
+        table (object): Pandas data-frame table of features across columns and
+            observations across rows with values on a quantitative, continuous,
+            interval or ratio scale of measurement
+        index_columns (str): name for index corresponding to features across
+            columns in the original source table
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        columns_quantitative (list<str>): names of columns in original source
+            table for a selection of features on a quantitative, continuous,
+            interval or ratio scale of measurement
+        translations_feature (dict<str>): translations for names of features
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict): collection of information
+
+    """
+
+    ##########
+    # Copy information.
+    table_source = table.copy(deep=True)
+    columns_quantitative = copy.deepcopy(columns_quantitative)
+    translations_feature = copy.deepcopy(translations_feature)
+
+    ##########
+    # Prepare parameters.
+
+    # Define selection of observations within groups.
+    pail_observations = define_selection_groups_observations_age_omega3(
+       table=table_source,
+       index_rows=index_rows,
+       report=report,
+    )
+    #pail_observations["names_groups_observations_sequence"]
+    #pail_observations["groups_observations"]
+    #pail_observations["observations_selection"]
+
+    # Filter rows in table.
+    table_selection = table_source.loc[
+        table_source[index_rows].isin(
+            pail_observations["observations_selection"]
+        ), :
+    ].copy(deep=True)
+
+    # Determine and fill groups of observations.
+    table_group = porg.determine_fill_table_groups_rows(
+        table=table_selection,
+        column_group="group",
+        index_rows=index_rows,
+        groups_rows=pail_observations["groups_observations"],
+        report=False,
+    )
+    # Sort rows in table by groups.
+    table_group = porg.sort_table_rows_by_single_column_reference(
+        table=table_group,
+        index_rows=index_rows,
+        column_reference="group",
+        column_sort_temporary="sort_temporary",
+        reference_sort=pail_observations["sequence_groups_observations"],
+    )
+
+    # Plot.
+    for column_quantitative in columns_quantitative:
+        manage_plot_write_groups_observations_box(
+            table=table_group,
+            column_feature=column_quantitative,
+            column_group="group",
+            translations_feature=translations_feature,
+            paths=paths,
+            report=False,
+        )
+        pass
+
+    # Table.
+    # Prepare summary of descriptive statistics for features across
+    # observations in groups.
+    table_description = pdesc.describe_table_features_by_groups(
+        table=table_group,
+        column_group="group",
+        columns_features=columns_quantitative,
+        index_feature=index_columns,
+        translations_feature=translations_feature,
+        threshold_observations=5,
+        digits_round=3,
+        report=False,
+    )
+    # Include reverse translations to original names of features.
+
+
+    # Collect information.
+    # Collections of files.
+    #pail_write_lists = dict()
+    pail_write_tables = dict()
+    pail_write_tables[str("table_quantitative_features")] = table_description
+    pail_write_objects = dict()
+    #pail_write_objects[str("samples")]
+
+    # Write product information to file.
+    putly.write_tables_to_file(
+        pail_write=pail_write_tables,
+        path_directory=paths["out_procedure_data_tables"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=True,
+        type="text",
+        delimiter="\t",
+        suffix=".tsv",
+    )
+
+    ##########
+    # Collect information.
+    pail_return = dict()
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = str(
+            "describe_quantitative_features_by_observations_groups()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail_return
 
 
 ##########
@@ -1452,6 +1917,9 @@ def organize_preliminary_information_to_prepare_tables_signal(
     return pail
 
 
+# TODO: TCW; 29 January 2025
+# prepare_table_signal_summaries_features_observation_groups()
+# this function belongs in the "description" module of package "partner"
 def prepare_table_signal_summaries_features_observation_groups(
     table=None,
     index_columns=None,
@@ -1476,22 +1944,21 @@ def prepare_table_signal_summaries_features_observation_groups(
     ----------
     Format of source table (name: "table_source")
     ----------
-    Format of source table is in wide format with floating-point values of
-    signal intensities for measurements corresponding to individual features
-    across columns and distinct individual observations across rows. A special
-    header row gives identifiers or names corresponding to each feature across
-    columns. A special column gives identifiers or names corresponding to each
-    observation across rows, and another special column provides names of
-    categorical groups for these observations. For versatility, this table does
-    not have explicitly defined indices across rows or columns.
+    Format of source table is in wide format with features across columns and
+    observations across rows. A special column gives identifiers corresponding
+    to each observation across rows. Another special column provides names
+    of categorical groups of observations, with multiple observations in each
+    group. For versatility, this table does not have explicitly defined indices
+    across columns or rows. Values for observations of features are on a
+    quantitative, continuous, interval or ratio scale of measurement.
     ----------
-    features        group     feature_1 feature_2 feature_3 feature_4 feature_5
-    observation
+    observation     group     feature_1 feature_2 feature_3 feature_4 feature_5
     observation_1   group_1   0.001     0.001     0.001     0.001     0.001
     observation_2   group_1   0.001     0.001     0.001     0.001     0.001
-    observation_3   group_2   0.001     0.001     0.001     0.001     0.001
+    observation_3   group_1   0.001     0.001     0.001     0.001     0.001
     observation_4   group_2   0.001     0.001     0.001     0.001     0.001
-    observation_5   group_3   0.001     0.001     0.001     0.001     0.001
+    observation_5   group_2   0.001     0.001     0.001     0.001     0.001
+    observation_6   group_2   0.001     0.001     0.001     0.001     0.001
     ----------
 
     ----------
@@ -1555,6 +2022,9 @@ def prepare_table_signal_summaries_features_observation_groups(
         column_group=column_group,
         columns_features=columns_features,
         index_feature=index_columns,
+        translations_feature=None,
+        threshold_observations=5,
+        digits_round=3,
         report=False,
     )
 
@@ -2159,6 +2629,10 @@ def prepare_tables_signals_features_sets_observations_groups(
         table=table_product_2_translation,
         column_group="group",
         columns_features=pail["features_available_translation"],
+        index_feature=pail["index_features"],
+        translations_feature=None,
+        threshold_observations=5,
+        digits_round=3,
         report=False,
     )
 
@@ -2168,6 +2642,10 @@ def prepare_tables_signals_features_sets_observations_groups(
         table=table_product_3_translation,
         column_group="group",
         columns_features=pail["features_available_translation"],
+        index_feature=pail["index_features"],
+        translations_feature=None,
+        threshold_observations=5,
+        digits_round=3,
         report=False,
     )
 
@@ -3914,10 +4392,11 @@ def execute_procedure(
 
     ##########
     # 3. Demonstrate and test functions to create plot charts.
-    manage_plot_charts_demonstration(
-        paths=paths,
-        report=report,
-    )
+    if False:
+        manage_plot_charts_demonstration(
+            paths=paths,
+            report=report,
+        )
 
     ##########
     # 3. Organize table of properties for study subjects.
@@ -3925,20 +4404,23 @@ def execute_procedure(
     columns_novel = define_sequence_columns_novel_subject_feature()
     pail_organization = organize_table_subject_property(
         table=pail_source["table_subject_property"],
-        translations_column=pail_source["translations_column"],
+        translations_column=pail_source["translations_feature_forward"],
         columns_original=columns_original,
         columns_novel=columns_novel,
         report=report,
     )
 
     ##########
-    # 4. Plot chart representations of features on continuous, quantitative
-    # measurement scales between groups of observations.
-    # pail_source["columns_continuous"]
-
-
-
-
+    # 4. Describe quantitative features in groups of observations.
+    pail_description = describe_quantitative_features_by_observations_groups(
+        table=pail_organization["table"],
+        index_columns="features",
+        index_rows="subject_visit",
+        columns_quantitative=pail_source["columns_quantitative"],
+        translations_feature=pail_source["translations_feature_reverse"],
+        paths=paths,
+        report=report,
+    )
 
     ##########
     # 4. Collect information.

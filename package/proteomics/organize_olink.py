@@ -253,7 +253,7 @@ def read_source(
         inclusion="inclusion_proteomics",
         report=report,
     )
-    pail["columns_continuous"] = pail_parse["columns_continuous"]
+    pail["columns_quantitative"] = pail_parse["columns_quantitative"]
     pail["columns_olink_plasma"] = pail_parse["columns_olink_plasma"]
     pail["columns_olink_muscle"] = pail_parse["columns_olink_muscle"]
     pail["columns_olink_adipose"] = pail_parse["columns_olink_adipose"]
@@ -285,7 +285,7 @@ def filter_fill_table_subject_olink(
     table=None,
     index_columns=None,
     index_rows=None,
-    columns_continuous=None,
+    columns_quantitative=None,
     columns_olink_plasma=None,
     columns_olink_muscle=None,
     columns_olink_adipose=None,
@@ -327,9 +327,9 @@ def filter_fill_table_subject_olink(
             columns in the original source table
         index_rows (str): name for index corresponding to observations across
             rows in the original source table
-        columns_continuous (list<str>): names of columns in original source
-            table for a selection of features on a continuous interval or ratio
-            scale of measurement
+        columns_quantitative (list<str>): names of columns in original source
+            table for a selection of features on a quantitative, continuous,
+            interval or ratio scale of measurement
         columns_olink_plasma (list<str>): names of columns in original source
             table for features corresponding to measurements by Olink
             technology of peptides in plasma
@@ -350,7 +350,7 @@ def filter_fill_table_subject_olink(
     ##########
     # Copy information.
     table_source = table.copy(deep=True)
-    columns_continuous = copy.deepcopy(columns_continuous)
+    columns_quantitative = copy.deepcopy(columns_quantitative)
     columns_olink_plasma = copy.deepcopy(columns_olink_plasma)
     columns_olink_muscle = copy.deepcopy(columns_olink_muscle)
     columns_olink_adipose = copy.deepcopy(columns_olink_adipose)
@@ -385,9 +385,9 @@ def filter_fill_table_subject_olink(
         table_category[index_rows].unique().tolist()
     )
     # Filter sets of features for those that are in the table.
-    columns_continuous_available = list(filter(
+    columns_quantitative_available = list(filter(
         lambda feature: (feature in columns_all),
-        columns_continuous
+        columns_quantitative
     ))
     columns_olink_plasma_available = list(filter(
         lambda feature: (feature in columns_all),
@@ -403,7 +403,7 @@ def filter_fill_table_subject_olink(
     ))
     # Combine sets of features.
     columns_selection = list()
-    columns_selection.extend(columns_continuous_available)
+    columns_selection.extend(columns_quantitative_available)
     columns_selection.extend(columns_olink_plasma_available)
     columns_selection.extend(columns_olink_muscle_available)
     columns_selection.extend(columns_olink_adipose_available)
@@ -436,16 +436,16 @@ def filter_fill_table_subject_olink(
         table_filter[index_rows].unique().tolist()
     )
     # Copy information.
-    columns_continuous_filter = copy.deepcopy(columns_continuous_available)
+    columns_quantitative_filter = copy.deepcopy(columns_quantitative_available)
     columns_olink_plasma_filter = copy.deepcopy(columns_olink_plasma_available)
     columns_olink_muscle_filter = copy.deepcopy(columns_olink_muscle_available)
     columns_olink_adipose_filter = copy.deepcopy(
         columns_olink_adipose_available
     )
     # Filter sets of features for those that remain in the table after filters.
-    columns_continuous_filter = list(filter(
+    columns_quantitative_filter = list(filter(
         lambda feature: (feature in columns_all),
-        columns_continuous_filter
+        columns_quantitative_filter
     ))
     columns_olink_plasma_filter = list(filter(
         lambda feature: (feature in columns_all),
@@ -461,7 +461,7 @@ def filter_fill_table_subject_olink(
     ))
     # Combine sets of features.
     columns_selection = list()
-    columns_selection.extend(columns_continuous_filter)
+    columns_selection.extend(columns_quantitative_filter)
     columns_selection.extend(columns_olink_plasma_filter)
     columns_selection.extend(columns_olink_muscle_filter)
     columns_selection.extend(columns_olink_adipose_filter)
@@ -485,7 +485,7 @@ def filter_fill_table_subject_olink(
     pail = dict()
     pail["table_filter"] = table_filter
     pail["table_fill"] = table_fill
-    pail["columns_continuous"] = columns_continuous_filter
+    pail["columns_quantitative"] = columns_quantitative_filter
     pail["columns_olink_plasma"] = columns_olink_plasma_filter
     pail["columns_olink_muscle"] = columns_olink_muscle_filter
     pail["columns_olink_adipose"] = columns_olink_adipose_filter
@@ -602,7 +602,7 @@ def prepare_derivative_deliverable_product_tables_signal(
     table=None,
     index_columns=None,
     index_rows=None,
-    columns_continuous=None,
+    columns_quantitative=None,
     columns_olink_plasma=None,
     columns_olink_muscle=None,
     columns_olink_adipose=None,
@@ -642,9 +642,9 @@ def prepare_derivative_deliverable_product_tables_signal(
             columns in the original source table
         index_rows (str): name for index corresponding to observations across
             rows in the original source table
-        columns_continuous (list<str>): names of columns in original source
-            table for a selection of features on a continuous interval or ratio
-            scale of measurement
+        columns_quantitative (list<str>): names of columns in original source
+            table for a selection of features on a quantitative, continuous,
+            interval or ratio scale of measurement
         columns_olink_plasma (list<str>): names of columns in original source
             table for features corresponding to measurements by Olink
             technology of peptides in plasma
@@ -666,7 +666,7 @@ def prepare_derivative_deliverable_product_tables_signal(
     ##########
     # Copy information.
     table_source = table.copy(deep=True)
-    columns_continuous = copy.deepcopy(columns_continuous)
+    columns_quantitative = copy.deepcopy(columns_quantitative)
     columns_olink_plasma = copy.deepcopy(columns_olink_plasma)
     columns_olink_muscle = copy.deepcopy(columns_olink_muscle)
     columns_olink_adipose = copy.deepcopy(columns_olink_adipose)
@@ -685,7 +685,7 @@ def prepare_derivative_deliverable_product_tables_signal(
     names_groups_observations_sequence.append("elder_male")
 
     groups_features = dict()
-    #groups_features["other"] = columns_continuous
+    #groups_features["other"] = columns_quantitative
     groups_features["olink_plasma"] = columns_olink_plasma
     groups_features["olink_muscle"] = columns_olink_muscle
     groups_features["olink_adipose"] = columns_olink_adipose
@@ -840,7 +840,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
     table=None,
     index_columns=None,
     index_rows=None,
-    columns_continuous=None,
+    columns_quantitative=None,
     columns_olink_plasma=None,
     columns_olink_muscle=None,
     columns_olink_adipose=None,
@@ -880,9 +880,9 @@ def prepare_derivative_deliverable_product_tables_correlation(
             columns in the original source table
         index_rows (str): name for index corresponding to observations across
             rows in the original source table
-        columns_continuous (list<str>): names of columns in original source
-            table for a selection of features on a continuous interval or ratio
-            scale of measurement
+        columns_quantitative (list<str>): names of columns in original source
+            table for a selection of features on a quantitative, continuous,
+            interval or ratio scale of measurement
         columns_olink_plasma (list<str>): names of columns in original source
             table for features corresponding to measurements by Olink
             technology of peptides in plasma
@@ -904,7 +904,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
     ##########
     # Copy information.
     table_source = table.copy(deep=True)
-    columns_continuous = copy.deepcopy(columns_continuous)
+    columns_quantitative = copy.deepcopy(columns_quantitative)
     columns_olink_plasma = copy.deepcopy(columns_olink_plasma)
     columns_olink_muscle = copy.deepcopy(columns_olink_muscle)
     columns_olink_adipose = copy.deepcopy(columns_olink_adipose)
@@ -922,7 +922,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
     names_groups_features_sequence.append("olink_adipose")
 
     groups_features = dict()
-    #groups_features["other"] = columns_continuous
+    #groups_features["other"] = columns_quantitative
     groups_features["olink_plasma"] = columns_olink_plasma
     groups_features["olink_muscle"] = columns_olink_muscle
     groups_features["olink_adipose"] = columns_olink_adipose
@@ -930,7 +930,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
     features_selection = list()
     for group_features in groups_features.keys():
         features_selection.extend(groups_features[group_features])
-    features_selection.extend(columns_continuous)
+    features_selection.extend(columns_quantitative)
 
     observations_selection = (
         porg.filter_extract_table_row_identifiers_by_columns_categories(
@@ -958,7 +958,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
             names_groups_features_sequence=(
                 names_groups_features_sequence
             ),
-            features_primary=columns_continuous,
+            features_primary=columns_quantitative,
             features_secondary=columns_olink_all,
             translations_features=None,
             method_priority="spearman", # "pearson", "spearman", "kendall",
@@ -1622,7 +1622,7 @@ def execute_procedure(
         table=pail_source["table_subject"],
         index_columns="features",
         index_rows="subject_visit",
-        columns_continuous=pail_source["columns_continuous"],
+        columns_quantitative=pail_source["columns_quantitative"],
         columns_olink_plasma=pail_source["columns_olink_plasma"],
         columns_olink_muscle=pail_source["columns_olink_muscle"],
         columns_olink_adipose=pail_source["columns_olink_adipose"],
@@ -1631,7 +1631,7 @@ def execute_procedure(
     )
     #pail_filter_fill["table_filter"]
     #pail_filter_fill["table_fill"]
-    #pail_filter_fill["columns_continuous"]
+    #pail_filter_fill["columns_quantitative"]
     #pail_filter_fill["columns_olink_plasma"]
     #pail_filter_fill["columns_olink_muscle"]
     #pail_filter_fill["columns_olink_adipose"]
@@ -1720,7 +1720,7 @@ def execute_procedure(
         table=pail_reduction["table"],
         index_columns="features",
         index_rows="subject_visit",
-        columns_continuous=pail_filter_fill["columns_continuous"],
+        columns_quantitative=pail_filter_fill["columns_quantitative"],
         columns_olink_plasma=pail_filter_fill["columns_olink_plasma"],
         columns_olink_muscle=pail_filter_fill["columns_olink_muscle"],
         columns_olink_adipose=pail_filter_fill["columns_olink_adipose"],
@@ -1732,7 +1732,7 @@ def execute_procedure(
             table=pail_reduction["table"],
             index_columns="features",
             index_rows="subject_visit",
-            columns_continuous=list(),
+            columns_quantitative=list(),
             columns_olink_plasma=pail_reduction["sets_columns"]["olink_plasma"],
             columns_olink_muscle=pail_reduction["sets_columns"]["olink_muscle"],
             columns_olink_adipose=pail_reduction["sets_columns"]["olink_adipose"],
@@ -1768,7 +1768,7 @@ def execute_procedure(
             table=pail_reduction["table"],
             index_columns="features",
             index_rows="subject_visit",
-            columns_continuous=pail_filter_fill["columns_continuous"],
+            columns_quantitative=pail_filter_fill["columns_quantitative"],
             columns_olink_plasma=pail_filter_fill["columns_olink_plasma"],
             columns_olink_muscle=pail_filter_fill["columns_olink_muscle"],
             columns_olink_adipose=pail_filter_fill["columns_olink_adipose"],
@@ -1854,7 +1854,7 @@ def execute_procedure(
     if False:
         pail_columns_histogram = dict()
         pail_columns_histogram["other"] = copy.deepcopy(
-            pail_parse["columns_continuous"]
+            pail_parse["columns_quantitative"]
         )
         pail_columns_histogram["olink_plasma"] = copy.deepcopy(
             pail_parse["columns_olink_plasma"]
