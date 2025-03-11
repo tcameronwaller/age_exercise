@@ -127,7 +127,7 @@ def preinitialize_directories(
     )
     paths["in_sets_gene"] = os.path.join(
         paths["in_parameters_private"], "age_exercise", "transcriptomics",
-        "sets_gene",
+        "sets_gene", "sets_gene_2025-02-11_volcano",
     )
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
@@ -140,6 +140,9 @@ def preinitialize_directories(
     )
     paths["out_data_overall"] = os.path.join(
         paths["out_procedure"], "data",
+    )
+    paths["out_data_overall_sets_gene"] = os.path.join(
+        paths["out_data_overall"], "sets_gene",
     )
     paths["out_data_overall_pickle"] = os.path.join(
         paths["out_data_overall"], "pickle",
@@ -159,6 +162,7 @@ def preinitialize_directories(
         #paths["out_routine"],
         paths["out_procedure"],
         paths["out_data_overall"],
+        paths["out_data_overall_sets_gene"],
         paths["out_data_overall_pickle"],
         paths["out_data_overall_text"],
         paths["out_data_overall_rank"],
@@ -1071,11 +1075,11 @@ def plot_write_chart_fold_change_volcano(
         ),
         title_abscissa="log2(fold change)",
         title_ordinate="-1*log10(p-value)", # "-1*log10(B.-H. FDR q-value)"
-        size_title_abscissa="eight", # ten
-        size_title_ordinate="eight", # ten
-        size_label_abscissa="twelve", # multi-panel: ten; individual: twelve
-        size_label_ordinate="twelve", # multi-panel: ten; individual: twelve
-        size_label_emphasis="seventeen",
+        size_title_abscissa="seven", # ten
+        size_title_ordinate="seven", # ten
+        size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
+        size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
+        size_label_emphasis="eleven",
         size_label_count="ten",
         aspect="landscape", # square, portrait, landscape, ...
         fonts=fonts,
@@ -1085,7 +1089,7 @@ def plot_write_chart_fold_change_volcano(
     # Write figure to file.
     pplot.write_product_plot_figure(
         figure=figure,
-        format="jpg", # jpg, png, svg
+        format="svg", # jpg, png, svg
         resolution=150,
         name_file=name_figure,
         path_directory=path_directory,
@@ -1125,6 +1129,7 @@ def plot_write_chart_fold_change_volcano(
 
 def control_procedure_part_branch(
     tissue=None,
+    sequence=None,
     group=None,
     name_instance=None,
     name_set_gene_emphasis=None,
@@ -1141,6 +1146,7 @@ def control_procedure_part_branch(
     arguments:
         tissue (str): name of tissue that distinguishes study design and
             set of relevant samples, either 'adipose' or 'muscle'
+        sequence (int): sequential index for instance's name and sort order
         group (str): name of a group of analyses
         name_instance (str): name of instance set of parameters for
             selection of samples in cohort and definition of analysis
@@ -1164,6 +1170,12 @@ def control_procedure_part_branch(
     returns:
 
     """
+
+    ##########
+    # Prepare parameters.
+    name_instance_simple = str(
+        tissue + "_" + sequence
+    )
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
@@ -1280,13 +1292,13 @@ def control_procedure_part_branch(
     # Collect information.
     # Collections of files.
     pail_write_lists = dict()
-    pail_write_lists[str("genes_change")] = (
+    pail_write_lists[str(name_instance_simple + "_genes_change")] = (
         pail_selection["genes_change"]
     )
-    pail_write_lists[str("genes_up")] = (
+    pail_write_lists[str(name_instance_simple + "_genes_up")] = (
         pail_selection["genes_up"]
     )
-    pail_write_lists[str("genes_down")] = (
+    pail_write_lists[str(name_instance_simple + "_genes_down")] = (
         pail_selection["genes_down"]
     )
     pail_write_tables = dict()
@@ -1302,7 +1314,7 @@ def control_procedure_part_branch(
     # Write product information to file.
     putly.write_lists_to_file_text(
         pail_write=pail_write_lists,
-        path_directory=paths["out_data"],
+        path_directory=paths["out_data_overall_sets_gene"],
         delimiter="\n",
     )
     putly.write_tables_to_file(
@@ -1354,6 +1366,7 @@ def control_parallel_instance(
         instance (dict): parameters specific to current instance
             tissue (str): name of tissue that distinguishes study design and
                 set of relevant samples, either 'adipose' or 'muscle'
+            sequence (int): sequential index for instance's name and sort order
             group (str): name of a group of analyses
             name_instance (str): name of instance set of parameters for
                 selection of samples in cohort and definition of analysis
@@ -1384,6 +1397,7 @@ def control_parallel_instance(
     # Extract parameters.
     # Extract parameters specific to each instance.
     tissue = instance["tissue"]
+    sequence = instance["sequence"]
     group = instance["group"]
     name_instance = instance["name_instance"]
     name_set_gene_emphasis = instance["name_set_gene_emphasis"]
@@ -1399,6 +1413,7 @@ def control_parallel_instance(
     # Control procedure with split for parallelization.
     control_procedure_part_branch(
         tissue=tissue,
+        sequence=sequence,
         group=group,
         name_instance=name_instance,
         name_set_gene_emphasis=name_set_gene_emphasis,

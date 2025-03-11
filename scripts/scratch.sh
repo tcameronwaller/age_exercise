@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 1 October 2024
-# Date, last execution or modification: 14 October 2024
-# Review: TCW; 14 October 2024
+# Date, first execution: 6 March 2025
+# Date, last execution or modification: 6 March 2025
+# Review: 6 March 2025
 ###############################################################################
 # Note
 
@@ -22,17 +22,17 @@
 # Organize paths.
 
 # Project.
-project_main="exercise"
+project_main="age_exercise"
+interface_subparser="main"
 
 # Directories.
 cd ~
 path_directory_paths="./Downloads/paths_process_local"
 path_directory_tools=$(<"$path_directory_paths/path_directory_tools.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
+path_directory_scripts="$path_directory_process/scripts"
 path_directory_package="$path_directory_process/package"
 path_directory_package_partner="$path_directory_package/partner"
-path_directory_package_project_main="$path_directory_package/${project_main}"
-
 path_directory_package_project_main="$path_directory_package/${project_main}"
 
 path_directory_dock="$path_directory_process/dock"
@@ -78,12 +78,11 @@ set +v # disable print input to standard error
 
 # Activate Python virtual environment.
 source "${path_environment_main}/bin/activate"
+
 # Set paths for local packages and modules.
-#echo "Python path variable before update"
-#echo $PYTHONPATH
-export PYTHONPATH=$PYTHONPATH:$path_directory_package
-export PYTHONPATH=$PYTHONPATH:$path_directory_package_partner
-export PYTHONPATH=$PYTHONPATH:$path_directory_package_project_main
+export OLD_PYTHONPATH="$PYTHONPATH"
+export PYTHONPATH="$PYTHONPATH:$path_directory_package"
+
 # Regulate concurrent or parallel process threads on node cores.
 # Force Python program (especially SciPy) not to use all available cores on a
 # cluster computation node.
@@ -109,12 +108,15 @@ fi
 
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
-main \
+$interface_subparser \
 --scratch \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
 # Deactivate Python virtual environment.
+
+# Restore paths.
+export PYTHONPATH="$OLD_PYTHONPATH"
 
 # Deactivate Python virtual environment.
 deactivate
@@ -127,7 +129,8 @@ deactivate
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
-  echo "procedure: main"
+  echo "routine: ${interface_subparser}"
+  echo "procedure: scratch"
   echo "script: scratch.sh"
   echo $0 # Print full file path to script.
   echo "done"

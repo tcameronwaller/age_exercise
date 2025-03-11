@@ -132,7 +132,7 @@ deactivate
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
-  echo "technology: proteomics"
+  echo "routine: proteomics"
   echo "procedure: organize_subject"
   echo "script: 1_organize_subject.sh"
   echo $0 # Print full file path to script.

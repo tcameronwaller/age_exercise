@@ -127,7 +127,7 @@ deactivate
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
-  echo "technology: transcriptomics"
+  echo "routine: transcriptomics"
   echo "procedure: 3_differential_expression"
   echo "script: 3_interaction.sh"
   echo $0 # Print full file path to script.

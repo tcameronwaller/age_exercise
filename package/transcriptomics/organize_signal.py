@@ -470,7 +470,7 @@ def define_column_types_table_parameter_instances():
     types_columns = dict()
     types_columns["inclusion"] = "string" # "int32"
     types_columns["tissue"] = "string"
-    types_columns["sort"] = "int32" # "int32"
+    types_columns["sequence"] = "int32" # "int32"
     types_columns["group"] = "string"
     types_columns["instance"] = "string"
     types_columns["selection_samples_primary"] = "string"
@@ -494,7 +494,6 @@ def define_column_types_table_parameter_instances():
     types_columns["note"] = "string"
     # Return information.
     return types_columns
-
 
 
 def define_features_special_derivation_after_selection():
@@ -580,12 +579,12 @@ def read_organize_source_parameter_instances(
         if (int(row["inclusion"]) == 1):
             # Collect information and parameters for current instance.
             pail = dict()
-            pail["sort"] = str(row["sort"])
+            pail["sequence"] = str(row["sequence"])
             pail["group"] = str(row["group"])
             pail["tissue"] = str(row["tissue"])
             pail["name_instance"] = "_".join([
                 str(row["tissue"]),
-                str(row["sort"]),
+                str(row["sequence"]),
                 str(row["instance"])
             ])
             # Collect information and parameters for selection of samples that
@@ -1007,15 +1006,15 @@ def read_organize_write_summary_instances_tissue(
     # Create pandas data-frame table.
     table = pandas.DataFrame(data=records)
     # Sort rows within table.
-    #table["sort"] = pandas.to_numeric(
-    #    table["sort"],
+    #table["sequence"] = pandas.to_numeric(
+    #    table["sequence"],
     #    errors="coerce", # force any parse error values to missing "NaN"
     #    downcast="float", # cast type to smallest float type
     #)
-    table["sort"] = table["sort"].astype("int32")
+    table["sequence"] = table["sequence"].astype("int32")
     table.sort_values(
         by=[
-            "sort",
+            "sequence",
         ],
         axis="index",
         ascending=True,
@@ -1739,7 +1738,7 @@ def select_sets_final_identifier_table_sample(
 
 def report_write_count_samples(
     samples=None,
-    sort=None,
+    sequence=None,
     group=None,
     name_instance=None,
     tissue=None,
@@ -1752,7 +1751,7 @@ def report_write_count_samples(
     arguments:
         samples (list<str>): identifiers of samples corresponding to names of
             columns for measurement values of signal intensity across features
-        sort (int): sequential index for sort order
+        sequence (int): sequential index for instance's name and sort order
         group (str): name of a group of analyses
         name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
@@ -1774,7 +1773,7 @@ def report_write_count_samples(
 
     # Collect information.
     record = dict()
-    record["sort"] = sort
+    record["sequence"] = sequence
     record["group"] = group
     record["name_instance"] = name_instance
     record["tissue"] = tissue
@@ -3060,9 +3059,10 @@ def create_write_chart_feature_signal_observations_distribution(
     # Create figure.
     figure = pplot.plot_boxes_groups(
         values_groups=values_groups,
+        names_groups=names_groups,
         title_ordinate="log(gene signal)",
         title_abscissa="",
-        titles_abscissa_groups=names_groups,
+        title_chart_top_center="",
         colors_groups=colors_groups,
         label_top_center="",
         label_top_left="",
@@ -3073,6 +3073,7 @@ def create_write_chart_feature_signal_observations_distribution(
         fonts=fonts,
         colors=colors,
     )
+
     # Write figure to file.
     pplot.write_product_plot_figure(
         figure=figure,
@@ -3371,7 +3372,7 @@ def control_procedure_whole_trunk_description(
 
 
 def control_procedure_part_branch_sample(
-    sort=None,
+    sequence=None,
     group=None,
     name_instance=None,
     tissue=None,
@@ -3390,7 +3391,7 @@ def control_procedure_part_branch_sample(
     Control branch of procedure.
 
     arguments:
-        sort (int): sequential index for sort order
+        sequence (int): sequential index for instance's name and sort order
         group (str): name of a group of analyses
         name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
@@ -3468,7 +3469,7 @@ def control_procedure_part_branch_sample(
     # Summarize the counts of samples corresponding to each set of parameters.
     report_write_count_samples(
         samples=pail_sample["samples_selection"],
-        sort=sort,
+        sequence=sequence,
         group=group,
         name_instance=name_instance,
         tissue=tissue,
@@ -3651,7 +3652,7 @@ def control_procedure_part_branch_signal(
 
 
 def control_procedure_part_branch(
-    sort=None,
+    sequence=None,
     group=None,
     name_instance=None,
     tissue=None,
@@ -3673,7 +3674,7 @@ def control_procedure_part_branch(
     Control branch of procedure.
 
     arguments:
-        sort (int): sequential index for sort order
+        sequence (int): sequential index for instance's name and sort order
         group (str): name of a group of analyses
         name_instance (str): name of instance set of parameters for selection
             of samples in cohort and definition of analysis
@@ -3731,7 +3732,7 @@ def control_procedure_part_branch(
     # 2. Prepare data for subjects and samples with stratification for a
     # specific instance of analysis.
     pail_sample = control_procedure_part_branch_sample(
-        sort=sort,
+        sequence=sequence,
         group=group,
         name_instance=name_instance,
         tissue=tissue, # adipose, muscle
@@ -3833,7 +3834,7 @@ def control_parallel_instance(
 
     arguments:
         instance (dict): parameters specific to current instance
-            sort (int): sequential index for sort order
+            sequence (int): sequential index for instance's name and sort order
             group (str): name of a group of analyses
             name_instance (str): name of instance set of parameters for
                 selection of samples in cohort and definition of analysis
@@ -3878,7 +3879,7 @@ def control_parallel_instance(
     ##########
     # Extract parameters.
     # Extract parameters specific to each instance.
-    sort = instance["sort"]
+    sequence = instance["sequence"]
     group = instance["group"]
     name_instance = instance["name_instance"]
     tissue = instance["tissue"]
@@ -3900,7 +3901,7 @@ def control_parallel_instance(
     ##########
     # Control procedure with split branch for parallelization.
     control_procedure_part_branch(
-        sort=sort,
+        sequence=sequence,
         group=group,
         name_instance=name_instance,
         tissue=tissue, # adipose, muscle

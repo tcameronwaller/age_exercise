@@ -87,7 +87,7 @@ import age_exercise.proteomics.organize_subject as aexpr_sub
 # the hierarchical tree structure of sub-procedures.
 
 
-def initialize_directories_trunk(
+def initialize_directories(
     project=None,
     routine=None,
     procedure=None,
@@ -247,7 +247,7 @@ def execute_procedure(
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
-    paths = initialize_directories_trunk(
+    paths = initialize_directories(
         project=project,
         routine=routine,
         procedure=procedure,
@@ -257,9 +257,10 @@ def execute_procedure(
     )
 
     ##########
+    # Summary of available sets.
     # 2.1. Read and count unique genes in sets.
     path_directory_sets_gene = os.path.join(
-        paths["in_sets_gene"], "sets_gene_2025-01-09",
+        paths["in_sets_gene"], "sets_gene_2025-02-11_operation",
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(
@@ -271,50 +272,147 @@ def execute_procedure(
     ))
 
     ##########
-    # Subjective combination of sets of genes identified by threshold.
-
-    # TODO: TCW; 9 January 2025
-    # Organize operation below within a cleaner, more versatile function
-    # arguments:
-    # path_directory_read
-    # names_sets <-- corresponding to names of files within directory
-    # name_file_product
-    # path_directory_write
-
-    # Define paths to directories.
-    path_directory_comparison_sets = os.path.join(
-        paths["out_routine"], "compare_sets_groups", "data",
-        "sets_subjective_match_directionality_younger_elder_omega3",
+    # Read and extract identifiers of genes in sets.
+    genes_adipose_1 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_1_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
     )
-    sets_match_younger_elder_omega3 = dict()
-    sets_match_younger_elder_omega3["main"] = [
-        "3_adipose_omega3_permissive",
-        "4_adipose_omega3",
-        "5_adipose_age_placebo_omega3",
-    ]
-    set_match_younger_elder_omega3 = (
-        aexpr_sub.read_extract_combine_custom_feature_sets(
-            names_sets=sets_match_younger_elder_omega3,
-            features_available=None,
-            path_directory=path_directory_comparison_sets,
+    genes_adipose_11 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_11_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_12 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_12_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_24 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_24_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_25 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_25_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_31 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_31_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_32 = aexpr_sub.read_extract_set_features(
+        name_set="adipose_32_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    ##########
+    # Combine the identifiers of genes in sets.
+    # Age.
+    print("age union")
+    genes_age = aexpr_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_1,
+        ],
+        report=True,
+    )
+    # Notice that the genes from "adipose_25" and "adipose_32" that associated
+    # with omega-3 already had integral control for placebo; however, the genes
+    # from "adipose_12" need exclusion of genes from "adipose_11" that
+    # associated with placebo.
+    # Placebo.
+    print("placebo union")
+    genes_placebo = aexpr_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_11,
+            genes_adipose_24,
+            genes_adipose_31,
+        ],
+        report=True,
+    )
+    # Omega-3 correction for placebo.
+    print("adipose_12 difference adipose_11")
+    genes_adipose_12_not_11 = aexpr_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_adipose_12,
+        items_exclusion=genes_adipose_11,
+        report=True,
+    )
+
+    # Omega-3.
+    print("omega-3 union triple: 12-not-11, 25, 32")
+    genes_omega3_union_triple = aexpr_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_12_not_11,
+            genes_adipose_25,
+            genes_adipose_32,
+        ],
+        report=True,
+    )
+    print("omega-3 union double: 25, 32")
+    genes_omega3_union_double = aexpr_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_25,
+            genes_adipose_32,
+        ],
+        report=True,
+    )
+    ##########
+    # Combine by difference of the identifiers of genes in sets.
+    # This approach is unnecessarily conservative.
+    # Some genes might change in one direction in placebo and in the other
+    # direction in omega-3 groups.
+    if False:
+        print("omega-3 difference placebo")
+        genes_omega3_not_placebo = aexpr_sub.combine_sets_items_difference_unique(
+            items_inclusion=genes_omega3,
+            items_exclusion=genes_placebo,
             report=True,
-    ))
-    # Copy information.
-    genes_match_younger_elder_omega3 = copy.deepcopy(
-        set_match_younger_elder_omega3["main"]
+        )
+        pass
+    ##########
+    # Combine by intersection of the identifiers of genes in sets.
+    print("age intersection omega-3 triple")
+    genes_age_omega3_triple = aexpr_sub.combine_sets_items_intersection_unique(
+        items_first=genes_age,
+        items_second=genes_omega3_union_triple,
+        report=True,
     )
-    # Collect unique names of genes in set.
-    genes_match_younger_elder_omega3 = putly.collect_unique_elements(
-        elements=genes_match_younger_elder_omega3,
+    print("age intersection omega-3 double")
+    genes_age_omega3_double = aexpr_sub.combine_sets_items_intersection_unique(
+        items_first=genes_age,
+        items_second=genes_omega3_union_double,
+        report=True,
     )
+
+    ##########
+    # Write information to file.
     # Collect information.
     # Collections of files.
-    name_set = str(
-        "genes_subjective_match_directionality_younger_elder_omega3"
-    )
     pail_write_lists = dict()
-    pail_write_lists[name_set] = (
-        genes_match_younger_elder_omega3
+    pail_write_lists["genes_adipose_1_age"] = genes_age
+    pail_write_lists["genes_adipose_12_not_11"] = genes_adipose_12_not_11
+    pail_write_lists["genes_adipose_25"] = genes_adipose_25
+    pail_write_lists["genes_adipose_32"] = genes_adipose_32
+    pail_write_lists["genes_adipose_12not11_25_32_omega3_union"] = (
+        genes_omega3_union_triple
+    )
+    pail_write_lists["genes_adipose_25_32_omega3_union"] = (
+        genes_omega3_union_double
+    )
+    pail_write_lists["genes_age_omega3_intersection_triple"] = (
+        genes_age_omega3_triple
+    )
+    pail_write_lists["genes_age_omega3_intersection_double"] = (
+        genes_age_omega3_double
     )
     # Define paths to directories.
     path_directory_data_sets = os.path.join(
@@ -332,30 +430,58 @@ def execute_procedure(
     )
 
 
-    ##########
-    # Set operations and combinations.
+    ###################
+    # Scrap
+    ##################
 
 
-    # Collections of files.
-    pail_write_lists = dict()
-    pail_write_lists["genes_adipose_1_up_25_up"] = (
-        genes_1_up_25_up
-    )
-    pail_write_lists["genes_adipose_1_down_25_down"] = (
-        genes_1_down_25_down
-    )
-    pail_write_lists["genes_adipose_same_1_25"] = (
-        genes_same_1_25
-    )
-    pail_write_lists["genes_adipose_1_up_25_down"] = (
-        genes_1_up_25_down
-    )
-    pail_write_lists["genes_adipose_1_down_25_down"] = (
-        genes_up_1_up_25
-    )
-    pail_write_lists["genes_adipose_opposite_1_25"] = (
-        genes_same_1_25
-    )
+    if False:
+        ##########
+        # Subjective combination of sets of genes identified by threshold.
+
+        # TODO: TCW; 9 January 2025
+        # Organize operation below within a cleaner, more versatile function
+        # arguments:
+        # path_directory_read
+        # names_sets <-- corresponding to names of files within directory
+        # name_file_product
+        # path_directory_write
+
+        # Define paths to directories.
+        path_directory_comparison_sets = os.path.join(
+            paths["out_routine"], "compare_sets_groups", "data",
+            "sets_subjective_match_directionality_younger_elder_omega3",
+        )
+        sets_match_younger_elder_omega3 = dict()
+        sets_match_younger_elder_omega3["main"] = [
+            "3_adipose_omega3_permissive",
+            "4_adipose_omega3",
+            "5_adipose_age_placebo_omega3",
+        ]
+        set_match_younger_elder_omega3 = (
+            aexpr_sub.read_extract_combine_custom_feature_sets(
+                names_sets=sets_match_younger_elder_omega3,
+                features_available=None,
+                path_directory=path_directory_comparison_sets,
+                report=True,
+        ))
+        # Copy information.
+        genes_match_younger_elder_omega3 = copy.deepcopy(
+            set_match_younger_elder_omega3["main"]
+        )
+        # Collect unique names of genes in set.
+        genes_match_younger_elder_omega3 = putly.collect_unique_elements(
+            elements=genes_match_younger_elder_omega3,
+        )
+        # Collect information.
+        # Collections of files.
+        name_set = str(
+            "genes_subjective_match_directionality_younger_elder_omega3"
+        )
+        pail_write_lists = dict()
+        pail_write_lists[name_set] = (
+            genes_match_younger_elder_omega3
+        )
 
     pass
 

@@ -277,7 +277,7 @@ def read_source(
     )
     #pail_parse = parse_extract_table_sample_feature_organization(
     #    table=pail["table_feature_organization"],
-    #    inclusion="inclusion_proteomics",
+    #    inclusion="inclusion",
     #    report=report,
     #)
 
@@ -1414,7 +1414,7 @@ def execute_procedure(
     # 3. Parse table of parameters describing properties for subjects.
     pail_parse = aexpr_sub.parse_extract_table_sample_feature_organization(
         table=pail_source["table_feature_organization"],
-        inclusion="inclusion_transcriptomics",
+        inclusion="inclusion",
         report=report,
     )
 

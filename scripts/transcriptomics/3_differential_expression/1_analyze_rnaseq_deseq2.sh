@@ -74,7 +74,7 @@ do
   # Extract values from individual columns within table's current row.
   raw_inclusion="${array[0]}"
   raw_tissue="${array[1]}"
-  raw_sort="${array[2]}"
+  raw_sequence="${array[2]}"
   raw_group="${array[3]}"
   raw_instance="${array[4]}"
   raw_selection_samples_primary="${array[5]}"
@@ -98,7 +98,7 @@ do
   raw_name_set_gene_exclusion="${array[23]}"
   raw_review="${array[24]}"
   raw_note="${array[25]}"
-  name_instance="${raw_tissue}_${raw_sort}_${raw_instance}"
+  name_instance="${raw_tissue}_${raw_sequence}_${raw_instance}"
 
   # Report.
   if [ $raw_inclusion == "1" ] && [ "$report" == "true" ]; then
@@ -107,7 +107,7 @@ do
     echo "--------------------------------------------------"
     echo "field 0, inclusion: ${raw_inclusion}"
     echo "field 1, tissue: ${raw_tissue}"
-    echo "field 2, sort: ${raw_sort}"
+    echo "field 2, sequence: ${raw_sequence}"
     echo "field 3, group: ${raw_group}"
     echo "field 4, instance: ${raw_instance}"
     echo "field 5, selection_samples_primary: ${raw_selection_samples_primary}"

@@ -1443,8 +1443,8 @@ def manage_plot_write_groups_observations_box(
     colors_names_groups = [
         "purple_violet",
         "blue_sky",
-        "yellow_sunshine",
         "green_mint",
+        "yellow_sunshine",
     ]
     if (
         (colors_names_groups is not None) and
@@ -1461,10 +1461,10 @@ def manage_plot_write_groups_observations_box(
     # Create figure.
     figure = pplot.plot_boxes_groups(
         values_groups=pail_extract["values_nonmissing_groups"],
-        title_ordinate="measurement",
+        names_groups=pail_extract["names_groups"],
+        title_ordinate=title,
         title_abscissa="",
-        titles_abscissa_groups=pail_extract["names_groups"],
-        title_chart_top_center=title,
+        title_chart_top_center="",
         colors_groups=colors_groups,
         label_top_center="",
         label_top_left="",
@@ -1498,7 +1498,7 @@ def manage_plot_write_groups_observations_box(
     # Write figures to file.
     pplot.write_product_plots_parent_directory(
         pail_write=pail_write_plot,
-        format="jpg", # jpg, png, svg
+        format="svg", # jpg, png, svg
         resolution=300,
         path_directory=path_directory_plot,
     )
@@ -3494,6 +3494,176 @@ def read_organize_feature_sets(
     return pail
 
 
+def combine_sets_items_union_unique(
+    sets_items=None,
+    report=None,
+):
+    """
+    Combines items from multiple sets by taking the union and then collecting
+    unique items.
+
+    Review: TCW; 11 February 2025
+
+    arguments:
+        sets_items (list<list<str>>): lists of items in distinct sets
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (list<str>): items in combination set
+
+    """
+
+    # Copy information.
+    sets_items = copy.deepcopy(sets_items)
+    # Collect.
+    items_combination = list()
+    # Iterate.
+    for items_set in sets_items:
+        # Combine by union.
+        items_combination.extend(items_set)
+        pass
+    # Collect unique.
+    items_combination_unique = putly.collect_unique_elements(
+        elements=items_combination,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = "combine_sets_items_union_unique"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        # Summarize.
+        count_items = len(items_combination_unique)
+        print(
+            "count of items in combination set: " + str(count_items)
+        )
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return.
+    return items_combination_unique
+
+
+def combine_sets_items_difference_unique(
+    items_inclusion=None,
+    items_exclusion=None,
+    report=None,
+):
+    """
+    Combines items from multiple sets by taking the difference and then
+    collecting unique items.
+
+    Review: TCW; 11 February 2025
+
+    arguments:
+        items_inclusion (list<str>): items to include, main set
+        items_exclusion (list<str>): items to exclude from main, inclusion set
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (list<str>): items in combination set
+
+    """
+
+    # Copy information.
+    items_inclusion = copy.deepcopy(items_inclusion)
+    items_exclusion = copy.deepcopy(items_exclusion)
+    # Filter.
+    items_combination = list(filter(
+        lambda item: (item not in items_exclusion),
+        items_inclusion
+    ))
+    # Collect unique.
+    items_combination_unique = putly.collect_unique_elements(
+        elements=items_combination,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = "combine_sets_items_difference_unique"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        # Summarize.
+        count_items = len(items_combination_unique)
+        print(
+            "count of items in combination set: " + str(count_items)
+        )
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return.
+    return items_combination_unique
+
+
+def combine_sets_items_intersection_unique(
+    items_first=None,
+    items_second=None,
+    report=None,
+):
+    """
+    Combines items from multiple sets by taking the intersection and then
+    collecting unique items.
+
+    Review: TCW; 11 February 2025
+
+    arguments:
+        items_first (list<str>): items to include in intersection
+        items_second (list<str>): items to include in intersection
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (list<str>): items in combination set
+
+    """
+
+    # Copy information.
+    items_first = copy.deepcopy(items_first)
+    items_second = copy.deepcopy(items_second)
+    # Combine items by union.
+    items_union = combine_sets_items_union_unique(
+        sets_items=[
+            items_first,
+            items_second,
+        ],
+        report=False,
+    )
+    # Filter.
+    items_combination = list(filter(
+        lambda item: ((item in items_first) and (item in items_second)),
+        items_union
+    ))
+    # Collect unique.
+    items_combination_unique = putly.collect_unique_elements(
+        elements=items_combination,
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = "combine_sets_items_intersection_unique"
+        print(str("function: " + function + "()"))
+        putly.print_terminal_partition(level=4)
+        # Summarize.
+        count_items = len(items_combination_unique)
+        print(
+            "count of items in combination set: " + str(count_items)
+        )
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return.
+    return items_combination_unique
+
+
+
 # Prepare table for allocation of features to sets.
 
 
@@ -4062,14 +4232,14 @@ def plot_heatmap_features_sets_observations_labels(
         value_maximum=value_maximum,
         title_ordinate="",
         title_abscissa="",
-        title_bar="mean signal (z-score)",
+        title_bar="Mean Signal (z-score)",
         labels_abscissa_categories=None,
         size_title_ordinate="eight",
         size_title_abscissa="eight",
-        size_title_bar="twelve",
-        size_label_feature_set="fifteen",
-        size_label_abscissa="eleven",
-        size_label_bar="fourteen",
+        size_title_bar="nine",
+        size_label_feature_set="eleven",
+        size_label_abscissa="nine",
+        size_label_bar="eleven",
         show_labels_abscissa=True,
         show_scale_bar=True, # whether to show scale bar on individual figures
         aspect="square", # square, portrait, landscape, ...
@@ -4163,19 +4333,19 @@ def plot_heatmap_features_observations_labels(
         value_maximum=value_maximum,
         title_ordinate="",
         title_abscissa="",
-        title_bar="mean signal (z-score)",
+        title_bar="Mean Signal (z-score)",
         labels_ordinate_categories=None,
         labels_abscissa_categories=None,
         size_title_ordinate="eight",
         size_title_abscissa="eight",
-        size_title_bar="twelve",
-        size_label_ordinate=None, # determine automatically if "None"
-        size_label_abscissa=None, # determine automatically if "None"
-        size_label_bar="thirteen",
+        size_title_bar="nine",
+        size_label_ordinate="fifteen", # determine automatically if "None"; "fifteen"
+        size_label_abscissa="nine", # determine automatically if "None"
+        size_label_bar="eleven",
         show_labels_ordinate=True,
         show_labels_abscissa=True,
         show_scale_bar=True,
-        aspect="square", # square, portrait, landscape, ...
+        aspect="portrait", # square, portrait, landscape, ...
         fonts=fonts,
         colors=colors,
         report=report,
