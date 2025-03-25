@@ -38,7 +38,11 @@ License:
 # Notes
 
 
-# scratch template
+# TCW; 25 March 2025
+# I had begun working on this procedure to calculate pairwise correlations
+# between genes and then to cluster the symmetrical matrix.
+# The hierarchical clustering algorithm was excessively slow on local machine,
+# failing to complete in a full day.
 
 
 ###############################################################################
@@ -91,43 +95,6 @@ import age_exercise.proteomics.organize_subject as aexpr_sub
 # 2. Read source information from file.
 
 
-
-
-
-
-def organize_table_measurement(
-    table_measurement=None,
-    report=None,
-):
-    """
-    Organizes information in tables about samples and measurement signals.
-
-    arguments:
-        table_measurement (object): Pandas data-frame table of values of signal
-            intensity for sample observations across columns and for gene
-            features across rows, with a few additional columns for attributes
-            of gene features
-        columns_gene (list<str>): names of columns corresponding to
-            information about genes
-        samples (list<str>): identifiers of samples corresponding to names of
-            columns for measurement values of signal intensity across features
-        tissue (str): name of tissue, either 'adipose' or 'muscle', which
-            distinguishes study design and sets of samples
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<object>): collection of information
-
-    """
-
-    pass
-
-
-
-
-
 ##########
 # Plot charts.
 
@@ -170,14 +137,7 @@ def execute_procedure(
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
-
     # Define paths to child files.
-    path_file_table_feature_organization = os.path.join(
-        paths["in_data"], "study_age_exercise", "subject_sample",
-        "table_subject_sample_feature_organization.tsv",
-    )
-
-
     path_file_table_signal = os.path.join(
         paths["out_project"], "transcriptomics", "organize_signal", "whole",
         "preparation", str("table_signal_scale_" + "adipose" + ".pickle"),
