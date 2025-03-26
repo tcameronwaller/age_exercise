@@ -140,9 +140,9 @@ def initialize_directories(
         paths["out_routine"], str(procedure),
     )
     # Specific.
-    #paths["out_procedure_lists"] = os.path.join(
-    #    paths["out_procedure"], "lists",
-    #)
+    paths["out_procedure_lists"] = os.path.join(
+        paths["out_procedure"], "lists",
+    )
     paths["out_procedure_tables"] = os.path.join(
         paths["out_procedure"], "tables",
     )
@@ -249,7 +249,7 @@ def read_source(
         encoding="utf-8",
     )
     pail["table_batch_b"] = pandas.read_csv(
-        path_file_table_batch_a=b,
+        path_file_table_batch_b,
         sep="\t",
         header=0,
         #dtype=types_columns,
@@ -276,6 +276,15 @@ def read_source(
 ##########
 # 3. Organize information.
 
+# eventually define a parameter table for each batch of proteomics data in a table
+# parameters:
+# translations for names of columns (similar to "table_subject_sample_feature_organization")
+# indications of columns in relevant subsets
+# example: names of samples in each batch (need a special column to indicate the batch)
+# example: names of columns corresponding to attributes of the analytes themselves (identifiers, names, etc)
+
+
+
 # TCW; 25 March 2025
 # manual clean-up of the output spectroscopy tables
 # 1. filter to identity confidence "High"
@@ -298,11 +307,46 @@ def read_source(
 # samples in batch "b"
 
 # programmatic organization
+# 1. separate columns for analyte properties to separate table from columns for analyte signals in samples
+# 2. filter to remove analytes with inadequate signal (missing or not within threshold range) coverage across samples (start with 100%)
+# 3.
 
 
 
+def define_names_analyte_attributes():
+    """
+    Defines parameters.
 
-def define_samples_by_batch():
+    arguments:
+
+    raises:
+
+    returns:
+        (dict): collection of information
+
+    """
+
+    # Collect information.
+    pail = dict()
+
+    # Main identifier of analytes.
+    pail["identifier_analyte"] = [
+        "identifier_protein_uniprot",
+    ]
+
+    # Attributes of analytes.
+    pail["attributes_analyte"] = [
+        "identifier_protein_uniprot",
+        "identifier_gene_symbol",
+        "identifier_gene_entrez",
+        "identifier_gene_ensembl",
+    ]
+
+    # Return information.
+    return pail
+
+
+def define_names_samples_by_batch():
     """
     Defines parameters.
 
@@ -347,6 +391,207 @@ def define_samples_by_batch():
 
     # Return information.
     return pail
+
+
+
+
+def separate_organize_table_measurement_analyte_signal(
+    table_measurement=None,
+    name_identifier_analyte=None,
+    names_analyte=None,
+    names_signal=None,
+    report=None,
+):
+    """
+    Separates information from table for measurements.
+
+    ----------
+    Format of table for measurements from instrument and preprocessing (name:
+    "table_measurement")
+    Format of source table is in wide format with features across rows and
+    observations across columns. Multiple special columns give identifiers and
+    other information about attributes of analytes. Another special column
+    gives signals from measurement of each analyte in a special bridge sample.
+    For versatility, this table does not have explicitly defined indices
+    across columns or rows. Values for observations of features are on a
+    quantitative, continuous, interval or ratio scale of measurement.
+    ----------
+    samples     attribute_1 attribute_2 bridge sample_1 sample_2 sample_3 ...
+    analyte
+    analyte_1   stuff       stuff       0.001  0.001    0.001    0.001    ...
+    analyte_2   stuff       stuff       0.001  0.001    0.001    0.001    ...
+    analyte_3   stuff       stuff       0.001  0.001    0.001    0.001    ...
+    analyte_4   stuff       stuff       0.001  0.001    0.001    0.001    ...
+    analyte_5   stuff       stuff       0.001  0.001    0.001    0.001    ...
+    ----------
+
+    ----------
+    Format of table for attributes of analytes (name: "table_analyte")
+    This table has explicitly defined indices across columns and rows.
+    ----------
+    attributes   attribute_1 attribute_2 attribute_3 attribute_4 ...
+    analyte
+    analyte_1    stuff       stuff       stuff       stuff       ...
+    analyte_2    stuff       stuff       stuff       stuff       ...
+    analyte_3    stuff       stuff       stuff       stuff       ...
+    analyte_4    stuff       stuff       stuff       stuff       ...
+    analyte_5    stuff       stuff       stuff       stuff       ...
+    ----------
+
+    ----------
+    Format of table for signals of analytes across samples (name:
+    "table_signal")
+    The names of columns in the table for signals indicate the sample
+    corresponding to measurements of the analyte; however, use terminology of
+    "identifier_signal" to distinguish these identifiers, which might differ
+    from those for samples in the table for attributes of samples. This table
+    has explicitly defined indices across columns and rows.
+    ----------
+    signal      bridge sample_1  sample_2  sample_3  sample_4  sample_5 ...
+    analyte
+    analyte_1   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_2   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_3   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_4   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_5   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    ----------
+
+    arguments:
+        table_measurement (object): Pandas data-frame table of attributes of
+            analytes and signals from their measurements across samples
+        name_identifier_analyte (str): name of column in table corresponding to
+            identifiers of analytes, which must also be in the 'names_analyte'
+            list
+        names_analyte (list<str>): names of columns in table corresponding to
+            attributes of analytes
+        names_signal (list<str>): names of columns in table corresponding to
+            signals from measurements of analytes across samples
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information.
+    table_measurement = table_measurement.copy(deep=True)
+    names_analyte = copy.deepcopy(names_analyte)
+    names_signal = copy.deepcopy(names_signal)
+
+    # Organize identifiers for analytes.
+    table_measurement["identifier_analyte"] = table_measurement[
+        name_identifier_analyte
+    ]
+
+    # Separate columns into separate tables.
+    #names_analyte.remove("identifier_analyte")
+    names_signal.insert(0, "identifier_analyte")
+    table_analyte = table_measurement.loc[
+        :, table_measurement.columns.isin(names_analyte)
+    ].copy(deep=True)
+    table_signal = table_measurement.loc[
+        :, table_measurement.columns.isin(names_signal)
+    ].copy(deep=True)
+
+    # Organize identifiers for analytes.
+    table_analyte["identifier_analyte"] = table_analyte[
+        name_identifier_analyte
+    ]
+
+    # Organize columns in tables.
+    names_analyte.insert(0, "identifier_analyte")
+    table_analyte = porg.filter_sort_table_columns(
+        table=table_analyte,
+        columns_sequence=names_analyte,
+        report=report,
+    )
+    table_signal = porg.filter_sort_table_columns(
+        table=table_signal,
+        columns_sequence=names_signal,
+        report=report,
+    )
+
+    # Translate names of columns.
+    #translations = dict()
+    #translations["identifier_analyte"] = "identifier"
+    #table_analyte.rename(
+    #    columns=translations,
+    #    inplace=True,
+    #)
+
+    # Organize indices in table.
+    table_analyte.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_signal.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table_analyte.set_index(
+        ["identifier_analyte"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    table_signal.set_index(
+        ["identifier_analyte"],
+        append=False,
+        drop=True,
+        inplace=True,
+    )
+    table_analyte.columns.rename(
+        "attributes",
+        inplace=True,
+    ) # single-dimensional index
+    table_signal.columns.rename(
+        "identifier_signal",
+        inplace=True,
+    ) # single-dimensional index
+
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("module: age_exercise.proteomics.organize_spectroscopy.py")
+        name_function = str(
+            "separate_organize_table_measurement_analyte_signal()"
+        )
+        print("function: " + name_function)
+        putly.print_terminal_partition(level=5)
+        print("source table of measurements:")
+        count_rows = (table_measurement.shape[0])
+        count_columns = (table_measurement.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        print(table_measurement.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        print("table of information about analytes:")
+        count_rows = (table_analyte.shape[0])
+        count_columns = (table_analyte.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        print(table_analyte.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        print("table of information about signals:")
+        count_rows = (table_signal.shape[0])
+        count_columns = (table_signal.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        print(table_signal.iloc[0:10, 0:])
+        putly.print_terminal_partition(level=5)
+        pass
+    # Collect information.
+    pail = dict()
+    pail["table_analyte"] = table_analyte
+    pail["table_signal"] = table_signal
+    # Return information.
+    return pail
+
 
 
 
@@ -417,10 +662,45 @@ def execute_procedure(
     ##########
     # 3.
 
-    pail_batch_samples = define_samples_by_batch()
-    #pail_batch_samples["names_samples_batch_a"]
-    #pail_batch_samples["names_samples_batch_b"]
+    # Copy information.
+    table_batch_a = pail_source["table_batch_a"].copy(deep=True)
+    table_batch_b = pail_source["table_batch_b"].copy(deep=True)
 
+    # Determine names of columns in table for attributes of analytes, including
+    # identifiers.
+    pail_names_attributes = define_names_analyte_attributes()
+
+    # Determine names of columns in table for measurements of analytes across
+    # samples.
+    pail_names_samples = define_names_samples_by_batch()
+    #pail_names_samples["names_samples_batch_a"]
+    #pail_names_samples["names_samples_batch_b"]
+
+    # Filter analytes in the measurement table by their attributes.
+    # TODO: TCW; 26 March 2025
+    # 1. mainly filter by the confidence of identification by Proteome Discoverer: "High"
+
+    # From measurement table, separate columns for analyte attributes from
+    # columns for signals from measurements of analytes across samples.
+    # Copy information.
+    names_analyte = copy.deepcopy(pail_names_attributes["identifier_analyte"])
+    names_signal_a = copy.deepcopy(pail_names_samples["names_samples_batch_a"])
+    names_signal_b = copy.deepcopy(pail_names_samples["names_samples_batch_b"])
+    # Separate and organize columns.
+    pail_split_a = separate_organize_table_measurement_analyte_signal(
+        table_measurement=table_batch_a,
+        name_identifier_analyte=pail_names_attributes["identifier_analyte"],
+        names_analyte=names_analyte,
+        names_signal=names_signal_a,
+        report=report,
+    )
+    pail_split_b = separate_organize_table_measurement_analyte_signal(
+        table_measurement=table_batch_b,
+        name_identifier_analyte=pail_names_attributes["identifier_analyte"],
+        names_analyte=names_analyte,
+        names_signal=names_signal_b,
+        report=report,
+    )
 
     pass
 
