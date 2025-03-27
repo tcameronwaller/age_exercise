@@ -363,7 +363,7 @@ def define_names_samples_by_batch():
     pail = dict()
 
     # Samples in batch A.
-    pail["names_samples_batch_a"] = [
+    pail["samples_batch_a"] = [
         "BOH319_pre",
         "BOH319_post",
         "BUR210_pre",
@@ -376,7 +376,7 @@ def define_names_samples_by_batch():
         "HAN172_post",
     ]
     # Samples in batch B.
-    pail["names_samples_batch_b"] = [
+    pail["samples_batch_b"] = [
         "ARM897_pre",
         "ARM897_post",
         "BEC65_pre",
@@ -393,13 +393,12 @@ def define_names_samples_by_batch():
     return pail
 
 
-
-
 def separate_organize_table_measurement_analyte_signal(
     table_measurement=None,
     name_identifier_analyte=None,
     names_analyte=None,
     names_signal=None,
+    explicate_indices=None,
     report=None,
 ):
     """
@@ -427,7 +426,8 @@ def separate_organize_table_measurement_analyte_signal(
 
     ----------
     Format of table for attributes of analytes (name: "table_analyte")
-    This table has explicitly defined indices across columns and rows.
+    Depending on parameters to this function, this table optionally has
+    explicitly defined indices across columns and rows.
     ----------
     attributes   attribute_1 attribute_2 attribute_3 attribute_4 ...
     analyte
@@ -444,8 +444,9 @@ def separate_organize_table_measurement_analyte_signal(
     The names of columns in the table for signals indicate the sample
     corresponding to measurements of the analyte; however, use terminology of
     "identifier_signal" to distinguish these identifiers, which might differ
-    from those for samples in the table for attributes of samples. This table
-    has explicitly defined indices across columns and rows.
+    from those for samples in the table for attributes of samples. Depending on
+    parameters to this function, this table optionally has explicit definitions
+    of indices across columns and rows.
     ----------
     signal      bridge sample_1  sample_2  sample_3  sample_4  sample_5 ...
     analyte
@@ -466,6 +467,8 @@ def separate_organize_table_measurement_analyte_signal(
             attributes of analytes
         names_signal (list<str>): names of columns in table corresponding to
             signals from measurements of analytes across samples
+        explicate_indices (bool): whether to explicate, define, or specify
+            explicit indices across columns and rows in table
         report (bool): whether to print reports
 
     raises:
@@ -522,37 +525,20 @@ def separate_organize_table_measurement_analyte_signal(
     #)
 
     # Organize indices in table.
-    table_analyte.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
+    table_analyte = porg.explicate_table_indices_columns_rows_single_level(
+        table=table_analyte,
+        index_columns="attributes",
+        index_rows="identifier_analyte",
+        explicate_indices=explicate_indices,
+        report=False,
     )
-    table_signal.reset_index(
-        level=None,
-        inplace=True,
-        drop=True, # remove index; do not move to regular columns
+    table_signal = porg.explicate_table_indices_columns_rows_single_level(
+        table=table_signal,
+        index_columns="identifier_signal",
+        index_rows="identifier_analyte",
+        explicate_indices=explicate_indices,
+        report=False,
     )
-    table_analyte.set_index(
-        ["identifier_analyte"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_signal.set_index(
-        ["identifier_analyte"],
-        append=False,
-        drop=True,
-        inplace=True,
-    )
-    table_analyte.columns.rename(
-        "attributes",
-        inplace=True,
-    ) # single-dimensional index
-    table_signal.columns.rename(
-        "identifier_signal",
-        inplace=True,
-    ) # single-dimensional index
-
 
     # Report.
     if report:
@@ -592,6 +578,202 @@ def separate_organize_table_measurement_analyte_signal(
     # Return information.
     return pail
 
+
+def filter_fill_intensity_table_signal(
+    table_signal=None,
+    name_index_columns=None,
+    name_index_rows=None,
+    name_bridge=None,
+    names_samples=None,
+    explicate_indices=None,
+    report=None,
+):
+    """
+    Filters analytes by proportion of signal intensities that are nonmissing
+    and valid, then fills missing values by imputation across samples.
+
+    ----------
+    Format of table for signals of analytes across samples (name:
+    "table_signal")
+    The names of columns in the table for signals indicate the sample
+    corresponding to measurements of the analyte; however, use terminology of
+    "identifier_signal" to distinguish these identifiers, which might differ
+    from those for samples in the table for attributes of samples. For
+    versatility, this table does not have explicit defininitions of indices
+    across columns or rows.
+    ----------
+    signal      bridge sample_1  sample_2  sample_3  sample_4  sample_5 ...
+    analyte
+    analyte_1   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_2   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_3   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_4   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    analyte_5   0.001  0.001     0.001     0.001     0.001     0.001    ...
+    ----------
+
+    arguments:
+        table_signal (object): Pandas data-frame table of signals for analytes
+            from their measurements across samples
+        name_index_columns (str): name of index across columns in table
+        name_index_rows (str): name of index across rows in table
+        name_bridge (str): name of column in table corresponding to signals
+            from measurements of analytes in the pooled bridge sample
+        names_samples (list<str>): names of columns in table corresponding to
+            signals from measurements of analytes across samples
+        explicate_indices (bool): whether to explicate, define, or specify
+            explicit indices across columns and rows in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information.
+    table_signal = table_signal.copy(deep=True)
+    table_filter = table_signal.copy(deep=True)
+    names_samples = copy.deepcopy(names_samples)
+    names_samples_all = copy.deepcopy(names_samples)
+
+    # Extract names or identifiers of rows for analytes.
+    #names_analytes = copy.deepcopy(list(table_filter.index.values))
+    names_analytes = copy.deepcopy(
+        table_filter[name_index_rows].unique().tolist()
+    )
+
+    # Organize names of columns for signals of analytes in samples.
+    names_samples_all.insert(0, name_bridge)
+
+    # Replace values of zero for signal intensity with missing values.
+    # Only replace values within table's columns for samples.
+    # This implementation is more concise than iteration across specific
+    # columns.
+    table_filter[names_samples_all] = table_filter[names_samples_all].replace(
+        to_replace=0,
+        value=pandas.NA,
+    )
+    # Replace values less than zero with missing values.
+    table_filter[names_samples_all][table_filter[names_samples_all] < 0] = (
+        pandas.NA
+    )
+
+    # Filter table's rows corresponding to analytes by their proportions of
+    # nonmissing and valid signal intensities in measurements across the bridge
+    # sample or samples.
+    table_filter.dropna(
+        axis="index",
+        how="all",
+        subset=[name_bridge],
+        inplace=True,
+    )
+    names_analytes = copy.deepcopy(
+        table_filter[name_index_rows].unique().tolist()
+    )
+    table_filter = (
+        porg.filter_table_rows_by_proportion_nonmissing_threshold(
+            table=table_filter,
+            index_columns=name_index_columns,
+            index_rows=name_index_rows,
+            columns_selection=[name_bridge],
+            rows_selection=names_analytes,
+            threshold_low=0.0,
+            threshold_high=None,
+            proportion=1.0,
+            report=report,
+    ))
+
+    # Filter table's rows corresponding to analytes by their proportions of
+    # nonmissing and valid signal intensities in measurements across samples.
+    table_filter.dropna(
+        axis="index",
+        how="all",
+        subset=names_samples,
+        inplace=True,
+    )
+    names_analytes = copy.deepcopy(
+        table_filter[name_index_rows].unique().tolist()
+    )
+    table_filter = (
+        porg.filter_table_rows_by_proportion_nonmissing_threshold(
+            table=table_filter,
+            index_columns=name_index_columns,
+            index_rows=name_index_rows,
+            columns_selection=names_samples,
+            rows_selection=names_analytes,
+            threshold_low=0.0,
+            threshold_high=None,
+            proportion=0.9,
+            report=report,
+    ))
+
+    # Copy information.
+    table_fill = table_filter.copy(deep=True)
+
+    # Fill missing values of signal intensity within table's rows corresponding
+    # to analytes with measurements across samples.
+    # Notice that this fill procedure occurs after the filters on proportions
+    # of missing signal intensities across features and observations. Hence,
+    # those previous filters regulate the extent of fills on missing values.
+    # fill missing values for each analyte (across rows)
+    names_analytes = copy.deepcopy(
+        table_fill[name_index_rows].unique().tolist()
+    )
+    table_fill = porg.fill_missing_values_table_by_row(
+        table=table_fill,
+        index_columns=name_index_columns,
+        index_rows=name_index_rows,
+        columns_selection=names_samples, # samples???
+        rows_selection=names_analytes,
+        method="half_minimum",
+        report=report,
+    )
+
+    # Organize indices in table.
+    table_fill = porg.explicate_table_indices_columns_rows_single_level(
+        table=table_fill,
+        index_columns=name_index_columns,
+        index_rows=name_index_rows,
+        explicate_indices=explicate_indices,
+        report=False,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("package: age_exercise")
+        print("subpackage: proteomics")
+        print("module: organize_spectroscopy.py")
+        name_function = str(
+            "filter_fill_intensity_table_signal()"
+        )
+        print("function: " + name_function)
+        putly.print_terminal_partition(level=5)
+        print("source table of signals:")
+        count_rows = (table_signal.shape[0])
+        count_columns = (table_signal.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        print(table_signal)
+        putly.print_terminal_partition(level=5)
+        print("table of signals after filters:")
+        count_rows = (table_filter.shape[0])
+        count_columns = (table_filter.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        print(table_filter)
+        putly.print_terminal_partition(level=5)
+        print("table of signals after filters and fills:")
+        count_rows = (table_fill.shape[0])
+        count_columns = (table_fill.shape[1])
+        print("count of rows in table: " + str(count_rows))
+        print("count of columns in table: " + str(count_columns))
+        print(table_fill)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table_fill
 
 
 
@@ -683,24 +865,69 @@ def execute_procedure(
     # From measurement table, separate columns for analyte attributes from
     # columns for signals from measurements of analytes across samples.
     # Copy information.
-    names_analyte = copy.deepcopy(pail_names_attributes["identifier_analyte"])
-    names_signal_a = copy.deepcopy(pail_names_samples["names_samples_batch_a"])
-    names_signal_b = copy.deepcopy(pail_names_samples["names_samples_batch_b"])
+    names_attributes = copy.deepcopy(pail_names_attributes["attributes_analyte"])
+    names_signal_a = copy.deepcopy(pail_names_samples["samples_batch_a"])
+    names_signal_b = copy.deepcopy(pail_names_samples["samples_batch_b"])
+    names_signal_a.insert(0, "bridge")
+    names_signal_b.insert(0, "bridge")
     # Separate and organize columns.
     pail_split_a = separate_organize_table_measurement_analyte_signal(
         table_measurement=table_batch_a,
         name_identifier_analyte=pail_names_attributes["identifier_analyte"],
-        names_analyte=names_analyte,
+        names_analyte=names_attributes,
         names_signal=names_signal_a,
+        explicate_indices=False,
         report=report,
     )
     pail_split_b = separate_organize_table_measurement_analyte_signal(
         table_measurement=table_batch_b,
         name_identifier_analyte=pail_names_attributes["identifier_analyte"],
-        names_analyte=names_analyte,
+        names_analyte=names_attributes,
         names_signal=names_signal_b,
+        explicate_indices=False,
         report=report,
     )
+
+    #################
+    # New Stuff in progress
+
+    # In signal table, filter analytes to remove those with inadequate values
+    # of signal that are nonmissing and withing threshold range.
+    # In signal table, fill missing values by imputation.
+
+    # Copy information.
+    names_samples_a = copy.deepcopy(pail_names_samples["samples_batch_a"])
+    names_samples_b = copy.deepcopy(pail_names_samples["samples_batch_b"])
+    # Filter and fill signals.
+    table_signal_a = filter_fill_intensity_table_signal(
+        table_signal=pail_split_a["table_signal"],
+        name_index_columns="identifier_signal",
+        name_index_rows="identifier_analyte",
+        name_bridge="bridge",
+        names_samples=names_samples_a,
+        explicate_indices=True,
+        report=report,
+    )
+    table_signal_b = filter_fill_intensity_table_signal(
+        table_signal=pail_split_b["table_signal"],
+        name_index_columns="identifier_signal",
+        name_index_rows="identifier_analyte",
+        name_bridge="bridge",
+        names_samples=names_samples_b,
+        explicate_indices=True,
+        report=report,
+    )
+
+    # Correct for artifactual batch effects.
+
+
+    # Scale values of signal intensity for measurements of analytes across
+    # samples.
+    # The goal of this scaling is to make the individual samples more
+    # comparable to each other.
+    # This scaling can decrease the variance or noise in measurements between
+    # samples.
+
 
     pass
 
