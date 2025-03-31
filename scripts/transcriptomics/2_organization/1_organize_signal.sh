@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 27 August 2024
-# Date, last execution or modification: 27 August 2024
-# Review: TCW; 27 August 2024
+# Date, first execution: 17 July 2024
+# Date, last execution or modification: 31 July 2024
+# Review: TCW; 31 July 2024
 ###############################################################################
 # Note
 
@@ -23,6 +23,7 @@
 
 # Project.
 project_main="age_exercise"
+interface_subparser="transcriptomics"
 
 # Directories.
 cd ~
@@ -89,18 +90,13 @@ export PYTHONPATH="$PYTHONPATH:$path_directory_package"
 export MKL_NUM_THREADS=$threads
 export NUMEXPR_NUM_THREADS=$threads
 export OMP_NUM_THREADS=$threads
-
 # Report.
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "Python virtual environment: main"
   echo "path to Python installation:"
   which python3
-  echo "VIRTUAL_ENV variable:"
-  echo $VIRTUAL_ENV
-  echo "PYTHONHOME variable:"
-  echo $PYTHONHOME
-  echo "PYTHONPATH variable:"
+  echo "Python path variable:"
   echo $PYTHONPATH
   sleep 1s
   echo "----------"
@@ -113,8 +109,8 @@ fi
 
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
-proteomics \
---organize_subject \
+$interface_subparser \
+--organize_signal \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
@@ -127,14 +123,16 @@ export PYTHONPATH="$OLD_PYTHONPATH"
 deactivate
 #which python3
 
+
+
 ###############################################################################
 # Report.
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
-  echo "routine: proteomics"
-  echo "procedure: organize_subject"
-  echo "script: 1_organize_subject.sh"
+  echo "routine: ${interface_subparser}"
+  echo "procedure: organize_signal"
+  echo "script: 1_organize_signal.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"

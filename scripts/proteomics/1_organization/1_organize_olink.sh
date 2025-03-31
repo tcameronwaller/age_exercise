@@ -23,6 +23,7 @@
 
 # Project.
 project_main="age_exercise"
+interface_subparser="proteomics"
 
 # Directories.
 cd ~
@@ -113,7 +114,7 @@ fi
 
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
-proteomics \
+$interface_subparser \
 --organize_olink \
 --path_directory_dock $path_directory_dock
 
@@ -132,9 +133,9 @@ deactivate
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
-  echo "routine: proteomics"
+  echo "routine: ${interface_subparser}"
   echo "procedure: organize_olink"
-  echo "script: 2_organize_olink.sh"
+  echo "script: 1_organize_olink.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"

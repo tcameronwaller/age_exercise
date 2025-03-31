@@ -73,10 +73,11 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import age_exercise.transcriptomics.organize_sample as extr_sample
+import age_exercise.phenotypes.organize_subject as aexph_sub
+import age_exercise.phenotypes.organize_sample as extr_sample
 import age_exercise.transcriptomics.organize_signal as extr_signal
 import age_exercise.transcriptomics.select_gene_sets as extr_select
-import age_exercise.proteomics.organize_subject as aexpr_sub
+
 
 ###############################################################################
 # Functionality
@@ -274,43 +275,43 @@ def execute_procedure(
 
     ##########
     # Read and extract identifiers of genes in sets.
-    genes_adipose_1 = aexpr_sub.read_extract_set_features(
+    genes_adipose_1 = aexph_sub.read_extract_set_features(
         name_set="adipose_1_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_11 = aexpr_sub.read_extract_set_features(
+    genes_adipose_11 = aexph_sub.read_extract_set_features(
         name_set="adipose_11_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_12 = aexpr_sub.read_extract_set_features(
+    genes_adipose_12 = aexph_sub.read_extract_set_features(
         name_set="adipose_12_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_24 = aexpr_sub.read_extract_set_features(
+    genes_adipose_24 = aexph_sub.read_extract_set_features(
         name_set="adipose_24_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_25 = aexpr_sub.read_extract_set_features(
+    genes_adipose_25 = aexph_sub.read_extract_set_features(
         name_set="adipose_25_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_31 = aexpr_sub.read_extract_set_features(
+    genes_adipose_31 = aexph_sub.read_extract_set_features(
         name_set="adipose_31_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_32 = aexpr_sub.read_extract_set_features(
+    genes_adipose_32 = aexph_sub.read_extract_set_features(
         name_set="adipose_32_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
@@ -320,7 +321,7 @@ def execute_procedure(
     # Combine the identifiers of genes in sets.
     # Age.
     print("age union")
-    genes_age = aexpr_sub.combine_sets_items_union_unique(
+    genes_age = aexph_sub.combine_sets_items_union_unique(
         sets_items=[
             genes_adipose_1,
         ],
@@ -332,7 +333,7 @@ def execute_procedure(
     # associated with placebo.
     # Placebo.
     print("placebo union")
-    genes_placebo = aexpr_sub.combine_sets_items_union_unique(
+    genes_placebo = aexph_sub.combine_sets_items_union_unique(
         sets_items=[
             genes_adipose_11,
             genes_adipose_24,
@@ -342,7 +343,7 @@ def execute_procedure(
     )
     # Omega-3 correction for placebo.
     print("adipose_12 difference adipose_11")
-    genes_adipose_12_not_11 = aexpr_sub.combine_sets_items_difference_unique(
+    genes_adipose_12_not_11 = aexph_sub.combine_sets_items_difference_unique(
         items_inclusion=genes_adipose_12,
         items_exclusion=genes_adipose_11,
         report=True,
@@ -350,7 +351,7 @@ def execute_procedure(
 
     # Omega-3.
     print("omega-3 union triple: 12-not-11, 25, 32")
-    genes_omega3_union_triple = aexpr_sub.combine_sets_items_union_unique(
+    genes_omega3_union_triple = aexph_sub.combine_sets_items_union_unique(
         sets_items=[
             genes_adipose_12_not_11,
             genes_adipose_25,
@@ -359,7 +360,7 @@ def execute_procedure(
         report=True,
     )
     print("omega-3 union double: 25, 32")
-    genes_omega3_union_double = aexpr_sub.combine_sets_items_union_unique(
+    genes_omega3_union_double = aexph_sub.combine_sets_items_union_unique(
         sets_items=[
             genes_adipose_25,
             genes_adipose_32,
@@ -373,7 +374,7 @@ def execute_procedure(
     # direction in omega-3 groups.
     if False:
         print("omega-3 difference placebo")
-        genes_omega3_not_placebo = aexpr_sub.combine_sets_items_difference_unique(
+        genes_omega3_not_placebo = aexph_sub.combine_sets_items_difference_unique(
             items_inclusion=genes_omega3,
             items_exclusion=genes_placebo,
             report=True,
@@ -382,13 +383,13 @@ def execute_procedure(
     ##########
     # Combine by intersection of the identifiers of genes in sets.
     print("age intersection omega-3 triple")
-    genes_age_omega3_triple = aexpr_sub.combine_sets_items_intersection_unique(
+    genes_age_omega3_triple = aexph_sub.combine_sets_items_intersection_unique(
         items_first=genes_age,
         items_second=genes_omega3_union_triple,
         report=True,
     )
     print("age intersection omega-3 double")
-    genes_age_omega3_double = aexpr_sub.combine_sets_items_intersection_unique(
+    genes_age_omega3_double = aexph_sub.combine_sets_items_intersection_unique(
         items_first=genes_age,
         items_second=genes_omega3_union_double,
         report=True,
@@ -460,7 +461,7 @@ def execute_procedure(
             "5_adipose_age_placebo_omega3",
         ]
         set_match_younger_elder_omega3 = (
-            aexpr_sub.read_extract_combine_custom_feature_sets(
+            aexph_sub.read_extract_combine_custom_feature_sets(
                 names_sets=sets_match_younger_elder_omega3,
                 features_available=None,
                 path_directory=path_directory_comparison_sets,

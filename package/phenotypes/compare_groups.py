@@ -2,7 +2,7 @@
 Studies of age, exercise, and dietary omega-3 in skeletal muscle and
 subcutaneous adipose of healthy adults.
 
-This module 'compare_sets_groups' is part of the 'transcriptomics' package
+This module 'compare_groups' is part of the 'phenotypes' subpackage
 within the 'age_exercise' package.
 
 Author:
@@ -77,7 +77,6 @@ import age_exercise.phenotypes.organize_subject as aexph_sub
 import age_exercise.phenotypes.organize_sample as extr_sample
 import age_exercise.transcriptomics.organize_signal as extr_signal
 import age_exercise.transcriptomics.select_gene_sets as extr_select
-
 
 ###############################################################################
 # Functionality

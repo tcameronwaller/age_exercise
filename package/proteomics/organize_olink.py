@@ -73,7 +73,7 @@ import partner.description as pdesc
 import partner.decomposition as pdecomp
 import partner.plot as pplot
 import partner.parallelization as prall
-import age_exercise.proteomics.organize_subject as aexpr_sub
+import age_exercise.phenotypes.organize_subject as aexph_sub
 
 ###############################################################################
 # Functionality
@@ -179,7 +179,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.proteomics.organize_subject.py")
+        print("module: age_exercise.proteomics.organize_olink.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -226,7 +226,7 @@ def read_source(
         "table_subject_sample_feature_organization.tsv",
     )
     path_file_table_subject = os.path.join(
-        paths["out_routine"], "organize_subject", "data",
+        paths["out_project"], "phenotypes", "organize_subject", "data",
         "tables", "table_subject.pickle",
     )
 
@@ -237,7 +237,7 @@ def read_source(
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
     types_columns = (
-        aexpr_sub.define_type_columns_table_subject_feature_organization()
+        aexph_sub.define_type_columns_table_subject_feature_organization()
     )
     pail["table_feature_organization"] = pandas.read_csv(
         path_file_table_feature_organization,
@@ -249,7 +249,7 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = aexpr_sub.parse_extract_table_sample_feature_organization(
+    pail_parse = aexph_sub.parse_extract_table_sample_feature_organization(
         table=pail["table_feature_organization"],
         inclusion="inclusion_proteomics",
         report=report,
@@ -495,7 +495,7 @@ def filter_fill_table_subject_olink(
     if report:
         putly.print_terminal_partition(level=3)
         print("package: age_exercise.proteomics")
-        print("module: organize_subject.py")
+        print("module: organize_olink.py")
         print("function: filter_fill_table_subject_olink()")
         putly.print_terminal_partition(level=5)
         print("table after filter: ")
@@ -574,7 +574,7 @@ def drive_manage_calculate_principal_components(
         putly.print_terminal_partition(level=3)
         print("package: partner")
         print("subpackage: proteomics")
-        print("module: organize_subject.py")
+        print("module: organize_olink.py")
         print("function: drive_manage_calculate_principal_components()")
         putly.print_terminal_partition(level=5)
         print("table with principal components: ")
@@ -751,7 +751,7 @@ def prepare_derivative_deliverable_product_tables_signal(
     ##########
     # Prepare tables for signals.
     pail_signal = (
-        aexpr_sub.prepare_tables_signals_features_sets_observations_groups(
+        aexph_sub.prepare_tables_signals_features_sets_observations_groups(
             table=table_source,
             transpose_source_table=False,
             index_features=index_columns,
@@ -779,7 +779,7 @@ def prepare_derivative_deliverable_product_tables_signal(
     # groups. Alternatively, it would be possible to define a separate
     # collection of groups or sets of features for use in the allocation.
     table_allocation_1 = (
-        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+        aexph_sub.prepare_table_features_sets_allocation_match_table_signal(
             table_signal=pail_signal["table_3"],
             index_features=index_columns,
             indices_observations=[index_rows, "group",],
@@ -792,7 +792,7 @@ def prepare_derivative_deliverable_product_tables_signal(
         )
     )
     table_allocation_2 = (
-        aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+        aexph_sub.prepare_table_features_sets_allocation_match_table_signal(
             table_signal=pail_signal["table_4"],
             index_features=index_columns,
             indices_observations=[index_rows, "group",],
@@ -949,7 +949,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
     ##########
     # Prepare tables for correlations.
     pail_correlation = (
-        aexpr_sub.prepare_tables_correlations_of_features_across_observations(
+        aexph_sub.prepare_tables_correlations_of_features_across_observations(
             table=table_source,
             index_features=index_columns,
             index_observations=index_rows,
@@ -979,7 +979,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
         # groups. Alternatively, it would be possible to define a separate
         # collection of groups or sets of features for use in the allocation.
         table_allocation_1 = (
-            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+            aexph_sub.prepare_table_features_sets_allocation_match_table_signal(
                 table_signal=pail_correlation["table_2"],
                 index_columns=index_columns,
                 indices_observations=[index_rows, "group",],
@@ -996,7 +996,7 @@ def prepare_derivative_deliverable_product_tables_correlation(
     if False:
 
         table_allocation_2 = (
-            aexpr_sub.prepare_table_features_sets_allocation_match_table_signal(
+            aexph_sub.prepare_table_features_sets_allocation_match_table_signal(
                 table_signal=pail_signal["table_4"],
                 index_features=index_columns,
                 indices_observations=[index_rows, "group",],
@@ -1464,7 +1464,7 @@ def plot_write_heatmap_chart_signal(
     )
     # Create heatmap.
     figure = (
-        aexpr_sub.plot_heatmap_signal_features_sets_observations_groups(
+        aexph_sub.plot_heatmap_signal_features_sets_observations_groups(
             table_signal=table_signal,
             table_feature=table_feature,
             index_columns=index_columns,
@@ -1526,7 +1526,7 @@ def plot_write_heatmap_chart_mean(
     )
     # Create heatmap.
     figure = (
-        aexpr_sub.plot_heatmap_signal_mean(
+        aexph_sub.plot_heatmap_signal_mean(
             table=table_mean,
             index_columns=index_columns,
             index_rows=index_rows,

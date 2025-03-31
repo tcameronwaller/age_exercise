@@ -2,7 +2,7 @@
 Studies of age, exercise, and dietary omega-3 in skeletal muscle and
 subcutaneous adipose of healthy adults.
 
-This module 'organize_subject' is part of the 'proteomics' package within
+This module 'organize_subject' is part of the 'phenotypes' subpackage within
 the 'age_exercise' package.
 
 Author:
@@ -96,9 +96,9 @@ def initialize_directories(
     arguments:
         project (str): name of project that normally corresponds to a single
             Python package
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics' that normally corresponds to a single Python package
-            or subpackage
+        routine (str): name of routine that normally corresponds to a single
+            Python package or subpackage, , either 'phenotypes',
+            'transcriptomics', or 'proteomics'
         procedure (str): name of procedure, a step in the routine process that
             normally corresponds to a single Python module within the package
         path_directory_dock (str): path to dock directory for procedure's
@@ -140,14 +140,11 @@ def initialize_directories(
         paths["out_routine"], str(procedure),
     )
     # Specific.
-    paths["out_procedure_data"] = os.path.join(
-        paths["out_procedure"], "data",
+    paths["out_procedure_lists"] = os.path.join(
+        paths["out_procedure"], "lists",
     )
-    paths["out_procedure_data_lists"] = os.path.join(
-        paths["out_procedure_data"], "lists",
-    )
-    paths["out_procedure_data_tables"] = os.path.join(
-        paths["out_procedure_data"], "tables",
+    paths["out_procedure_tables"] = os.path.join(
+        paths["out_procedure"], "tables",
     )
     paths["out_procedure_plot"] = os.path.join(
         paths["out_procedure"], "plot",
@@ -156,11 +153,10 @@ def initialize_directories(
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
-        #paths["out_routine"],
+        paths["out_routine"],
         paths["out_procedure"],
-        paths["out_procedure_data"],
-        paths["out_procedure_data_lists"],
-        paths["out_procedure_data_tables"],
+        paths["out_procedure_lists"],
+        paths["out_procedure_tables"],
         paths["out_procedure_plot"],
     ]
     # Remove previous directories and files to avoid version or batch
@@ -178,7 +174,7 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.proteomics.organize_subject.py")
+        print("module: age_exercise.phenotypes.organize_subject.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -1700,7 +1696,7 @@ def describe_quantitative_features_by_observations_groups(
     # Write product information to file.
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data_tables"],
+        path_directory=paths["out_procedure_tables"],
         reset_index_rows=False,
         write_index_rows=False,
         write_index_columns=True,
@@ -4523,7 +4519,7 @@ def execute_procedure(
     ##########
     # Parameters.
     project="age_exercise"
-    routine="proteomics"
+    routine="phenotypes"
     procedure="organize_subject"
     report = True
 
@@ -4608,12 +4604,12 @@ def execute_procedure(
     if False:
         putly.write_lists_to_file_text(
             pail_write=pail_write_lists,
-            path_directory=paths["out_procedure_data_lists"],
+            path_directory=paths["out_procedure_lists"],
             delimiter="\n",
         )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data_tables"],
+        path_directory=paths["out_procedure_tables"],
         reset_index_rows=False,
         write_index_rows=False,
         write_index_columns=True,
@@ -4623,7 +4619,7 @@ def execute_procedure(
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_data_tables"],
+        path_directory=paths["out_procedure_tables"],
         reset_index_rows=None,
         write_index_rows=None,
         write_index_columns=None,

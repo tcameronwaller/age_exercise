@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 17 July 2024
-# Date, last execution or modification: 31 July 2024
-# Review: TCW; 31 July 2024
+# Date, first execution: 25 March 2025
+# Date, last execution or modification: 25 March 2025
+# Review: 25 March 2025
 ###############################################################################
 # Note
 
@@ -23,16 +23,16 @@
 
 # Project.
 project_main="age_exercise"
+interface_subparser="proteomics"
 
 # Directories.
 cd ~
 path_directory_paths="./Downloads/paths_process_local"
 path_directory_tools=$(<"$path_directory_paths/path_directory_tools.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
+path_directory_scripts="$path_directory_process/scripts"
 path_directory_package="$path_directory_process/package"
 path_directory_package_partner="$path_directory_package/partner"
-path_directory_package_project_main="$path_directory_package/${project_main}"
-
 path_directory_package_project_main="$path_directory_package/${project_main}"
 
 path_directory_dock="$path_directory_process/dock"
@@ -108,8 +108,8 @@ fi
 
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
-transcriptomics \
---organize_signal \
+$interface_subparser \
+--organize_spectroscopy \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
@@ -129,9 +129,9 @@ deactivate
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
-  echo "routine: transcriptomics"
-  echo "procedure: organize_signal"
-  echo "script: 2_organize_signal.sh"
+  echo "routine: ${interface_subparser}"
+  echo "procedure: organize_spectroscopy"
+  echo "script: 2_organize_spectroscopy.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"

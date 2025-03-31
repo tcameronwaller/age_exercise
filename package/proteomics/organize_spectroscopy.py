@@ -73,7 +73,7 @@ import partner.description as pdesc
 import partner.decomposition as pdecomp
 import partner.plot as pplot
 import partner.parallelization as prall
-import age_exercise.proteomics.organize_subject as aexpr_sub
+import age_exercise.phenotypes.organize_subject as aexph_sub
 
 ###############################################################################
 # Functionality
@@ -237,7 +237,7 @@ def read_source(
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
     #types_columns = (
-    #    aexpr_sub.define_type_columns_table_subject_feature_organization()
+    #    aexph_sub.define_type_columns_table_subject_feature_organization()
     #)
     pail["table_batch_a"] = pandas.read_csv(
         path_file_table_batch_a,

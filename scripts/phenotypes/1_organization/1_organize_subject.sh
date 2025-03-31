@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 25 March 2025
-# Date, last execution or modification: 25 March 2025
-# Review: 25 March 2025
+# Date, first execution: 27 August 2024
+# Date, last execution or modification: 31 March 2025
+# Review: TCW; 31 March 2025
 ###############################################################################
 # Note
 
@@ -23,16 +23,17 @@
 
 # Project.
 project_main="age_exercise"
-interface_subparser="proteomics"
+interface_subparser="phenotypes"
 
 # Directories.
 cd ~
 path_directory_paths="./Downloads/paths_process_local"
 path_directory_tools=$(<"$path_directory_paths/path_directory_tools.txt")
 path_directory_process=$(<"$path_directory_paths/path_directory_process_local.txt")
-path_directory_scripts="$path_directory_process/scripts"
 path_directory_package="$path_directory_process/package"
 path_directory_package_partner="$path_directory_package/partner"
+path_directory_package_project_main="$path_directory_package/${project_main}"
+
 path_directory_package_project_main="$path_directory_package/${project_main}"
 
 path_directory_dock="$path_directory_process/dock"
@@ -89,13 +90,18 @@ export PYTHONPATH="$PYTHONPATH:$path_directory_package"
 export MKL_NUM_THREADS=$threads
 export NUMEXPR_NUM_THREADS=$threads
 export OMP_NUM_THREADS=$threads
+
 # Report.
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "Python virtual environment: main"
   echo "path to Python installation:"
   which python3
-  echo "Python path variable:"
+  echo "VIRTUAL_ENV variable:"
+  echo $VIRTUAL_ENV
+  echo "PYTHONHOME variable:"
+  echo $PYTHONHOME
+  echo "PYTHONPATH variable:"
   echo $PYTHONPATH
   sleep 1s
   echo "----------"
@@ -109,7 +115,7 @@ fi
 # Execute program process in Python.
 python3 $path_directory_package_project_main/interface.py \
 $interface_subparser \
---organize_spectroscopy \
+--organize_subject \
 --path_directory_dock $path_directory_dock
 
 ###############################################################################
@@ -122,16 +128,14 @@ export PYTHONPATH="$OLD_PYTHONPATH"
 deactivate
 #which python3
 
-
-
 ###############################################################################
 # Report.
 if [ "$report" == "true" ]; then
   echo "----------"
   echo "project: ${project_main}"
   echo "routine: ${interface_subparser}"
-  echo "procedure: organize_spectroscopy"
-  echo "script: 3_organize_spectroscopy.sh"
+  echo "procedure: organize_subject"
+  echo "script: 1_organize_subject.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"

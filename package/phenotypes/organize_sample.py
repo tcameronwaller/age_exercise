@@ -2,7 +2,7 @@
 Studies of age, exercise, and dietary omega-3 in skeletal muscle and
 subcutaneous adipose of healthy adults.
 
-This module 'organize_sample' is part of the 'transcriptomics' package within
+This module 'organize_sample' is part of the 'phenotypes' subpackage within
 the 'age_exercise' package.
 
 Author:
@@ -72,7 +72,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import age_exercise.proteomics.organize_subject as aexpr_sub
+import age_exercise.phenotypes.organize_subject as aexph_sub
 
 ###############################################################################
 # Functionality
@@ -145,7 +145,7 @@ def initialize_directories(
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
-        paths["out_routine"],
+        #paths["out_routine"],
         paths["out_procedure"],
         paths["out_data"],
     ]
@@ -249,8 +249,8 @@ def read_source(
         "table_subject_sample_feature_organization.tsv",
     )
     path_file_table_subject = os.path.join(
-        paths["out_project"], "proteomics", "organize_subject", "data",
-        "tables", "table_subject.pickle",
+        paths["out_project"], "phenotypes", "organize_subject", "tables",
+        "table_subject.pickle",
     )
     path_file_table_sample_file = os.path.join(
         paths["in_data"], "study_age_exercise", "subject_sample",
@@ -264,7 +264,7 @@ def read_source(
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
     types_columns = (
-        aexpr_sub.define_type_columns_table_subject_feature_organization()
+        aexph_sub.define_type_columns_table_subject_feature_organization()
     )
     pail["table_feature_organization"] = pandas.read_csv(
         path_file_table_feature_organization,
@@ -303,7 +303,7 @@ def read_source(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: read_source()")
         putly.print_terminal_partition(level=5)
         print("table of properties for subjects: ")
@@ -478,7 +478,7 @@ def organize_table_subject_property(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: organize_table_subject_property()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
@@ -787,7 +787,7 @@ def organize_table_sample_file(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: organize_table_sample_file()")
         putly.print_terminal_partition(level=5)
         print("table of matches between samples and files: ")
@@ -867,7 +867,7 @@ def combine_table_subject_sample_file_property(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: combine_table_subject_sample_file_property()")
         putly.print_terminal_partition(level=5)
         print("table of files and attributes for samples: ")
@@ -989,7 +989,7 @@ def organize_table_sample_interaction_combinations(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.proteomics.organize_sample_olink.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: organize_table_sample_interaction_combinations()")
         putly.print_terminal_partition(level=5)
         print("table of attributes for samples: ")
@@ -1046,7 +1046,7 @@ def describe_table_sample_factors(
     # Report.
     if report:
         putly.print_terminal_partition(level=2)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: describe_table_sample_factors()")
         putly.print_terminal_partition(level=4)
         print("tissue: adipose")
@@ -1289,7 +1289,7 @@ def describe_table_sample_sets(
     # Report.
     if report:
         putly.print_terminal_partition(level=2)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: describe_table_sample_sets()")
         putly.print_terminal_partition(level=5)
         print("count of selections: " + str(len(selections)))
@@ -1341,7 +1341,7 @@ def describe_table_sample_sets(
     # Report.
     if report:
         putly.print_terminal_partition(level=2)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: describe_table_sample_sets()")
         putly.print_terminal_partition(level=5)
         print("description complete")
@@ -1374,7 +1374,7 @@ def execute_procedure(
     ##########
     # Parameters.
     project="age_exercise"
-    routine="transcriptomics"
+    routine="phenotypes"
     procedure="organize_sample"
     report = True
 
@@ -1382,7 +1382,7 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
+        print("module: age_exercise.phenotypes.organize_sample.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
@@ -1413,7 +1413,7 @@ def execute_procedure(
 
     ##########
     # 3. Parse table of parameters describing properties for subjects.
-    pail_parse = aexpr_sub.parse_extract_table_sample_feature_organization(
+    pail_parse = aexph_sub.parse_extract_table_sample_feature_organization(
         table=pail_source["table_feature_organization"],
         inclusion="inclusion",
         report=report,
@@ -1427,7 +1427,7 @@ def execute_procedure(
     #columns_subject_original.append("identifier_subject_study")
     columns_subject_original.insert(5, "identifier_subject_study")
     columns_subject_novel = (
-        aexpr_sub.define_sequence_columns_novel_subject_feature()
+        aexph_sub.define_sequence_columns_novel_subject_feature()
     )
     columns_subject_novel.remove("study_clinic_visit")
     #columns_subject_novel.append("study_clinic_visit_subject")

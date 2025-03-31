@@ -79,7 +79,7 @@ import partner.description as pdesc
 #import partner.regression as preg
 import partner.plot as pplot
 import partner.parallelization as prall
-import age_exercise.transcriptomics.organize_sample as extr_sample
+import age_exercise.phenotypes.organize_sample as extr_sample
 
 ###############################################################################
 # Functionality
@@ -763,7 +763,7 @@ def read_source_sample(
         "table_sample_file_rnaseq.tsv",
     )
     path_file_table_sample = os.path.join(
-        paths["out_routine"], "organize_sample", "data",
+        paths["out_project"], "phenotypes", "organize_sample", "data",
         "table_sample.pickle",
     )
 

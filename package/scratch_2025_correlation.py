@@ -79,7 +79,7 @@ import partner.plot as pplot
 import partner.parallelization as prall
 import age_exercise.transcriptomics.organize_signal as exrosig
 import age_exercise.transcriptomics.select_gene_sets as exrosel
-import age_exercise.proteomics.organize_subject as aexpr_sub
+import age_exercise.phenotypes.organize_subject as aexph_sub
 
 ###############################################################################
 # Functionality
@@ -257,7 +257,7 @@ def execute_procedure(
 
     if False:
         heatmap = (
-            aexpr_sub.plot_heatmap_features_observations_labels(
+            aexph_sub.plot_heatmap_features_observations_labels(
                 table=table_signal_correlation_cluster,
                 index_columns="group_observations",
                 index_rows=index_features,
