@@ -1,6 +1,6 @@
 """
-Supply functionality for process and analysis of data from proteomics using
-mass spectroscopy.
+Studies of age, exercise, and dietary omega-3 in skeletal muscle and
+subcutaneous adipose of healthy adults.
 
 This module 'organization' is part of the 'proteomics' package within the
 'exercise' package.
@@ -14,24 +14,24 @@ Author:
 
 License:
 
-    This file is part of the project package directory 'exercise'
-    (https://github.com/tcameronwaller/exercise/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'exercise' supports data analysis with team in endocrinology.
-    Copyright (C) 2024 Thomas Cameron Waller
+    Project 'age_exercise' supports data analysis with team in endocrinology.
+    Copyright (C) 2025 Thomas Cameron Waller
 
-    The code within project 'exercise' is free software: you can redistribute
-    it and/or modify it under the terms of the GNU General Public License as
-    published by the Free Software Foundation, either version 3 of the GNU
-    General Public License, or (at your option) any later version.
+    The code within project 'age_exercise' is free software: you can
+    redistribute it and/or modify it under the terms of the GNU General Public
+    License as published by the Free Software Foundation, either version 3 of
+    the GNU General Public License, or (at your option) any later version.
 
-    The code within project 'exercise' is distributed in the hope that it will
-    be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+    The code within project 'age_exercise' is distributed in the hope that it
+    will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
     Public License for more details.
 
     You should have received a copy of the GNU General Public License along
-    with project 'exercise'. If not, see <http://www.gnu.org/licenses/>.
+    with project 'age_exercise'. If not, see <http://www.gnu.org/licenses/>.
 """
 
 
