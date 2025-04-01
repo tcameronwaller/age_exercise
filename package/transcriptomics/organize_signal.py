@@ -3830,8 +3830,7 @@ def control_parallel_instance(
     parameters=None,
 ):
     """
-    Control procedure to organize within tables the information about genetic
-    correlations from LDSC.
+    Control procedure for a single instance in parallel with others.
 
     arguments:
         instance (dict): parameters specific to current instance
