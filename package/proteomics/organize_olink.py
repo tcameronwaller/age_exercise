@@ -362,15 +362,15 @@ def filter_fill_table_subject_olink(
     # Olink measurements are only available for "Pre" or "first" clinical
     # visits of the study.
     columns_categories = dict()
-    columns_categories["cohort_age_text"] = ["younger", "elder",]
-    #columns_categories["cohort_age_text"] = ["younger",]
-    #columns_categories["cohort_age_text"] = ["elder",]
+    columns_categories["age_cohort_text"] = ["younger", "elder",]
+    #columns_categories["age_cohort_text"] = ["younger",]
+    #columns_categories["age_cohort_text"] = ["elder",]
     columns_categories["sex_text"] = ["female", "male",]
     #columns_categories["sex_text"] = ["female",]
     #columns_categories["sex_text"] = ["male",]
-    #columns_categories["study_clinic_visit"] = ["first", "second",]
-    columns_categories["study_clinic_visit"] = ["first",]
-    #columns_categories["study_clinic_visit"] = ["second",]
+    #columns_categories["visit_text"] = ["first", "second",]
+    columns_categories["visit_text"] = ["first",]
+    #columns_categories["visit_text"] = ["second",]
     table_category = porg.filter_select_table_rows_by_columns_categories(
         table=table_source,
         columns_categories=columns_categories,
@@ -702,8 +702,8 @@ def prepare_derivative_deliverable_product_tables_signal(
             column_identifier="subject_visit",
             name="younger_female", # or "name_instance"
             columns_categories={
-                "study_clinic_visit": ["first",],
-                "cohort_age_text": ["younger",],
+                "visit_text": ["first",],
+                "age_cohort_text": ["younger",],
                 "sex_text": ["female",],
             },
             report=report,
@@ -714,8 +714,8 @@ def prepare_derivative_deliverable_product_tables_signal(
             column_identifier="subject_visit",
             name="younger_male", # or "name_instance"
             columns_categories={
-                "study_clinic_visit": ["first",],
-                "cohort_age_text": ["younger",],
+                "visit_text": ["first",],
+                "age_cohort_text": ["younger",],
                 "sex_text": ["male",],
             },
             report=report,
@@ -726,8 +726,8 @@ def prepare_derivative_deliverable_product_tables_signal(
             column_identifier="subject_visit",
             name="elder_female", # or "name_instance"
             columns_categories={
-                "study_clinic_visit": ["first",],
-                "cohort_age_text": ["elder",],
+                "visit_text": ["first",],
+                "age_cohort_text": ["elder",],
                 "sex_text": ["female",],
             },
             report=report,
@@ -738,8 +738,8 @@ def prepare_derivative_deliverable_product_tables_signal(
             column_identifier="subject_visit",
             name="elder_male", # or "name_instance"
             columns_categories={
-                "study_clinic_visit": ["first",],
-                "cohort_age_text": ["elder",],
+                "visit_text": ["first",],
+                "age_cohort_text": ["elder",],
                 "sex_text": ["male",],
             },
             report=report,
@@ -939,8 +939,8 @@ def prepare_derivative_deliverable_product_tables_correlation(
             column_identifier="subject_visit",
             name="observations", # or "name_instance"
             columns_categories={
-                "study_clinic_visit": ["first",],
-                "cohort_age_text": ["younger", "elder",],
+                "visit_text": ["first",],
+                "age_cohort_text": ["younger", "elder",],
                 "sex_text": ["female", "male",],
             },
             report=report,
@@ -1193,7 +1193,7 @@ def define_response_features_principal_components_olink():
             "type": "category",
         })
         records.append({
-            "name": "cohort_age_text",
+            "name": "age_cohort_text",
             "type": "category",
         })
     if True:

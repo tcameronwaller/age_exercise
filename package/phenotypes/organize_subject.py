@@ -548,6 +548,12 @@ def read_source(
 
 ##########
 # 3. Organize table of properties for study subjects.
+# Exercise caution and pay attention to the definitions of the logical binary
+# features.
+# Some definitions are 'lazy', such that they have values of zero (0) when they
+# perhaps ought to have missing values.
+# For this reason, for clarity, filter and stratify observations by the
+# corresponding features with categorical text values.
 
 
 def define_sequence_columns_novel_subject_feature():
@@ -571,25 +577,29 @@ def define_sequence_columns_novel_subject_feature():
 
     # Specify sequence of columns within table.
     columns_sequence = [
-        "cohort_age",
-        "cohort_age_text",
-        #"cohort_age_letter",
-        "intervention",
-        "intervention_text",
-        "intervention_text_placebo_other",
-        "intervention_text_placebo_other_after_only",
-        "intervention_text_active_other",
-        "intervention_text_active_other_after_only",
         #"identifier_subject",
-        #"study_clinic_visit_relative",
-        "study_clinic_visit",
-        "study_clinic_visit_younger_second",
+        "age_cohort_text",
+        "age_cohort",
+        "sex_text",
+        "sex_female",
+        "sex_y",
+        "intervention_text",
+        "intervention_placebo",
+        "intervention_omega3",
+        "intervention_text_placebo_versus_other",
+        "intervention_text_omega3_versus_other",
+        "intervention_placebo_other",
+        "intervention_omega3_other",
+        "intervention_text_after_placebo_versus_other",
+        "intervention_text_after_omega3_versus_other",
+        "intervention_after_placebo",
+        "intervention_after_omega3",
+        "visit_text",
+        "visit_second",
+        "visit_text_fill_second_for_age_younger",
         "subject_visit",
         "date_visit_text",
         #"date_visit_text_raw",
-        "sex_y",
-        #"sex_letter",
-        "sex_text",
         #"age",
         #"body_mass_index",
         #"body_fat_percent",
@@ -606,7 +616,43 @@ def define_sequence_columns_novel_subject_feature():
     return columns_sequence
 
 
-def determine_subject_study_clinic_visit(
+def determine_sex_text(
+    sex_text_raw=None,
+):
+    """
+    Determines a designator for sex.
+
+    arguments:
+        sex_text_raw (str): designator of sex
+
+    raises:
+
+    returns:
+        (str): designator of sex
+
+    """
+
+    # Determine designator.
+    if (
+        (pandas.notna(sex_text_raw)) and
+        (len(str(sex_text_raw).strip()) > 0)
+    ):
+        # There is adequate information.
+        sex_text_raw = str(sex_text_raw).strip().upper()
+        if (sex_text_raw == "F"):
+            designator = str("female")
+        elif (sex_text_raw == "M"):
+            designator = str("male")
+        else:
+            designator = ""
+    else:
+        designator = ""
+        pass
+    # Return information.
+    return designator
+
+
+def determine_subject_visit_text(
     visit_relative=None,
 ):
     """
@@ -645,14 +691,14 @@ def determine_subject_study_clinic_visit(
     return visit
 
 
-def determine_cohort_age_text(
-    cohort_age_letter=None,
+def determine_age_cohort_text(
+    age_cohort_text_raw=None,
 ):
     """
     Determines a designator for cohort by age.
 
     arguments:
-        cohort_age_letter (str): designator of cohort by age
+        age_cohort_text_raw (str): designator of cohort by age
 
     raises:
 
@@ -663,14 +709,14 @@ def determine_cohort_age_text(
 
     # Determine designator.
     if (
-        (pandas.notna(cohort_age_letter)) and
-        (len(str(cohort_age_letter).strip()) > 0)
+        (pandas.notna(age_cohort_text_raw)) and
+        (len(str(age_cohort_text_raw).strip()) > 0)
     ):
         # There is adequate information.
-        cohort_age_letter = str(cohort_age_letter).strip().upper()
-        if (cohort_age_letter == "E"):
+        age_cohort_text_raw = str(age_cohort_text_raw).strip().upper()
+        if (age_cohort_text_raw == "E"):
             designator = str("elder")
-        elif (cohort_age_letter == "Y"):
+        elif (age_cohort_text_raw == "Y"):
             designator = str("younger")
         else:
             designator = ""
@@ -681,52 +727,16 @@ def determine_cohort_age_text(
     return designator
 
 
-def determine_cohort_age(
-    cohort_age_text=None,
-):
-    """
-    Determines a designator for cohort by age.
-
-    arguments:
-        cohort_age_text (str): designator of cohort by age
-
-    raises:
-
-    returns:
-        (float): designator of cohort by age
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(cohort_age_text)) and
-        (len(str(cohort_age_text).strip()) > 0)
-    ):
-        # There is adequate information.
-        cohort_age_text = str(cohort_age_text).strip().lower()
-        if (cohort_age_text == "elder"):
-            designator = 1
-        elif (cohort_age_text == "younger"):
-            designator = 0
-        else:
-            designator = float("nan")
-    else:
-        designator = float("nan")
-        pass
-    # Return information.
-    return designator
-
-
 def determine_intervention_text(
     intervention_text_raw=None,
-    cohort_age_text=None,
+    age_cohort_text=None,
 ):
     """
     Determines a designator for intervention.
 
     arguments:
-        intervention_text (str): designator of intervention
-        cohort_age_text (str): designator of cohort by age
+        intervention_text_raw (str): designator of intervention
+        age_cohort_text (str): designator of cohort by age
 
     raises:
 
@@ -742,17 +752,20 @@ def determine_intervention_text(
     ):
         # Determine designator.
         designator = str(intervention_text_raw).strip().lower()
+        # Translate designator.
+        if (designator == "active"):
+            designator = "omega3"
     else:
         # Fill with parsable term for not applicable.
         designator = "none"
         pass
     # Interpret designator and fill or change as necessary.
     if (
-        (pandas.notna(cohort_age_text)) and
-        (len(str(cohort_age_text).strip()) > 0) and
+        (pandas.notna(age_cohort_text)) and
+        (len(str(age_cohort_text).strip()) > 0) and
         (
-            (cohort_age_text == "younger") or
-            (designator not in ["placebo", "active",])
+            (age_cohort_text == "younger") or
+            (designator not in ["placebo", "omega3",])
         )
     ):
         # Fill with parsable term for not applicable.
@@ -762,14 +775,20 @@ def determine_intervention_text(
     return designator
 
 
-def determine_intervention(
+def determine_intervention_text_after_intervention_versus_other(
+    type=None,
     intervention_text=None,
+    visit_text=None,
 ):
     """
-    Determines a designator for intervention.
+    Determines a designator.
 
     arguments:
+        type (str): type of intervention to designate, either 'placebo' or
+            'omega3'
         intervention_text (str): designator of intervention
+        visit_text (str): designator of clinical visit in the study at which
+            collection of a sample occurred, either 'first' or 'second'
 
     raises:
 
@@ -778,93 +797,33 @@ def determine_intervention(
 
     """
 
-    # Determine designator.
-    if (
-        (pandas.notna(intervention_text)) and
-        (len(str(intervention_text).strip()) > 0)
-    ):
-        # There is adequate information.
-        intervention_text = str(intervention_text).strip().lower()
-        if (intervention_text == "active"):
-            designator = 1
-        elif (intervention_text == "placebo"):
-            designator = 0
-        else:
-            designator = float("nan")
-    else:
-        designator = float("nan")
-        pass
-    # Return information.
-    return designator
-
-
-def determine_sex_text(
-    sex_letter=None,
-):
-    """
-    Determines a designator for sex.
-
-    arguments:
-        sex_letter (str): designator of sex
-
-    raises:
-
-    returns:
-        (str): designator of sex
-
-    """
+    #table["intervention_text_after_placebo_versus_other"] = table.apply(
+    #    lambda series_row: (
+    #        str("other")
+    #        if (series_row["visit_text"] in ["first",])
+    #        else series_row["intervention_text_placebo_versus_other"]
+    #    ),
+    #    axis="columns", # apply function to each row
+    #)
+    #table["intervention_text_after_omega3_versus_other"] = table.apply(
+    #    lambda series_row: (
+    #        str("other")
+    #        if (series_row["visit_text"] in ["first",])
+    #        else series_row["intervention_text_omega3_versus_other"]
+    #    ),
+    #    axis="columns", # apply function to each row
+    #)
 
     # Determine designator.
     if (
-        (pandas.notna(sex_letter)) and
-        (len(str(sex_letter).strip()) > 0)
+        (visit_text == "second") and
+        (intervention_text == type)
     ):
-        # There is adequate information.
-        sex_letter = str(sex_letter).strip().upper()
-        if (sex_letter == "F"):
-            designator = str("female")
-        elif (sex_letter == "M"):
-            designator = str("male")
-        else:
-            designator = ""
+        # Determine designator.
+        designator = type
     else:
-        designator = ""
-        pass
-    # Return information.
-    return designator
-
-
-def determine_sex_y(
-    sex_text=None,
-):
-    """
-    Determines a designator for sex.
-
-    arguments:
-        sex_text (str): designator of sex
-
-    raises:
-
-    returns:
-        (float): designator of sex
-
-    """
-
-    # Determine designator.
-    if (
-        (pandas.notna(sex_text)) and
-        (len(str(sex_text).strip()) > 0)
-    ):
-        # There is adequate information.
-        sex_text = str(sex_text).strip().lower()
-        if (sex_text == "female"):
-            designator = 0
-        elif (sex_text == "male"):
-            designator = 1
-        else:
-            designator = float("nan")
-    else:
-        designator = float("nan")
+        # Fill with parsable term for not applicable.
+        designator = "other"
         pass
     # Return information.
     return designator
@@ -1096,36 +1055,74 @@ def organize_table_subject_property(
         report=False,
     )
 
-    # Determine designations of cohort by age.
-    table["cohort_age_text"] = table.apply(
+    # Determine designations of sex.
+    table["sex_text"] = table.apply(
         lambda row:
-            determine_cohort_age_text(
-                cohort_age_letter=row["cohort_age_letter"],
+            determine_sex_text(
+                sex_text_raw=row["sex_text_raw"],
             ),
         axis="columns", # apply function to each row
     )
-    table["cohort_age"] = table.apply(
+    table["sex_female"] = table.apply(
         lambda row:
-            determine_cohort_age(
-                cohort_age_text=row["cohort_age_text"],
+            putly.determine_logical_binary_designator(
+                category_text=row["sex_text"],
+                values_1=["female",],
+                values_0=["male",],
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["sex_y"] = table.apply(
+        lambda row:
+            putly.determine_logical_binary_designator(
+                category_text=row["sex_text"],
+                values_1=["male",],
+                values_0=["female",],
+            ),
+        axis="columns", # apply function to each row
+    )
+
+    # Determine designations of cohort by age.
+    table["age_cohort_text"] = table.apply(
+        lambda row:
+            determine_age_cohort_text(
+                age_cohort_text_raw=row["age_cohort_text_raw"],
+            ),
+        axis="columns", # apply function to each row
+    )
+
+    table["age_cohort"] = table.apply(
+        lambda row: putly.determine_logical_binary_designator(
+                category_text=row["age_cohort_text"],
+                values_1=["elder",],
+                values_0=["younger",],
             ),
         axis="columns", # apply function to each row
     )
 
     # Determine designation for subject's first or second clinical visit of the
     # study.
-    table["study_clinic_visit"] = table.apply(
+    table["visit_text"] = table.apply(
         lambda row:
-            determine_subject_study_clinic_visit(
-                visit_relative=row["study_clinic_visit_relative"],
+            determine_subject_visit_text(
+                visit_relative=row["study_clinic_visit_text_raw"],
             ),
         axis="columns", # apply function to each row
     )
-    table["study_clinic_visit_younger_second"] = table.apply(
+    table["visit_second"] = table.apply(
+        lambda row:
+        putly.determine_logical_binary_designator(
+            category_text=row["visit_text"],
+            values_1=["second",],
+            values_0=["first",],
+        ),
+        axis="columns", # apply function to each row
+    )
+    table["visit_text_fill_second_for_age_younger"] = table.apply(
         lambda series_row: (
             str("second")
-            if (series_row["cohort_age_text"] == "younger")
-            else series_row["study_clinic_visit"]
+            if (series_row["age_cohort_text"] == "younger")
+            else series_row["visit_text"]
         ),
         axis="columns", # apply function to each row
     )
@@ -1133,7 +1130,7 @@ def organize_table_subject_property(
     # Determine combination designation for subject and visit.
     table["subject_visit"] = table.apply(
         lambda row: str(
-            row["identifier_subject"] + "_" + row["study_clinic_visit"]
+            row["identifier_subject"] + "_" + row["visit_text"]
         ),
         axis="columns", # apply function to each row
     )
@@ -1141,36 +1138,39 @@ def organize_table_subject_property(
     # Determine designations of intervention, either placebo or active.
     table["intervention_text"] = table.apply(
         lambda row:
-            determine_intervention_text(
-                intervention_text_raw=row["intervention_text_raw"],
-                cohort_age_text=row["cohort_age_text"],
-            ),
+        determine_intervention_text(
+            intervention_text_raw=row["intervention_text_raw"],
+            age_cohort_text=row["age_cohort_text"],
+        ),
         axis="columns", # apply function to each row
     )
-    table["intervention"] = table.apply(
+    table["intervention_placebo"] = table.apply(
         lambda row:
-            determine_intervention(
-                intervention_text=row["intervention_text"],
+        putly.determine_logical_binary_designator(
+            category_text=row["intervention_text"],
+            values_1=["placebo",],
+            values_0=["omega3",],
+        ),
+        axis="columns", # apply function to each row
+    )
+    table["intervention_omega3"] = table.apply(
+        lambda row:
+            putly.determine_logical_binary_designator(
+                category_text=row["intervention_text"],
+                values_1=["omega3",],
+                values_0=["placebo",],
             ),
         axis="columns", # apply function to each row
     )
-    table["intervention_text_placebo_other"] = table.apply(
+    table["intervention_text_placebo_versus_other"] = table.apply(
         lambda series_row: (
             str("other")
-            if (series_row["intervention_text"] in ["active", "none",])
+            if (series_row["intervention_text"] in ["omega3", "none",])
             else series_row["intervention_text"]
         ),
         axis="columns", # apply function to each row
     )
-    table["intervention_text_placebo_other_after_only"] = table.apply(
-        lambda series_row: (
-            str("other")
-            if (series_row["study_clinic_visit"] in ["first",])
-            else series_row["intervention_text_placebo_other"]
-        ),
-        axis="columns", # apply function to each row
-    )
-    table["intervention_text_active_other"] = table.apply(
+    table["intervention_text_omega3_versus_other"] = table.apply(
         lambda series_row: (
             str("other")
             if (series_row["intervention_text"] in ["placebo", "none",])
@@ -1178,30 +1178,65 @@ def organize_table_subject_property(
         ),
         axis="columns", # apply function to each row
     )
-    table["intervention_text_active_other_after_only"] = table.apply(
-        lambda series_row: (
-            str("other")
-            if (series_row["study_clinic_visit"] in ["first",])
-            else series_row["intervention_text_active_other"]
-        ),
+    abbreviation = "intervention_text_placebo_versus_other"
+    table["intervention_placebo_other"] = table.apply(
+        lambda row:
+            putly.determine_logical_binary_designator(
+                category_text=row[abbreviation],
+                values_1=["placebo",],
+                values_0=["other",],
+            ),
+        axis="columns", # apply function to each row
+    )
+    abbreviation = "intervention_text_omega3_versus_other"
+    table["intervention_omega3_other"] = table.apply(
+        lambda row:
+            putly.determine_logical_binary_designator(
+                category_text=row[abbreviation],
+                values_1=["omega3",],
+                values_0=["other",],
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["intervention_text_after_placebo_versus_other"] = table.apply(
+        lambda row:
+            determine_intervention_text_after_intervention_versus_other(
+                type="placebo",
+                intervention_text=row["intervention_text"],
+                visit_text=row["visit_text"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["intervention_text_after_omega3_versus_other"] = table.apply(
+        lambda row:
+            determine_intervention_text_after_intervention_versus_other(
+                type="omega3",
+                intervention_text=row["intervention_text"],
+                visit_text=row["visit_text"],
+            ),
+        axis="columns", # apply function to each row
+    )
+    abbreviation = "intervention_text_after_placebo_versus_other"
+    table["intervention_after_placebo"] = table.apply(
+        lambda row:
+            putly.determine_logical_binary_designator(
+                category_text=row[abbreviation],
+                values_1=["placebo",],
+                values_0=["other",],
+            ),
+        axis="columns", # apply function to each row
+    )
+    abbreviation = "intervention_text_after_omega3_versus_other"
+    table["intervention_after_omega3"] = table.apply(
+        lambda row:
+            putly.determine_logical_binary_designator(
+                category_text=row[abbreviation],
+                values_1=["omega3",],
+                values_0=["other",],
+            ),
         axis="columns", # apply function to each row
     )
 
-    # Determine designations of sex.
-    table["sex_text"] = table.apply(
-        lambda row:
-            determine_sex_text(
-                sex_letter=row["sex_letter"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    table["sex_y"] = table.apply(
-        lambda row:
-            determine_sex_y(
-                sex_text=row["sex_text"],
-            ),
-        axis="columns", # apply function to each row
-    )
     # Determine date of visit to the clinic for study.
     table["date_visit_text"] = table.apply(
         lambda row:
@@ -1222,10 +1257,10 @@ def organize_table_subject_property(
     # Sort rows within table.
     table.sort_values(
         by=[
-            "cohort_age",
-            "intervention",
+            "age_cohort",
+            "intervention_omega3",
             "identifier_subject",
-            "study_clinic_visit",
+            "visit_text",
         ],
         axis="index",
         ascending=True,
@@ -1261,7 +1296,6 @@ def organize_table_subject_property(
         pass
     # Return information.
     return pail
-
 
 
 ##########
@@ -1320,9 +1354,9 @@ def define_selection_groups_observations_age_omega3(
             name="younger_control", # or "name_instance"
             columns_categories={
                 #"tissue": ["adipose",], # column "tissue" not in original subject table
-                "cohort_age_text": ["younger",],
+                "age_cohort_text": ["younger",],
                 "sex_text": ["female","male",],
-                "study_clinic_visit": ["first",],
+                "visit_text": ["first",],
             },
             report=report,
     ))
@@ -1333,9 +1367,9 @@ def define_selection_groups_observations_age_omega3(
             name="older_control", # or "name_instance"
             columns_categories={
                 #"tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
                 "sex_text": ["female","male",],
-                "study_clinic_visit": ["first",],
+                "visit_text": ["first",],
             },
             report=report,
     ))
@@ -1346,9 +1380,9 @@ def define_selection_groups_observations_age_omega3(
             name="older_placebo", # or "name_instance"
             columns_categories={
                 #"tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
                 "sex_text": ["female","male",],
-                "study_clinic_visit": ["second",],
+                "visit_text": ["second",],
                 "intervention_text": ["placebo",],
             },
             report=report,
@@ -1360,10 +1394,10 @@ def define_selection_groups_observations_age_omega3(
             name="older_omega3", # or "name_instance"
             columns_categories={
                 #"tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
                 "sex_text": ["female","male",],
-                "study_clinic_visit": ["second",],
-                "intervention_text": ["active",],
+                "visit_text": ["second",],
+                "intervention_text": ["omega3",],
             },
             report=report,
     ))
@@ -4590,7 +4624,18 @@ def execute_procedure(
     )
 
     ##########
-    # 4. Collect information.
+    # 5. Calculate principal components of features quantitative, continuous,
+    # ratio or interval scales of measurement.
+
+    #pail_source["columns_quantitative"]
+    #pail_source["columns_olink_plasma"] # only available for second visit
+    #pail_source["columns_olink_muscle"] # only available for second visit
+    #pail_source["columns_olink_adipose"] # only available for second visit
+
+
+
+    ##########
+    # 6. Collect information.
     # Collections of files.
 
     #pail_write_lists = dict()
@@ -4600,7 +4645,7 @@ def execute_procedure(
     #pail_write_objects[str("samples")]
 
     ##########
-    # 5. Write product information to file.
+    # 7. Write product information to file.
     if False:
         putly.write_lists_to_file_text(
             pail_write=pail_write_lists,

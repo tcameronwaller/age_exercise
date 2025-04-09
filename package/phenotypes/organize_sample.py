@@ -338,14 +338,14 @@ def define_translation_columns_table_subject_property():
     # Translate names of columns.
     translations = dict()
     translations["identifier_subject"] = "identifier_subject_study"
-    translations["study_clinic_visit"] = "study_clinic_visit_subject"
+    translations["visit_text"] = "visit_text_subject"
     # Return information.
     return translations
 
 
 def determine_match_subject_sample_file_forward(
     subject=None,
-    study_clinic_visit=None,
+    visit_text=None,
 ):
     """
     Determines a designator to match samples from their files of signals with
@@ -353,7 +353,7 @@ def determine_match_subject_sample_file_forward(
 
     arguments:
         subject (str): identifier of study participant subject
-        study_clinic_visit (str): indicator of clinical visit in the study at
+        visit_text (str): indicator of clinical visit in the study at
             which collection of a sample occurred, either 'first' or 'second'
 
     raises:
@@ -368,13 +368,13 @@ def determine_match_subject_sample_file_forward(
     if (
         (pandas.notna(subject)) and
         (len(str(subject).strip()) > 0) and
-        (pandas.notna(study_clinic_visit)) and
-        (len(str(study_clinic_visit).strip()) > 0)
+        (pandas.notna(visit_text)) and
+        (len(str(visit_text).strip()) > 0)
     ):
         # There is adequate information.
         subject = str(subject).strip()
-        study_clinic_visit = str(study_clinic_visit).strip().lower()
-        designator = str(subject + "_" + study_clinic_visit)
+        visit_text = str(visit_text).strip().lower()
+        designator = str(subject + "_" + visit_text)
     else:
         designator = ""
         pass
@@ -442,7 +442,7 @@ def organize_table_subject_property(
         lambda row:
             determine_match_subject_sample_file_forward(
                 subject=row["identifier_subject_study"],
-                study_clinic_visit=row["study_clinic_visit_subject"],
+                visit_text=row["visit_text_subject"],
             ),
         axis="columns", # apply function to each row
     )
@@ -450,10 +450,10 @@ def organize_table_subject_property(
     # Sort rows within table.
     table.sort_values(
         by=[
-            "cohort_age",
-            "intervention",
+            "age_cohort",
+            "intervention_omega3",
             "identifier_subject_study",
-            "study_clinic_visit_subject",
+            "visit_text_subject",
         ],
         axis="index",
         ascending=True,
@@ -539,7 +539,7 @@ def define_sequence_columns_table_sample_file():
         "identifier_signal",
         "tissue",
         "condition_correction",
-        "study_clinic_visit",
+        "visit_text",
         "exercise_time_point",
         "match_subject_sample_file_transcriptomics",
         #"path_file",
@@ -553,7 +553,7 @@ def define_sequence_columns_table_sample_file():
     return columns_sequence
 
 
-def determine_sample_study_clinic_visit(
+def determine_sample_visit_text(
     tissue=None,
     instance=None,
 ):
@@ -663,7 +663,7 @@ def determine_muscle_exercise_time_point(
 
 def determine_match_subject_sample_file_reverse(
     subject=None,
-    study_clinic_visit=None,
+    visit_text=None,
 ):
     """
     Determines a designator to match samples from their files of signals with
@@ -671,7 +671,7 @@ def determine_match_subject_sample_file_reverse(
 
     arguments:
         subject (str): identifier of study participant subject
-        study_clinic_visit (str): indicator of clinical visit in the study at
+        visit_text (str): indicator of clinical visit in the study at
             which collection of a sample occurred, either 'first' or 'second'
 
     raises:
@@ -686,13 +686,13 @@ def determine_match_subject_sample_file_reverse(
     if (
         (pandas.notna(subject)) and
         (len(str(subject).strip()) > 0) and
-        (pandas.notna(study_clinic_visit)) and
-        (len(str(study_clinic_visit).strip()) > 0)
+        (pandas.notna(visit_text)) and
+        (len(str(visit_text).strip()) > 0)
     ):
         # There is adequate information.
         subject = str(subject).strip()
-        study_clinic_visit = str(study_clinic_visit).strip()
-        designator = str(subject + "_" + study_clinic_visit)
+        visit_text = str(visit_text).strip()
+        designator = str(subject + "_" + visit_text)
     else:
         designator = ""
         pass
@@ -752,9 +752,9 @@ def organize_table_sample_file(
     )
     # Determine the clinical visit of the study at which collection of the
     # sample occurred.
-    table["study_clinic_visit"] = table.apply(
+    table["visit_text"] = table.apply(
         lambda row:
-            determine_sample_study_clinic_visit(
+            determine_sample_visit_text(
                 tissue=row["tissue"],
                 instance=row["condition_correction"],
             ),
@@ -765,7 +765,7 @@ def organize_table_sample_file(
         lambda row:
             determine_match_subject_sample_file_reverse(
                 subject=row["identifier_subject"],
-                study_clinic_visit=row["study_clinic_visit"],
+                visit_text=row["visit_text"],
             ),
         axis="columns", # apply function to each row
     )
@@ -851,11 +851,11 @@ def combine_table_subject_sample_file_property(
     table.sort_values(
         by=[
             "tissue",
-            "cohort_age",
-            "intervention",
+            "age_cohort",
+            "intervention_omega3",
             "sex_y",
             "identifier_subject",
-            "study_clinic_visit",
+            "visit_text",
             "exercise_time_point",
         ],
         axis="index",
@@ -902,17 +902,17 @@ def define_interaction_combination_categorical_factor():
 
     # Specify sequence of columns within table.
     columns_sequence = dict()
-    columns_sequence["cohort_age_text_by_sex_text"] = "elder_by_male"
-    columns_sequence["cohort_age_text_by_exercise_time_point"] = (
+    columns_sequence["age_cohort_text_by_sex_text"] = "elder_by_male"
+    columns_sequence["age_cohort_text_by_exercise_time_point"] = (
         "elder_by_3_hour"
     )
     columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
-    columns_sequence["intervention_text_by_study_clinic_visit"] = (
-        "active_by_second"
+    columns_sequence["intervention_text_by_visit_text"] = (
+        "omega3_by_second"
     )
-    columns_sequence["sex_text_by_study_clinic_visit"] = "male_by_second"
+    columns_sequence["sex_text_by_visit_text"] = "male_by_second"
 
-    columns_sequence["cohort_age_text_by_intervention_text"] = "elder_by_active" # other: elder_by_placebo, younger_by_none
+    columns_sequence["age_cohort_text_by_intervention_text"] = "elder_by_omega3" # other: elder_by_placebo, younger_by_none
     # Return information.
     return columns_sequence
 
@@ -1031,7 +1031,7 @@ def describe_table_sample_factors(
         (table_sample["inclusion"] == 1), :
     ].copy(deep=True)
     table_elder = table_inclusion.loc[
-        (table_inclusion["cohort_age_text"] == "elder"), :
+        (table_inclusion["age_cohort_text"] == "elder"), :
     ].copy(deep=True)
     table_tissue = table_elder.loc[
         (table_elder["tissue"] == "adipose"), :
@@ -1039,7 +1039,7 @@ def describe_table_sample_factors(
 
     # Create cross tabulation.
     cross_tabulation = pandas.crosstab(
-        table_tissue["study_clinic_visit"].astype("category"),
+        table_tissue["visit_text"].astype("category"),
         table_tissue["intervention_text"].astype("category"),
     )
 
@@ -1090,7 +1090,7 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["muscle",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
             },
             "factor_availability": {
                 "exercise_time_point": ["0_hour", "3_hour",],
@@ -1102,7 +1102,7 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["muscle",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
             },
             "factor_availability": {
                 "exercise_time_point": ["0_hour", "48_hour",],
@@ -1114,7 +1114,7 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["muscle",],
-                "cohort_age_text": ["younger",],
+                "age_cohort_text": ["younger",],
             },
             "factor_availability": {
                 "exercise_time_point": ["0_hour", "3_hour",],
@@ -1126,7 +1126,7 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["muscle",],
-                "cohort_age_text": ["younger",],
+                "age_cohort_text": ["younger",],
             },
             "factor_availability": {
                 "exercise_time_point": ["0_hour", "48_hour",],
@@ -1141,7 +1141,7 @@ def define_selections_sample_set():
                 "exercise_time_point": ["0_hour",],
             },
             "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
+                "age_cohort_text": ["younger", "elder",],
             },
         },
         {
@@ -1153,7 +1153,7 @@ def define_selections_sample_set():
                 "exercise_time_point": ["3_hour",],
             },
             "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
+                "age_cohort_text": ["younger", "elder",],
             },
         },
         {
@@ -1165,7 +1165,7 @@ def define_selections_sample_set():
                 "exercise_time_point": ["48_hour",],
             },
             "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
+                "age_cohort_text": ["younger", "elder",],
             },
         },
         {
@@ -1174,10 +1174,10 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["adipose",],
-                "study_clinic_visit": ["first",],
+                "visit_text": ["first",],
             },
             "factor_availability": {
-                "cohort_age_text": ["younger", "elder",],
+                "age_cohort_text": ["younger", "elder",],
             },
         },
         {
@@ -1188,11 +1188,11 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
             },
             "factor_availability": {
-                "study_clinic_visit": ["first", "second",],
-                "intervention_text": ["placebo", "active",],
+                "visit_text": ["first", "second",],
+                "intervention_text": ["placebo", "omega3",],
             },
         },
 
@@ -1205,11 +1205,11 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "study_clinic_visit": ["first",],
+                "age_cohort_text": ["elder",],
+                "visit_text": ["first",],
             },
             "factor_availability": {
-                "intervention_text": ["placebo", "active",],
+                "intervention_text": ["placebo", "omega3",],
             },
         },
         {
@@ -1220,11 +1220,11 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "study_clinic_visit": ["second",],
+                "age_cohort_text": ["elder",],
+                "visit_text": ["second",],
             },
             "factor_availability": {
-                "intervention_text": ["placebo", "active",],
+                "intervention_text": ["placebo", "omega3",],
             },
         },
         {
@@ -1235,26 +1235,26 @@ def define_selections_sample_set():
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
+                "age_cohort_text": ["elder",],
                 "intervention_text": ["placebo",],
             },
             "factor_availability": {
-                "study_clinic_visit": ["first", "second",],
+                "visit_text": ["first", "second",],
             },
         },
         {
             "name_set": str(
-                "adipose_elder-active_visit"
+                "adipose_elder-omega3_visit"
             ),
             "tissue": "adipose",
             "cohort_selection": {
                 "inclusion": [1,],
                 "tissue": ["adipose",],
-                "cohort_age_text": ["elder",],
-                "intervention_text": ["active",],
+                "age_cohort_text": ["elder",],
+                "intervention_text": ["omega3",],
             },
             "factor_availability": {
-                "study_clinic_visit": ["first", "second",],
+                "visit_text": ["first", "second",],
             },
         },
     ]
@@ -1429,9 +1429,9 @@ def execute_procedure(
     columns_subject_novel = (
         aexph_sub.define_sequence_columns_novel_subject_feature()
     )
-    columns_subject_novel.remove("study_clinic_visit")
-    #columns_subject_novel.append("study_clinic_visit_subject")
-    columns_subject_novel.insert(5, "study_clinic_visit_subject")
+    columns_subject_novel.remove("visit_text")
+    #columns_subject_novel.append("visit_text_subject")
+    columns_subject_novel.insert(5, "visit_text_subject")
     columns_subject_novel.insert(
         5, "match_subject_sample_file_transcriptomics"
     )
