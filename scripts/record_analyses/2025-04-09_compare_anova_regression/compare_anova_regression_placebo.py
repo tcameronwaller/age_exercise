@@ -11,10 +11,10 @@ Author:
 
 License:
 
-    This module file is part of the project package directory 'partner'
-    (https://github.com/tcameronwaller/partner/).
+    This file is part of the project package directory 'age_exercise'
+    (https://github.com/tcameronwaller/age_exercise/).
 
-    Project 'partner' supports data analysis in multiple other projects.
+    Project 'age_exercise' supports data analysis with team in endocrinology.
     Copyright (C) 2025 Thomas Cameron Waller
 
     The code within project 'partner' is free software: you can redistribute it
