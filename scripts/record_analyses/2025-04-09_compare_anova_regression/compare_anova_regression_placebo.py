@@ -1,5 +1,6 @@
 """
-Drive multiple regressions from a single table of parameters.
+Compare Analysis of Variance (ANOVA) against Linear Regression in the analysis
+of published data from a placebo-controlled clinical trial.
 
 Author:
 
@@ -42,12 +43,10 @@ License:
 #         placebo-controlled repeat measures'
 
 # The purpose of this Python script is to demonstrate a comparison between
-# the methods, analysis of variance (ANOVA) with repeated measures and linear
-# regression with mixed effects.
-# This demonstration applies repeated measures ANOVA and mixed effects linear
-# regression to the same data from the same study.
-# The study design is
-
+# the methods, analysis of variance (ANOVA) with mixed effects and repeated
+# measures against linear regression with mixed effects for the analysis of
+# data from a placebo-controlled clinical trial with repeated measures before
+# and after intervention.
 
 # References:
 
@@ -62,8 +61,8 @@ License:
 #  year: 2004
 #  authors: Hans P.A. Van Dongen; ... Greg Maislin
 #  note:
-#  - the study design included measurement at baseline before treatment and at
-#    3 time points after treatment by either placebo or intervention
+#  - The study design included measurement at baseline before treatment and at
+#    3 time points after treatment by either placebo or intervention.
 #  - TCW transferred the raw data from Table 1 to file "table_data.tsv" within
 #    the directory 'partner/repository/demonstration/15081686_vandongen_2004'.
 #  - TCW encoded the placebo group as value '0' for feature 'condition'.
@@ -71,7 +70,8 @@ License:
 #  - TCW endoced the 'day 0', 'day 1', 'day 2', 'day 3' time points of
 #    measurement as values '0', '1', '2', and '3' respectively for feature
 #    'time_point'.
-
+#  - In the main analysis, TCW only considered values 'day 0' and 'day 1' of
+#    'time_point'.
 
 ################################################################################
 # Installation and importation
