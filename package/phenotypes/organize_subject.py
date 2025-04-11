@@ -87,6 +87,7 @@ def initialize_directories(
     routine=None,
     procedure=None,
     path_directory_dock=None,
+    initialize_routine=None,
     restore=None,
     report=None,
 ):
@@ -97,12 +98,13 @@ def initialize_directories(
         project (str): name of project that normally corresponds to a single
             Python package
         routine (str): name of routine that normally corresponds to a single
-            Python package or subpackage, , either 'phenotypes',
+            Python package or subpackage, either 'phenotypes',
             'transcriptomics', or 'proteomics'
         procedure (str): name of procedure, a step in the routine process that
             normally corresponds to a single Python module within the package
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
+        initialize_routine (bool): whether to initialize directory for routine
         restore (bool): whether to remove previous versions of data
         report (bool): whether to print reports
 
@@ -149,16 +151,23 @@ def initialize_directories(
     paths["out_procedure_plot"] = os.path.join(
         paths["out_procedure"], "plot",
     )
+    paths["out_procedure_object"] = os.path.join(
+        paths["out_procedure"], "object",
+    )
 
     # Initialize directories in main branch.
     paths_initialization = [
         #paths["out_project"],
-        paths["out_routine"],
+        #paths["out_routine"],
         paths["out_procedure"],
         paths["out_procedure_lists"],
         paths["out_procedure_tables"],
         paths["out_procedure_plot"],
+        paths["out_procedure_object"],
     ]
+    if (initialize_routine):
+        paths_initialization.insert(0, paths["out_routine"],)
+        pass
     # Remove previous directories and files to avoid version or batch
     # confusion.
     if restore:
@@ -174,7 +183,9 @@ def initialize_directories(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.phenotypes.organize_subject.py")
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: organize_subject.py")
         print("function: initialize_directories()")
         putly.print_terminal_partition(level=5)
         print("path to dock directory for procedure's files: ")
@@ -451,7 +462,7 @@ def parse_extract_table_sample_feature_organization(
     return pail
 
 
-def read_source(
+def read_organize_source_table_subject_feature_organization(
     paths=None,
     report=None,
 ):
@@ -482,19 +493,13 @@ def read_source(
         paths["in_data"], "study_age_exercise", "subject_sample",
         "table_subject_sample_feature_organization.tsv",
     )
-    path_file_table_subject_property = os.path.join(
-        paths["in_data"], "study_age_exercise", "subject_sample",
-        "table_subject_sample_feature_olink_hek_2024-11-22.csv",
-    )
 
-    # Collect information.
-    pail = dict()
     # Read information from file.
 
     # Table of parameters for organization of the table of attributes for
     # subjects and samples.
     types_columns = define_type_columns_table_subject_feature_organization()
-    pail["table_feature_organization"] = pandas.read_csv(
+    table_feature_organization = pandas.read_csv(
         path_file_table_feature_organization,
         sep="\t",
         header=0,
@@ -504,22 +509,71 @@ def read_source(
         ],
         encoding="utf-8",
     )
-    pail_parse = parse_extract_table_sample_feature_organization(
-        table=pail["table_feature_organization"],
+    pail = parse_extract_table_sample_feature_organization(
+        table=table_feature_organization,
         inclusion="inclusion",
         report=report,
     )
-    pail["translations_feature_forward"] = (
-        pail_parse["translations_feature_forward"]
-    )
-    pail["translations_feature_reverse"] = (
-        pail_parse["translations_feature_reverse"]
-    )
-    pail["columns_all"] = pail_parse["columns_all"]
-    pail["columns_quantitative"] = pail_parse["columns_quantitative"]
 
-    # Table of attributes for samples.
-    pail["table_subject_property"] = pandas.read_csv(
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: organize_subject.py")
+        name_function = str(
+            "read_organize_source_table_subject_feature_organization()"
+        )
+        print("function: " + name_function)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
+
+
+def read_source(
+    paths=None,
+    report=None,
+):
+    """
+    Reads and organizes source information from file.
+
+    Notice that Pandas does not accommodate missing values within series of
+    integer variable types.
+
+    arguments:
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of source information read from file
+
+    """
+
+    # Define paths to parent directories.
+    #paths["in_data"]
+    #paths["in_parameters"]
+
+    # Define paths to child files.
+    path_file_table_subject_property = os.path.join(
+        paths["in_data"], "study_age_exercise", "subject_sample",
+        "table_subject_sample_feature_olink_hek_2024-11-22.csv",
+    )
+
+    # Read information from file.
+
+    # Table of parameters for organization of the table of attributes for
+    # subjects and samples.
+    pail_parse = read_organize_source_table_subject_feature_organization(
+        paths=paths,
+        report=paths,
+    )
+
+    # Table of properties and attributes for subjects and samples.
+    table_subject_property = pandas.read_csv(
         path_file_table_subject_property,
         sep=",",
         header=0,
@@ -531,6 +585,18 @@ def read_source(
     )
     # Fill information about intervention in experimental condition.
     #pail["table_subject_property"]["Intervention"] = "Placebo"
+
+    # Collect information.
+    pail = dict()
+    pail["table_subject_property"] = table_subject_property
+    pail["translations_feature_forward"] = (
+        pail_parse["translations_feature_forward"]
+    )
+    pail["translations_feature_reverse"] = (
+        pail_parse["translations_feature_reverse"]
+    )
+    pail["columns_all"] = pail_parse["columns_all"]
+    pail["columns_quantitative"] = pail_parse["columns_quantitative"]
 
     # Report.
     if report:
@@ -1675,6 +1741,9 @@ def describe_quantitative_features_by_observations_groups(
     ].copy(deep=True)
 
     # Determine and fill groups of observations.
+    # This function creates a new column named "group" and assigns categorical
+    # names corresponding to specific sets of observations.
+    # Each observation only belongs to a single group.
     table_group = porg.determine_fill_table_groups_rows(
         table=table_selection,
         column_group="group",
@@ -4561,7 +4630,8 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("package: age_exercise.proteomics")
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
         print("module: organize_subject.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
@@ -4579,6 +4649,7 @@ def execute_procedure(
         routine=routine,
         procedure=procedure,
         path_directory_dock=path_directory_dock,
+        initialize_routine=True,
         restore=True,
         report=report,
     )

@@ -82,98 +82,6 @@ import age_exercise.phenotypes.organize_subject as aexph_sub
 # 1. Initialize directories for read of source and write of product files.
 
 
-def initialize_directories(
-    project=None,
-    routine=None,
-    procedure=None,
-    path_directory_dock=None,
-    restore=None,
-    report=None,
-):
-    """
-    Initialize directories for procedure's product files.
-
-    arguments:
-        project (str): name of project
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics'
-        procedure (str): name of procedure, a set or step in the routine
-            process
-        path_directory_dock (str): path to dock directory for procedure's
-            source and product directories and files
-        restore (bool): whether to remove previous versions of data
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<str>): collection of paths to directories for procedure's files
-
-    """
-
-    # Collect paths.
-    paths = dict()
-    # Define paths to directories.
-    paths["dock"] = path_directory_dock
-    paths["in_data"] = os.path.join(
-        paths["dock"], "in_data",
-    )
-    paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters",
-    )
-    paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private",
-    )
-    paths["out_project"] = os.path.join(
-        paths["dock"], str("out_" + project),
-    )
-    paths["out_routine"] = os.path.join(
-        paths["out_project"], str(routine),
-    )
-    paths["out_procedure"] = os.path.join(
-        paths["out_routine"], str(procedure),
-    )
-    #paths["out_test"] = os.path.join(
-    #    paths["out_procedure"], "test",
-    #)
-    paths["out_data"] = os.path.join(
-        paths["out_procedure"], "data",
-    )
-    #paths["out_plot"] = os.path.join(
-    #    paths["out_procedure"], "plot",
-    #)
-    # Initialize directories in main branch.
-    paths_initialization = [
-        #paths["out_project"],
-        #paths["out_routine"],
-        paths["out_procedure"],
-        paths["out_data"],
-    ]
-    # Remove previous directories and files to avoid version or batch
-    # confusion.
-    if restore:
-        for path in paths_initialization:
-            putly.remove_directory(path=path)
-            pass
-    # Create directories.
-    for path in paths_initialization:
-        putly.create_directories(
-            path=path,
-        )
-        pass
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.organize_sample.py")
-        print("function: initialize_directories()")
-        putly.print_terminal_partition(level=5)
-        print("path to dock directory for procedure's files: ")
-        print(path_directory_dock)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return paths
-
 
 ##########
 # 2. Read source information from file.
@@ -1382,7 +1290,9 @@ def execute_procedure(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("module: age_exercise.phenotypes.organize_sample.py")
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: organize_sample.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
@@ -1394,11 +1304,12 @@ def execute_procedure(
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
-    paths = initialize_directories(
+    paths = aexph_sub.initialize_directories(
         project=project,
         routine=routine,
         procedure=procedure,
         path_directory_dock=path_directory_dock,
+        initialize_routine=False,
         restore=True,
         report=report,
     )
@@ -1458,6 +1369,9 @@ def execute_procedure(
     ##########
     # 6. Combine within the same table the matches between samples and files
     # along with their further attributes.
+    # The main reason that this combination is necessary and special is that
+    # there are records in the table of data for subjects that match multiple
+    # samples for RNAseq transcriptomics, especially in the study on muscle.
     columns_transfer = copy.deepcopy(columns_subject_original)
     columns_transfer.extend(columns_subject_novel)
     columns_transfer.remove("match_subject_sample_file_transcriptomics")
@@ -1510,7 +1424,7 @@ def execute_procedure(
     # Write product information to file.
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_data"],
+        path_directory=paths["out_procedure_tables"],
         reset_index_rows=False,
         write_index_rows=False,
         write_index_columns=True,
@@ -1520,7 +1434,7 @@ def execute_procedure(
     )
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
-        path_directory=paths["out_data"],
+        path_directory=paths["out_procedure_tables"],
         reset_index_rows=None,
         write_index_rows=None,
         write_index_columns=None,
