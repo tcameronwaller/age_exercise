@@ -663,6 +663,7 @@ def define_sequence_columns_novel_subject_feature():
         "visit_text",
         "visit_second",
         "visit_text_fill_second_for_age_younger",
+        #"subject_tissue_visit",
         "subject_visit",
         "date_visit_text",
         #"date_visit_text_raw",
@@ -1200,6 +1201,14 @@ def organize_table_subject_property(
         ),
         axis="columns", # apply function to each row
     )
+    #table["subject_tissue_visit"] = table.apply(
+    #    lambda row: str(
+    #        row["identifier_subject"] + "_" +
+    #        row["tissue"] + "_" +
+    #        row["visit_text"]
+    #    ),
+    #    axis="columns", # apply function to each row
+    #)
 
     # Determine designations of intervention, either placebo or active.
     table["intervention_text"] = table.apply(
