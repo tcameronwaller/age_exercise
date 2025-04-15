@@ -1355,7 +1355,7 @@ def describe_quantitative_features_by_observations_groups(
             translations_feature=translations_feature,
             key_group=column_group,
             threshold_observations=5,
-            digits_round=3,
+            digits_round=5,
             ttest_one=ttest_one,
             ttest_two=ttest_two,
             report=report,
@@ -1517,12 +1517,22 @@ def execute_procedure(
         column_group="group",
         ttest_one={
             "name": "p_ttest_age",
-            "groups": ["younger", "older",],
+            "groups": [
+                "adipose_age_-_younger", "adipose_age_-_older",
+            ],
             "equal_variances": True,
             "independent_groups": True,
             "hypothesis_alternative": "two-sided",
         }, # or None
-        ttest_two=None,
+        ttest_two={
+            "name": "p_ttest_sex",
+            "groups": [
+                "adipose_age_-_older_female", "adipose_age_-_older_male",
+            ],
+            "equal_variances": True,
+            "independent_groups": True,
+            "hypothesis_alternative": "two-sided",
+        }, # or None
         report=report,
     )
 
