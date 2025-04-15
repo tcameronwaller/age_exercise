@@ -1325,45 +1325,46 @@ def describe_quantitative_features_by_observations_groups(
     ttest_one = copy.deepcopy(ttest_one)
     ttest_two = copy.deepcopy(ttest_two)
 
-    # Parameters.
-    method_separate_tables = False
-
     ##########
     # Describe features in groups of observations.
-    if (method_separate_tables):
-        table_description = (
-            pdesc.describe_features_from_columns_by_separate_tables_rows(
-                entries_tables=entries_tables,
-                groups_sequence=groups_sequence,
-                index_columns=index_columns,
-                index_rows=index_rows,
-                index_features=index_features,
-                columns_features=columns_features,
-                translations_feature=translations_feature,
-                threshold_observations=5,
-                digits_round=3,
-                ttest_one=ttest_one,
-                ttest_two=ttest_two,
-                report=report,
-        ))
-    else:
-        table_description = (
-            pdesc.describe_features_from_table_columns_by_groups_rows(
-                table_group=table_group,
-                index_columns=index_columns,
-                index_rows=index_rows,
-                index_features=index_features,
-                column_group=column_group,
-                groups_sequence=groups_sequence,
-                columns_features=columns_features,
-                translations_feature=translations_feature,
-                threshold_observations=5,
-                digits_round=3,
-                ttest_one=ttest_one,
-                ttest_two=ttest_two,
-                report=report,
-        ))
-        pass
+    table_description_priority = (
+        pdesc.describe_features_from_columns_by_separate_tables_rows(
+            entries_tables=entries_tables,
+            groups_sequence=groups_sequence,
+            index_columns=index_columns,
+            index_rows=index_rows,
+            index_features=index_features,
+            columns_features=columns_features,
+            translations_feature=translations_feature,
+            key_group=column_group,
+            threshold_observations=5,
+            digits_round=3,
+            ttest_one=ttest_one,
+            ttest_two=ttest_two,
+            report=report,
+    ))
+    table_description_check = (
+        pdesc.describe_features_from_table_columns_by_groups_rows(
+            table_group=table_group,
+            index_columns=index_columns,
+            index_rows=index_rows,
+            index_features=index_features,
+            column_group=column_group,
+            groups_sequence=groups_sequence,
+            columns_features=columns_features,
+            translations_feature=translations_feature,
+            key_group=column_group,
+            threshold_observations=5,
+            digits_round=3,
+            ttest_one=ttest_one,
+            ttest_two=ttest_two,
+            report=report,
+    ))
+
+    # Collect information.
+    pail = dict()
+    pail["table_priority"] = table_description_priority
+    pail["table_check"] = table_description_check
 
     # Report.
     if report:
@@ -1376,14 +1377,12 @@ def describe_quantitative_features_by_observations_groups(
         print("function: " + function)
         putly.print_terminal_partition(level=5)
         print("Table of descriptive statistics and T-tests")
-        print(table_description)
+        print(pail["table_priority"])
+        print(pail["table_check"])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
-    return table_description
-
-
-
+    return pail
 
 
 ###############################################################################
@@ -1487,39 +1486,6 @@ def execute_procedure(
     print(pail_parts["table_group"])
     #print(pail_parts["entries_tables"]["younger_older"])
 
-
-    ###########################################
-    ############################
-    #######################
-    ################
-    # Temporary
-
-    # Collect information.
-    # Collections of files.
-    #pail_write_lists = dict()
-    pail_write_tables = dict()
-    pail_write_tables[str("table_group")] = pail_parts["table_group"]
-    #pail_write_objects[str("samples")]
-
-    # Write product information to file.
-    putly.write_tables_to_file(
-        pail_write=pail_write_tables,
-        path_directory=paths["out_procedure_tables"],
-        reset_index_rows=False,
-        write_index_rows=False,
-        write_index_columns=True,
-        type="text",
-        delimiter="\t",
-        suffix=".tsv",
-    )
-
-    #####
-    ###########
-    ###################
-    ####################################
-
-
-
     ##########
     # 4. Create plot charts for quantitative features in groups of observations.
     # Plot.
@@ -1539,7 +1505,7 @@ def execute_procedure(
 
     ##########
     # 5. Describe quantitative features in groups of observations.
-    table_description = describe_quantitative_features_by_observations_groups(
+    pail_description = describe_quantitative_features_by_observations_groups(
         entries_tables=pail_parts["entries_tables"],
         groups_sequence=pail_parts["groups_sequence"],
         index_columns="features",
@@ -1560,14 +1526,11 @@ def execute_procedure(
         report=report,
     )
 
-
-
     ##########
     # Perform T-test, ANOVA, and regression analyses.
 
     # T-tests and regressions for features against age cohorts.
     #entries_tables["1_adipose_age_younger_older"]
-
     # T-tests and regressions for features against omega-3 intervention.
     #entries_tables["8_adipose_diet_older_placebo_omega3"]
 
@@ -1577,8 +1540,12 @@ def execute_procedure(
     #pail_write_lists = dict()
     pail_write_tables = dict()
     pail_write_tables[str("table_group")] = pail_parts["table_group"]
-    #pail_write_tables[str("table_younger_older")] = pail_parts["entries_tables"]["younger_older"]
-    pail_write_tables[str("table_description")] = table_description
+    pail_write_tables[str("table_description_priority")] = (
+        pail_description["table_priority"]
+    )
+    pail_write_tables[str("table_description_check")] = (
+        pail_description["table_check"]
+    )
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
 
