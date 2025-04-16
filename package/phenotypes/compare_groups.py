@@ -1196,6 +1196,7 @@ def describe_quantitative_features_by_observations_groups(
     column_group=None,
     ttest_one=None,
     ttest_two=None,
+    ttest_three=None,
     report=None,
 ):
     """
@@ -1306,6 +1307,7 @@ def describe_quantitative_features_by_observations_groups(
                 'two-tailed' analysis in which both lesser and greater are
                 relevant
         ttest_two (dict): collection of parameters for T-test
+        ttest_three (dict): collection of parameters for T-test
         report (bool): whether to print reports
 
     raises:
@@ -1338,9 +1340,10 @@ def describe_quantitative_features_by_observations_groups(
             translations_feature=translations_feature,
             key_group=column_group,
             threshold_observations=5,
-            digits_round=3,
+            digits_round=5,
             ttest_one=ttest_one,
             ttest_two=ttest_two,
+            ttest_three=ttest_three,
             report=report,
     ))
     table_description_check = (
@@ -1358,6 +1361,7 @@ def describe_quantitative_features_by_observations_groups(
             digits_round=5,
             ttest_one=ttest_one,
             ttest_two=ttest_two,
+            ttest_three=ttest_three,
             report=report,
     ))
 
@@ -1528,6 +1532,16 @@ def execute_procedure(
             "name": "p_ttest_sex",
             "groups": [
                 "adipose_age_-_older_female", "adipose_age_-_older_male",
+            ],
+            "equal_variances": True,
+            "independent_groups": True,
+            "hypothesis_alternative": "two-sided",
+        }, # or None
+        ttest_three={
+            "name": "p_ttest_omega3",
+            "groups": [
+                "adipose_placebo_-_older_placebo_after",
+                "adipose_omega3_-_older_omega3_after",
             ],
             "equal_variances": True,
             "independent_groups": True,
