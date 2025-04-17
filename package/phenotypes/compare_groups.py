@@ -305,9 +305,9 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "adipocyte_diameter",
         "adipocyte_lipid_content",
         "cd68_adipose_percent",
-        "p16_adipose_percent",
         "cd14_adipose_percent",
         "cd206_adipose_percent",
+        "p16_adipose_percent",
 
         "red_blood_cells",
         "hemoglobin",
@@ -367,7 +367,7 @@ def define_type_table_columns_subject_sample():
     types_columns["sex_female"] = "float32"
     types_columns["sex_y"] = "float32"
     types_columns["age_cohort_text"] = "string"
-    types_columns["age_cohort"] = "float32"
+    types_columns["age_cohort_elder"] = "float32"
     types_columns["visit_text"] = "string"
     types_columns["visit_second"] = "float32"
     types_columns["intervention_text"] = "string"

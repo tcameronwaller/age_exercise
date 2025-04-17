@@ -358,7 +358,7 @@ def organize_table_subject_property(
     # Sort rows within table.
     table.sort_values(
         by=[
-            "age_cohort",
+            "age_cohort_elder",
             "intervention_omega3",
             "identifier_subject_study",
             "visit_text_subject",
@@ -759,7 +759,7 @@ def combine_table_subject_sample_file_property(
     table.sort_values(
         by=[
             "tissue",
-            "age_cohort",
+            "age_cohort_elder",
             "intervention_omega3",
             "sex_y",
             "identifier_subject",

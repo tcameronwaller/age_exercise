@@ -643,9 +643,10 @@ def define_sequence_columns_novel_subject_feature():
 
     # Specify sequence of columns within table.
     columns_sequence = [
+        "identifier_observation_trial",
         #"identifier_subject",
         "age_cohort_text",
-        "age_cohort",
+        "age_cohort_elder",
         "sex_text",
         "sex_female",
         "sex_y",
@@ -1122,6 +1123,20 @@ def organize_table_subject_property(
         report=False,
     )
 
+    # Identifiers of observations.
+    # Name generic index in table.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table.index.set_names("identifier_observation_trial", inplace=True)
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=False, # remove index; do not move to regular columns
+    )
+
     # Determine designations of sex.
     table["sex_text"] = table.apply(
         lambda row:
@@ -1158,7 +1173,7 @@ def organize_table_subject_property(
         axis="columns", # apply function to each row
     )
 
-    table["age_cohort"] = table.apply(
+    table["age_cohort_elder"] = table.apply(
         lambda row: putly.determine_logical_binary_designator(
                 category_text=row["age_cohort_text"],
                 values_1=["elder",],
@@ -1332,7 +1347,7 @@ def organize_table_subject_property(
     # Sort rows within table.
     table.sort_values(
         by=[
-            "age_cohort",
+            "age_cohort_elder",
             "intervention_omega3",
             "identifier_subject",
             "visit_text",
