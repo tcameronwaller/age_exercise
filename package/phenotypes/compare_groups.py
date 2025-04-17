@@ -256,6 +256,8 @@ def read_organize_source_parameter(
     return pail
 
 
+# The features in this list determines the inclusion and sequence of features
+# in the product table "table_description_clean".
 def define_type_table_columns_subject_sample_quantitative_continuous():
     """
     Defines the types of variables for columns in table.
@@ -276,36 +278,51 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
     names_features = [
         "age",
         "body_mass_index",
+        "body_skeletal_muscle_index",
+        "activity_moderate_vigorous",
+        "activity_steps",
+        "oxygen_consumption",
+        "mitochondrial_respiration_maximum",
+        "heart_rate",
+        "pressure_blood_systolic",
+        "pressure_blood_diastolic",
 
-        "triglyceride",
+        "glucose",
+        "insulin",
+        "insulin_sensitivity",
+        "homa_insulin_resist",
+        "thyroid_stimulate_hormone",
+        "c_react_protein",
+
         "omega3_eicosapentaenoate",
         "omega3_docosahexaenoate",
+        "triglyceride",
         "cholesterol",
         "lipoprotein_hdl",
         "lipoprotein_nonhdl",
         "lipoprotein_ldl",
 
-        "thyroid_stimulate_hormone",
-        "insulin",
-        "insulin_sensitivity",
-        "homa_insulin_resist",
-
-        "c_react_protein",
         "adipocyte_diameter",
         "adipocyte_lipid_content",
-        "mitochondrial_respiration_maximum",
-        "oxygen_consumption",
+        "cd68_adipose_percent",
+        "p16_adipose_percent",
+        "cd14_adipose_percent",
+        "cd206_adipose_percent",
 
+        "red_blood_cells",
+        "hemoglobin",
+        "hematocrit",
+        "mean_corpuscular_volume",
+        "rbc_distribution_width",
+        "erythrocyte_sedimentation_rate",
+        "platelets",
+        "prothrombin_time",
         "white_blood_cells",
         "neutrophils",
         "lymphocytes",
         "monocytes",
         "eosinophils",
         "basophils",
-        "cd68_adipose_percent",
-        "p16_adipose_percent",
-        "cd14_adipose_percent",
-        "cd206_adipose_percent",
     ]
 
     # Specify types of variables in columns of table.
@@ -915,7 +932,7 @@ def collect_entries_tables_identifiers_groups_observations(
                 remove_redundancy=True,
                 adjust_scale=False,
                 method_scale=None, # "z_score" or "unit_range"
-                explicate_indices=True,
+                explicate_indices=False,
                 report=False,
             )
             # Collect information.
@@ -1004,7 +1021,7 @@ def collect_entries_tables_identifiers_groups_observations(
         remove_redundancy=True,
         adjust_scale=False,
         method_scale=None, # "z_score" or "unit_range"
-        explicate_indices=True,
+        explicate_indices=False,
         report=False,
     )
 
@@ -1340,7 +1357,7 @@ def describe_quantitative_features_by_observations_groups(
             translations_feature=translations_feature,
             key_group=column_group,
             threshold_observations=5,
-            digits_round=5,
+            digits_round=4,
             ttest_one=ttest_one,
             ttest_two=ttest_two,
             ttest_three=ttest_three,
@@ -1358,7 +1375,7 @@ def describe_quantitative_features_by_observations_groups(
             translations_feature=translations_feature,
             key_group=column_group,
             threshold_observations=5,
-            digits_round=5,
+            digits_round=4,
             ttest_one=ttest_one,
             ttest_two=ttest_two,
             ttest_three=ttest_three,
@@ -1387,6 +1404,150 @@ def describe_quantitative_features_by_observations_groups(
         pass
     # Return information.
     return pail
+
+
+##########
+# 6. Prepare clean version of the description table for report.
+
+
+def prepare_clean_table_description(
+    table=None,
+    features_sequence=None,
+    names_pvalue=None,
+    threshold_low_pvalue=None,
+    report=None,
+):
+    """
+    Prepare a clean format of the table with descriptive statistics for
+    features across groups of observations.
+
+    ----------
+    Format of product table
+    ----------
+    Format of product table is in partial long format with summary statistics
+    and measures across columns and features across rows. A special column
+    gives identifiers corresponding to each feature across rows. Another
+    special column provides names of categorical groups of observations. For
+    versatility, this table does not have explicity defined indices across
+    columns or rows.
+    ----------
+    detail    group   mean standard_error standard_deviation median interqua...
+    feature
+    feature_1 group_1 0.01 0.001          0.001              0.015  0.5
+    feature_1 group_2 0.01 0.001          0.001              0.015  0.5
+    feature_1 group_3 0.01 0.001          0.001              0.015  0.5
+    feature_1 group_4 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_1 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_2 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_3 0.01 0.001          0.001              0.015  0.5
+    feature_2 group_4 0.01 0.001          0.001              0.015  0.5
+    ----------
+
+    Review: TCW; 16 April 2025
+
+    arguments:
+        table (object): Pandas data-frame table of features and groups of
+            observations across rows with statistical measures across columns
+            to describe the features within these groups of observations
+        features_sequence (list<str>): unique names of features in their proper
+            sequence across rows in table
+        names_pvalue (list<str>): names of columns in table for p-values for
+            which to manage custom representation, such as '< 0.0001'
+        threshold_low_pvalue (float): minimal value of p-value to represent as
+            a number, with a textual representation (i.e. '< 0.0001') of any
+            value below threshold
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (object): Pandas data-frame table
+
+    """
+
+    ##########
+    # Define subordinate functions for internal use.
+    def determine_pvalue_below_threshold(pvalue=None, threshold_low=None):
+        if (pvalue < threshold_low):
+            pvalue_new = str("< " + str(threshold_low))
+        else:
+            pvalue_new = pvalue
+        return pvalue_new
+
+    ##########
+    # Copy information.
+    table = table.copy(deep=True)
+    features_sequence = copy.deepcopy(features_sequence)
+    # Restore or reset indices to generic default.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    table.columns.rename(
+        None,
+        inplace=True,
+    ) # single-dimensional index
+    # Copy names of columns in table in their original sequence.
+    columns_sequence_source = copy.deepcopy(table.columns.to_list())
+    # Create reference of sequence of features.
+    sequence_features = dict(zip(
+        features_sequence,
+        range(len(features_sequence))
+    ))
+    # Asign sort sequences to features.
+    table["sort_feature"] = table.apply(
+        lambda row: sequence_features[row["features"]],
+        axis="columns", # apply function to each row
+    )
+    # Sort rows in table.
+    table.sort_values(
+        by=["group", "sort_feature",],
+        axis="index",
+        ascending=True,
+        na_position="last",
+        inplace=True,
+    )
+    # Organize indices in table.
+    table.reset_index(
+        level=None,
+        inplace=True,
+        drop=True, # remove index; do not move to regular columns
+    )
+    # Filter and sort columns in table.
+    table = porg.filter_sort_table_columns(
+        table=table,
+        columns_sequence=columns_sequence_source,
+        report=False,
+    )
+
+    # Manage representation of p-values.
+    for name_pvalue in names_pvalue:
+        table[name_pvalue] = table.apply(
+            lambda row: determine_pvalue_below_threshold(
+                pvalue=row[name_pvalue],
+                threshold_low=threshold_low_pvalue,
+            ),
+            axis="columns", # apply function to each row
+        )
+        pass
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise.proteomics")
+        print("module: organize_subject.py")
+        function = str(
+            "prepare_clean_table_description()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        print("Table of descriptive statistics and T-tests")
+        print(table)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table
 
 
 ###############################################################################
@@ -1551,6 +1712,20 @@ def execute_procedure(
     )
 
     ##########
+    # 6. Prepare clean version of the description table for report.
+    table_description_clean = prepare_clean_table_description(
+        table=pail_description["table_priority"],
+        features_sequence=pail_source["features_quantitative"],
+        names_pvalue=[
+            "p_ttest_age",
+            "p_ttest_sex",
+            "p_ttest_omega3",
+        ],
+        threshold_low_pvalue=0.0001,
+        report=report,
+    )
+
+    ##########
     # Perform T-test, ANOVA, and regression analyses.
 
     # T-tests and regressions for features against age cohorts.
@@ -1569,6 +1744,9 @@ def execute_procedure(
     )
     pail_write_tables[str("table_description_check")] = (
         pail_description["table_check"]
+    )
+    pail_write_tables[str("table_description_clean")] = (
+        table_description_clean
     )
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
