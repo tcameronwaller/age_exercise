@@ -57,7 +57,7 @@ path_file_product="${path_directory_product}/table_parameters_anova_automatic_om
 mkdir -p $path_directory_product
 
 # Initialize file.
-rm $path_file_product # caution
+#rm $path_file_product # caution
 
 ###############################################################################
 # Organize parameters.
@@ -86,7 +86,7 @@ identifier_observations="identifier_observation_trial"
 method_scale="none"
 data_path_directory="dock,in_data,regression,age_exercise"
 data_file="table_subject.tsv"
-review="2025-04-22"
+review="2025-04-23"
 note="a script prepared this table of parameters automatically"
 
 

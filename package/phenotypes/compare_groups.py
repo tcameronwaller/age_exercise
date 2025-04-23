@@ -282,17 +282,10 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "activity_moderate_vigorous",
         "activity_steps",
         "oxygen_consumption",
-        "mitochondrial_respiration_maximum",
+        "temperature",
         "heart_rate",
         "pressure_blood_systolic",
         "pressure_blood_diastolic",
-
-        "glucose",
-        "insulin",
-        "insulin_sensitivity",
-        "homa_insulin_resist",
-        "thyroid_stimulate_hormone",
-        "c_react_protein",
 
         "omega3_eicosapentaenoate",
         "omega3_docosahexaenoate",
@@ -302,12 +295,12 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "lipoprotein_nonhdl",
         "lipoprotein_ldl",
 
-        "adipocyte_diameter",
-        "adipocyte_lipid_content",
-        "cd68_adipose_percent",
-        "cd14_adipose_percent",
-        "cd206_adipose_percent",
-        "p16_adipose_percent",
+        "glucose",
+        "insulin",
+        "insulin_sensitivity",
+        "homa_insulin_resist",
+        "thyroid_stimulate_hormone",
+        "c_react_protein",
 
         "red_blood_cells",
         "hemoglobin",
@@ -317,12 +310,22 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "erythrocyte_sedimentation_rate",
         "platelets",
         "prothrombin_time",
+        "blood_clot_inr",
         "white_blood_cells",
         "neutrophils",
         "lymphocytes",
         "monocytes",
         "eosinophils",
         "basophils",
+
+        "mitochondrial_respiration_maximum",
+        "adipocyte_diameter",
+        "adipocyte_lipid_content",
+        "cd68_adipose_percent",
+        "cd14_adipose_percent",
+        "cd206_adipose_percent",
+        "p16_adipose_percent",
+
     ]
 
     # Specify types of variables in columns of table.
