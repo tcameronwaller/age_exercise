@@ -5,9 +5,9 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 4 April 2025
-# Date, last execution or modification: 17 April 2025
-# Review: 17 April 2025
+# Date, first execution: 22 April 2025
+# Date, last execution or modification: 22 April 2025
+# Review: 22 April 2025
 ###############################################################################
 # Note
 
@@ -44,14 +44,14 @@ path_directory_demonstration="$path_directory_dock/in_demonstration"
 path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
-path_directory_source="${path_directory_demonstration}/partner"
+path_directory_source="${path_directory_scripts}/age_exercise/record_analyses/2025-04-23_table_1_regressions_anova"
 path_directory_product="${path_directory_dock}/out_regression/age_exercise/table_1"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
 path_file_source="${path_directory_source}/list_regression_responses.txt"
-path_file_product="${path_directory_product}/table_regression_parameters_automatic_age.tsv"
+path_file_product="${path_directory_product}/table_parameters_anova_automatic_omega3.tsv"
 
 # Initialize directory.
 mkdir -p $path_directory_product
@@ -74,21 +74,20 @@ execution="1"
 sequence=1
 group="group_automatic"
 name="name_automatic" # name for instance of parameters
-selection_observations="sex_text:female,male;age_cohort_text:younger,elder;visit_text:first"
-type_regression="continuous_ols"
-formula_text="response ~ age_cohort_elder + sex_female"
+selection_observations="sex_text:female,male;age_cohort_text:elder;intervention_text:placebo,omega3;visit_text:first,second"
+type_anova="2way_repeat_mix"
+formula_text="response ~ intervention_omega3 + visit_second + intervention_after_omega3 + identifier_subject"
 #feature_response="${response}" # this parameter varies
-features_predictor_fixed="age_cohort_elder,sex_female"
-features_predictor_random="none"
-groups_random="none"
+features_predictor_between="intervention_omega3"
+features_predictor_within="visit_second"
+subject="identifier_subject"
 features_continuity_scale="none"
 identifier_observations="identifier_observation_trial"
 method_scale="none"
 data_path_directory="dock,in_data,regression,age_exercise"
 data_file="table_subject.tsv"
-review="2025-04-17"
+review="2025-04-22"
 note="a script prepared this table of parameters automatically"
-
 
 
 ###############################################################################
@@ -135,10 +134,10 @@ fi
 
 # Write column header names in table to file.
 printf "execution\tsequence\tgroup\tname\t" > $path_file_product
-printf "selection_observations\ttype_regression\t" >> $path_file_product
+printf "selection_observations\ttype_anova\t" >> $path_file_product
 printf "formula_text\tfeature_response\t" >> $path_file_product
-printf "features_predictor_fixed\tfeatures_predictor_random\t" >> $path_file_product
-printf "groups_random\tfeatures_continuity_scale\t" >> $path_file_product
+printf "features_predictor_between\tfeatures_predictor_within\t" >> $path_file_product
+printf "subject\tfeatures_continuity_scale\t" >> $path_file_product
 printf "identifier_observations\tmethod_scale\t" >> $path_file_product
 printf "data_path_directory\tdata_file\treview\tnote\n" >> $path_file_product
 # Write rows in table to file.
@@ -146,10 +145,10 @@ printf "data_path_directory\tdata_file\treview\tnote\n" >> $path_file_product
 # For each response feature, create a new row of parameters in the table.
 for item_source in "${items_source[@]}"; do
   printf "${execution}\t${sequence}\t${group}\t${name}\t" >> $path_file_product
-  printf "${selection_observations}\t${type_regression}\t" >> $path_file_product
+  printf "${selection_observations}\t${type_anova}\t" >> $path_file_product
   printf "${formula_text}\t${item_source}\t" >> $path_file_product
-  printf "${features_predictor_fixed}\t${features_predictor_random}\t" >> $path_file_product
-  printf "${groups_random}\t${features_continuity_scale}\t" >> $path_file_product
+  printf "${features_predictor_between}\t${features_predictor_within}\t" >> $path_file_product
+  printf "${subject}\t${features_continuity_scale}\t" >> $path_file_product
   printf "${identifier_observations}\t${method_scale}\t" >> $path_file_product
   printf "${data_path_directory}\t${data_file}\t${review}\t${note}\n" >> $path_file_product
   # Increment sequence.
@@ -165,7 +164,7 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "----------"
   echo "----------"
-  echo "script: template_create_parameter_table.sh"
+  echo "script: template_create_table_parameters_anova.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"
