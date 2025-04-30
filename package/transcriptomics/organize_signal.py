@@ -763,7 +763,7 @@ def read_source_sample(
         "table_sample_file_rnaseq.tsv",
     )
     path_file_table_sample = os.path.join(
-        paths["out_project"], "phenotypes", "organize_sample", "data",
+        paths["out_project"], "phenotypes", "organize_sample", "tables",
         "table_sample.pickle",
     )
 
@@ -2470,11 +2470,16 @@ def separate_table_main_columns(
 def scale_normalize_values_intensity_signal_table(
     table=None,
     method=None,
+    pseudo_count=None,
     report=None,
 ):
     """
     Adjust the scale and normalize the distribution of values of signal
     intensity across genes within each sample.
+
+    It is often standard practice to add a pseudo count to signals before
+    calculation of the logarithm. Keeping signals greater than one (1) ensures
+    that the logarithm is positive.
 
     Table's format and orientation
 
@@ -2498,21 +2503,26 @@ def scale_normalize_values_intensity_signal_table(
             samples across columns and for genes across rows
         method (str): name of method to use for scaling values, currently only
             'deseq'
+        pseudo_count (float): value of pseudo count to add to all signal values
+            before calculation of the logarithm
         report (bool): whether to print reports
 
     raises:
 
     returns:
-        (object): Pandas data-frame table of values of intensity across
-            samples in columns and proteins in rows
+        (dict): collection of information
+            table_scale (object): Pandas data-frame table of signals after
+                adjustment of scale
+            table_normal (object): Pandas data-frame table of signals after
+                adjustment of scale and subsequent normalization by logarithm
 
     """
 
     # Copy information in table.
-    table = table.copy(deep=True)
+    table_scale = table.copy(deep=True)
     # Organize indices in table.
-    table = porg.translate_names_table_indices_columns_rows(
-        table=table,
+    table_scale = porg.translate_names_table_indices_columns_rows(
+        table=table_scale,
         index_columns_product="observations",
         index_rows_source="identifier_gene",
         index_rows_product="features",
@@ -2522,11 +2532,12 @@ def scale_normalize_values_intensity_signal_table(
     if (method == "deseq"):
         table_scale = (
             pscl.scale_feature_values_between_observations_by_deseq(
-                table=table,
+                table=table_scale,
                 name_columns="observations",
                 name_rows="features",
                 report=report,
         ))
+        pass
     # Organize indices in table.
     table_scale = porg.translate_names_table_indices_columns_rows(
         table=table_scale,
@@ -2535,6 +2546,22 @@ def scale_normalize_values_intensity_signal_table(
         index_rows_product="identifier_gene",
         report=False,
     )
+    # Copy information in table.
+    table_scale_normal = table_scale.copy(deep=True)
+    # Add pseudo count to values of signal.
+    if (
+        (pseudo_count is not None) and
+        (pseudo_count > 0.0)
+    ):
+        table_scale_normal = table_scale_normal.transform(
+            lambda row: numpy.add(row.to_numpy(
+                dtype="float64",
+                na_value=numpy.nan,
+                copy=True,
+            ), pseudo_count),
+            axis="columns", # apply function to each row
+        )
+        pass
     # Calculate the natural logarithm of signal intensity values.
     # math.log() # optimal for scalar values
     # numpy.log() # optimal for array values
@@ -2542,7 +2569,7 @@ def scale_normalize_values_intensity_signal_table(
     #    lambda value: math.log(value),
     #    na_action="ignore", # ignore missing values in calculation
     #)
-    table_normal = table_scale.transform(
+    table_scale_normal = table_scale_normal.transform(
         lambda row: numpy.log(row.to_numpy(
             dtype="float64",
             na_value=numpy.nan,
@@ -2550,16 +2577,25 @@ def scale_normalize_values_intensity_signal_table(
         )),
         axis="columns", # apply function to each row
     )
+    # Collect information.
+    pail = dict()
+    pail["table_scale"] = table_scale
+    pail["table_scale_normal"] = table_scale_normal
+
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
         print("module: age_exercise.transcriptomics.organize_signal.py")
         print("function: scale_values_intensity_signal_table()")
         putly.print_terminal_partition(level=4)
-        print(table_normal)
+        print("table_scale:")
+        print(table_scale)
+        putly.print_terminal_partition(level=4)
+        print("table_scale_normal:")
+        print(table_scale_normal)
         putly.print_terminal_partition(level=4)
     # Return information.
-    return table_normal
+    return pail
 
 
 ##########
@@ -3233,7 +3269,11 @@ def control_procedure_whole_trunk_preparation(
     pail_write_table[str("table_signal_scale_" + tissue)] = (
         pail_signal["table_signal_scale"]
     )
-    pail_write_table[str("table_signal_gene_sample_" + tissue)] = (
+    pail_write_table[str("table_signal_scale_normal_" + tissue)] = (
+        pail_signal["table_signal_scale_normal"]
+    )
+
+    pail_write_table[str("table_signal_scale_gene_sample_" + tissue)] = (
         pail_signal["table_combination"]
     )
 
@@ -3542,9 +3582,9 @@ def control_procedure_part_branch_signal(
         selection_genes=selection_genes,
         remove_sex_chromosomes=True, # exclude chromosomes X and Y
         filter_rows_signal=True,
-        threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
+        threshold_signal_low=5, # 10 is DESeq2 recommendation for bulk RNAseq
         threshold_signal_high=None,
-        proportion_signal_all=0.33, # proportion of smaller condition to total
+        proportion_signal_all=0.10, # proportion to require within thresholds
         tissue=tissue,
         report=report,
     )
@@ -3620,15 +3660,16 @@ def control_procedure_part_branch_signal(
         # samples.
         # Normalize distribution values of signal intensity by taking the
         # natural logarithm.
-        table_signal_scale = scale_normalize_values_intensity_signal_table(
+        pail_scale = scale_normalize_values_intensity_signal_table(
             table=table_signal,
             method="deseq",
+            pseudo_count=1.0, # ignore values less than or equal to zero
             report=report,
         )
         # Combine and organize signals across samples and genes with supplemental
         # information about genes.
         table_combination = combine_organize_table_signal_genes_samples(
-            table_signal=table_signal_scale,
+            table_signal=pail_scale["table_scale_normal"],
             table_gene=pail_separate["table_gene"],
             table_sample=pail_source_sample["table_sample_file"],
             columns_signal=samples,
@@ -3637,7 +3678,10 @@ def control_procedure_part_branch_signal(
             report=report,
         )
     else:
-        table_signal_scale = pandas.DataFrame()
+        pail_scale = {
+            "table_scale": pandas.DataFrame(),
+            "table_normal": pandas.DataFrame(),
+        }
         table_combination = pandas.DataFrame()
         pass
 
@@ -3646,7 +3690,8 @@ def control_procedure_part_branch_signal(
     pail = dict()
     pail["table_gene"] = pail_separate["table_gene"]
     pail["table_signal"] = table_signal
-    pail["table_signal_scale"] = table_signal_scale
+    pail["table_signal_scale"] = pail_scale["table_scale"]
+    pail["table_signal_scale_normal"] = pail_scale["table_scale_normal"]
     pail["table_combination"] = table_combination
     # Return information.
     return pail
@@ -3716,6 +3761,10 @@ def control_procedure_part_branch(
     """
 
     ##########
+    # Parameters.
+    calculate_write_scale_normal = True
+
+    ##########
     # 1. Initialize directories for read of source and write of product files.
     # Initialize directories for instance-specific parallel branch procedure.
     paths = initialize_directories_branch_instance(
@@ -3756,7 +3805,7 @@ def control_procedure_part_branch(
         samples=pail_sample["samples_selection"],
         tissue=tissue, # adipose, muscle
         selection_genes=selection_genes,
-        scale_combination=False,
+        scale_combination=calculate_write_scale_normal,
         paths=paths,
         report=report,
     )
@@ -3795,6 +3844,14 @@ def control_procedure_part_branch(
     pail_write_data[str("table_signal")] = (
         pail_signal["table_signal"]
     )
+    if calculate_write_scale_normal:
+        pail_write_table[str("table_signal_scale")] = (
+            pail_signal["table_signal_scale"]
+        )
+        pail_write_table[str("table_signal_scale_normal")] = (
+            pail_signal["table_signal_scale_normal"]
+        )
+        pass
 
     ##########
     # Write product information to file.
@@ -4054,7 +4111,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to describe tables of signals with adjustment of scale
     # and normalization.
-    if True:
+    if False:
         # Control procedure for description of signal data as a whole.
         control_procedure_whole_trunk_description(
             tissue="muscle",
@@ -4081,7 +4138,7 @@ def execute_procedure(
 
     # The current implementation requires manual switch on or off according to
     # the tissues that are included in the batch.
-    if True:
+    if False:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
             project=project,

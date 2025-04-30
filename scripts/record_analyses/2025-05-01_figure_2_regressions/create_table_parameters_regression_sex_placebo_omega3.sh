@@ -44,14 +44,14 @@ path_directory_demonstration="$path_directory_dock/in_demonstration"
 path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
-path_directory_source="${path_directory_scripts}/age_exercise/record_analyses/2025-04-23_table_1_regressions_anova"
-path_directory_product="${path_directory_dock}/out_regression/age_exercise/table_1"
+path_directory_source="${path_directory_scripts}/age_exercise/record_analyses/2025-05-01_figure_2_regressions"
+path_directory_product="${path_directory_dock}/out_regression/age_exercise/figure_2"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
 path_file_source="${path_directory_source}/list_regression_responses.txt"
-path_file_product="${path_directory_product}/table_parameters_regression_automatic_sex_omega3.tsv"
+path_file_product="${path_directory_product}/table_parameters_regression_automatic_interaction_sex_omega3.tsv"
 
 # Initialize directory.
 mkdir -p $path_directory_product
