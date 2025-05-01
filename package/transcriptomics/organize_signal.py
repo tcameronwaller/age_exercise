@@ -38,10 +38,24 @@ License:
 ###############################################################################
 # Notes
 
-# TODO: TCW; 15 October 2024
-# TODO: simplify this process of organizing the signal information
-# TODO: It might help to separate the preparation of the overall signal table
-# TODO: from the stratified signal tables for individual analyses.
+
+# TODO: TCW; 30 April 2025
+# Filter the parameter table by "inclusion", and then write the table to file
+# along with the output for the stratified signal tables.
+
+# TODO: TCW; 24 July 2024
+# 1. - In future, add a pseudo-count of 1 to any zeros or missing values.
+#    - Silverman et al, 2020 (PubMed:33101615) is a good review of methods for handling zeros.
+# 2. - In future, apply a variety of scale-adjustment and normalization methods.
+#    - DESeq2 algorithm (PubMed:25516281), edgeR algorithm (PubMed:20196867), MRN algorithm (PubMed:26442135)
+#    - Evans, 2018 (PubMed:28334202)
+# 3. - In future, apply logarithmic transformation and evaluate distributions (histograms).
+# 4. - In future, evaluate coefficient of variance of each gene across control samples.
+
+# TODO: TCW; 18 July 2024
+# For analysis (by regression, for example) it will make most sense to transpose the "signal" table
+# to orient samples across rows (convenience in merging in sample attributes)
+# and genes across columns (features, along with sample attributes as covariates).
 
 
 
@@ -3123,16 +3137,6 @@ def create_write_chart_feature_signal_observations_distribution(
     return figure
 
 
-
-
-##########
-# TODO: TCW; 18 July 2024
-# For analysis (by regression, for example) it will make most sense to transpose the "signal" table
-# to orient samples across rows (convenience in merging in sample attributes)
-# and genes across columns (features, along with sample attributes as covariates).
-
-
-
 ##########
 # Downstream analyses
 
@@ -3259,28 +3263,28 @@ def control_procedure_whole_trunk_preparation(
     ##########
     # Collect information.
     # Collections of files.
-    pail_write_table = dict()
-    pail_write_table[str("table_gene_" + tissue)] = (
+    pail_write_tables = dict()
+    pail_write_tables[str("table_gene_" + tissue)] = (
         pail_signal["table_gene"]
     )
-    pail_write_table[str("table_signal_" + tissue)] = (
+    pail_write_tables[str("table_signal_" + tissue)] = (
         pail_signal["table_signal"]
     )
-    pail_write_table[str("table_signal_scale_" + tissue)] = (
+    pail_write_tables[str("table_signal_scale_" + tissue)] = (
         pail_signal["table_signal_scale"]
     )
-    pail_write_table[str("table_signal_scale_normal_" + tissue)] = (
+    pail_write_tables[str("table_signal_scale_normal_" + tissue)] = (
         pail_signal["table_signal_scale_normal"]
     )
 
-    pail_write_table[str("table_signal_scale_gene_sample_" + tissue)] = (
+    pail_write_tables[str("table_signal_scale_gene_sample_" + tissue)] = (
         pail_signal["table_combination"]
     )
 
     ##########
     # Write product information to file.
     putly.write_tables_to_file(
-        pail_write=pail_write_table,
+        pail_write=pail_write_tables,
         path_directory=paths["out_whole_preparation"],
         reset_index_rows=False,
         write_index_rows=True,
@@ -3290,7 +3294,7 @@ def control_procedure_whole_trunk_preparation(
         suffix=".tsv",
     )
     putly.write_tables_to_file(
-        pail_write=pail_write_table,
+        pail_write=pail_write_tables,
         path_directory=paths["out_whole_preparation"],
         reset_index_rows=None,
         write_index_rows=None,
@@ -3582,9 +3586,9 @@ def control_procedure_part_branch_signal(
         selection_genes=selection_genes,
         remove_sex_chromosomes=True, # exclude chromosomes X and Y
         filter_rows_signal=True,
-        threshold_signal_low=5, # 10 is DESeq2 recommendation for bulk RNAseq
+        threshold_signal_low=10, # 10 is DESeq2 recommendation for bulk RNAseq
         threshold_signal_high=None,
-        proportion_signal_all=0.10, # proportion to require within thresholds
+        proportion_signal_all=0.33, # proportion to require within thresholds
         tissue=tissue,
         report=report,
     )
@@ -3820,35 +3824,24 @@ def control_procedure_part_branch(
         report=report,
     )
 
-
-    # TODO: TCW; 24 July 2024
-    # TODO:
-    # 1. - In future, add a pseudo-count of 1 to any zeros or missing values.
-    #    - Silverman et al, 2020 (PubMed:33101615) is a good review of methods for handling zeros.
-    # 2. - In future, apply a variety of scale-adjustment and normalization methods.
-    #    - DESeq2 algorithm (PubMed:25516281), edgeR algorithm (PubMed:20196867), MRN algorithm (PubMed:26442135)
-    #    - Evans, 2018 (PubMed:28334202)
-    # 3. - In future, apply logarithmic transformation and evaluate distributions (histograms).
-    # 4. - In future, evaluate coefficient of variance of each gene across control samples.
-
     ##########
     # Collect information.
     # Collections of files.
-    pail_write_data = dict()
-    pail_write_data[str("table_sample")] = (
+    pail_write_tables = dict()
+    pail_write_tables[str("table_sample")] = (
         pail_sample["table_selection"]
     )
-    pail_write_data[str("table_gene")] = (
+    pail_write_tables[str("table_gene")] = (
         pail_signal["table_gene"]
     )
-    pail_write_data[str("table_signal")] = (
+    pail_write_tables[str("table_signal")] = (
         pail_signal["table_signal"]
     )
     if calculate_write_scale_normal:
-        pail_write_table[str("table_signal_scale")] = (
+        pail_write_tables[str("table_signal_scale")] = (
             pail_signal["table_signal_scale"]
         )
-        pail_write_table[str("table_signal_scale_normal")] = (
+        pail_write_tables[str("table_signal_scale_normal")] = (
             pail_signal["table_signal_scale_normal"]
         )
         pass
@@ -3856,7 +3849,7 @@ def control_procedure_part_branch(
     ##########
     # Write product information to file.
     putly.write_tables_to_file(
-        pail_write=pail_write_data,
+        pail_write=pail_write_tables,
         path_directory=paths["out_data"],
         reset_index_rows=False,
         write_index_rows=True,
@@ -3866,7 +3859,7 @@ def control_procedure_part_branch(
         suffix=".tsv",
     )
     putly.write_tables_to_file(
-        pail_write=pail_write_data,
+        pail_write=pail_write_tables,
         path_directory=paths["out_data"],
         reset_index_rows=None,
         write_index_rows=None,
@@ -4138,7 +4131,7 @@ def execute_procedure(
 
     # The current implementation requires manual switch on or off according to
     # the tissues that are included in the batch.
-    if False:
+    if True:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
             project=project,

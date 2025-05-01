@@ -650,6 +650,7 @@ def define_sequence_columns_novel_subject_feature():
         "sex_text",
         "sex_female",
         "sex_y",
+        "age_younger_sex_female_text",
         "intervention_text",
         "intervention_placebo",
         "intervention_omega3",
@@ -1180,6 +1181,22 @@ def organize_table_subject_property(
                 category_text=row["age_cohort_text"],
                 values_1=["elder",],
                 values_0=["younger",],
+            ),
+        axis="columns", # apply function to each row
+    )
+    # Intersection, interaction of sex and age.
+    table["age_younger_sex_female_text"] = table.apply(
+        lambda row:
+            putly.determine_category_text_two_intersection_interaction(
+                value_intersection="younger_female",
+                value_other="other",
+                value_else="none",
+                category_one=row["age_cohort_text"],
+                values_one_intersection=["younger",], # tested first
+                values_one_other=["younger", "elder",], # tested second
+                category_two=row["sex_text"],
+                values_two_intersection=["female",], # tested first
+                values_two_other=["female", "male",], # tested second
             ),
         axis="columns", # apply function to each row
     )

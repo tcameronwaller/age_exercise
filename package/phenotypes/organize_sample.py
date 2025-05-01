@@ -820,7 +820,9 @@ def define_interaction_combination_categorical_factor():
     )
     columns_sequence["sex_text_by_visit_text"] = "male_by_second"
 
-    columns_sequence["age_cohort_text_by_intervention_text"] = "elder_by_omega3" # other: elder_by_placebo, younger_by_none
+    columns_sequence["age_cohort_text_by_intervention_text"] = str(
+        "elder_by_omega3"
+    ) # other: elder_by_placebo, younger_by_none
     # Return information.
     return columns_sequence
 
