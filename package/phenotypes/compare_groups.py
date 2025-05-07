@@ -63,6 +63,7 @@ pandas.options.mode.chained_assignment = None # default = "warn"
 pandas.set_option('future.no_silent_downcasting', True) # set option to suppress warnings
 from warnings import simplefilter
 simplefilter(action="ignore", category=pandas.errors.PerformanceWarning)
+import matplotlib
 
 # Custom
 import partner.utility as putly
@@ -78,14 +79,6 @@ import age_exercise.phenotypes.organize_sample as exph_sample
 
 ###############################################################################
 # Functionality
-
-# TODO: TCW; 14 April 2025
-# I'm still trying to figure out the introduction of multiple groups for an observations.
-# I've been encountering difficulty due to the presence of both "adipose" and "muscle"
-# records for subjects.
-# Rather than using "table_sample", use the simpler, more original "table_subject".
-# The tissue information only became available with RNA Seq on adipose or muscle samples.
-
 
 
 ##########
@@ -1050,157 +1043,6 @@ def collect_entries_tables_identifiers_groups_observations(
 
 
 ##########
-# 4. Create plot charts for quantitative features in groups of observations.
-
-
-def manage_plot_write_groups_observations_box(
-    table=None,
-    column_feature=None,
-    column_group=None,
-    translations_feature=None,
-    path_directory_parent=None,
-    report=None,
-):
-    """
-    Plot chart representations of values of signal intensity for features
-    across sample observations or groups of sample observations.
-
-    arguments:
-        table (object): Pandas data-frame table of values of signal intensity
-            corresponding to features across columns and observations across
-            rows
-        column_feature (str): name of column in original source table for a
-            feature on a quantitative, continuous, interval, or ratio scale of
-            measurement
-        column_group (str): name of column in table to use for groups
-        translations_feature (dict<str>): translations for names of features
-        path_directory_parent ((str): path to parent directory within which to
-            write files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-
-
-    """
-
-    ##########
-    # Organize information for plot.
-    pail_extract = porg.extract_array_values_from_table_column_by_groups_rows(
-        table=table,
-        column_group=column_group,
-        column_feature=column_feature,
-        report=False,
-    )
-    # Determine title.
-    if (
-        (translations_feature is not None) and
-        (column_feature in translations_feature.keys())
-    ):
-        title = translations_feature[column_feature]
-    else:
-        title = column_feature
-        pass
-
-    ##########
-    # Create plot chart.
-    # Define fonts.
-    fonts = pplot.define_font_properties()
-    # Define colors.
-    colors = pplot.define_color_properties()
-    # Extract parameters for colors.
-    colors_names_groups = [
-        "purple_violet",
-        "blue_sky",
-        "green_mint",
-        "yellow_sunshine",
-    ]
-    if (
-        (colors_names_groups is not None) and
-        (len(colors_names_groups) > 0)
-    ):
-        colors_groups = list(map(
-            lambda color_name: copy.deepcopy(colors[color_name]),
-            colors_names_groups
-        ))
-    else:
-        colors_groups = None
-        pass
-
-    # Create figure.
-    figure = pplot.plot_boxes_groups(
-        values_groups=pail_extract["values_nonmissing_groups"],
-        names_groups=pail_extract["names_groups"],
-        title_ordinate=title,
-        title_abscissa="",
-        title_chart_top_center="",
-        colors_groups=colors_groups,
-        label_top_center="",
-        label_top_left="",
-        label_top_right="",
-        aspect="landscape",
-        orientation_box="vertical",
-        axis_linear_minimum=0.0,
-        fonts=fonts,
-        colors=colors,
-        report=report,
-    )
-
-    ##########
-    # Collect information.
-    pail_write_plot_box = dict()
-    pail_write_plot_box[column_feature] = figure_box
-    pail_write_plot_vioin = dict()
-    pail_write_plot_vioin[column_feature] = figure_violin
-
-    ##########
-    # Write product information to file.
-
-    # Define paths to directories.
-    path_directory_box = os.path.join(
-        path_directory_parent, "box",
-    )
-    path_directory_violin = os.path.join(
-        path_directory_parent, "violin",
-    )
-    # Create directories.
-    putly.create_directories(
-        path=path_directory_box,
-    )
-    putly.create_directories(
-        path=path_directory_violin,
-    )
-    # Write figures to file.
-    pplot.write_product_plots_parent_directory(
-        pail_write=pail_write_plot_box,
-        format="svg", # jpg, png, svg
-        resolution=300,
-        path_directory=path_directory_box,
-    )
-    pplot.write_product_plots_parent_directory(
-        pail_write=pail_write_plot_violin,
-        format="svg", # jpg, png, svg
-        resolution=300,
-        path_directory=path_directory_violin,
-    )
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("package: age_exercise.proteomics")
-        print("module: organize_subject.py")
-        function = str(
-            "manage_plot_write_groups_observations_box()"
-        )
-        print("function: " + function)
-        putly.print_terminal_partition(level=4)
-
-    # Return information.
-    pass
-
-
-##########
 # 5. Describe quantitative features in groups of observations.
 
 
@@ -1393,8 +1235,9 @@ def describe_quantitative_features_by_observations_groups(
     # Report.
     if report:
         putly.print_terminal_partition(level=3)
-        print("package: age_exercise.proteomics")
-        print("module: organize_subject.py")
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: compare_groups.py")
         function = str(
             "describe_quantitative_features_by_observations_groups()"
         )
@@ -1553,6 +1396,296 @@ def prepare_clean_table_description(
     return table
 
 
+##########
+# 4. Create plot charts for quantitative features in groups of observations.
+
+
+def manage_create_write_plot_box_violin_feature_groups(
+    column_feature=None,
+    entries_tables=None,
+    index_columns=None,
+    index_rows=None,
+    index_features=None,
+    groups_sequence=None,
+    translations_feature=None,
+    translations_group=None,
+    path_directory_parent=None,
+    report=None,
+):
+    """
+    Manage creation and write to file of box or violin plots to represent
+    visually features on quantitative, continuous scales of measurement
+    within and between groups of observations.
+
+    Review: TCW; 1 May 2025
+
+    arguments:
+        column_feature (str): name of column in original source table for a
+            feature on a quantitative, continuous, interval or ratio scale of
+            measurement
+        entries_tables (dict<object>): entries with names as keys and as
+            values, Pandas data-frame tables with features across columns and
+            observations across rows
+        index_columns (str): name for index corresponding to features across
+            columns in the original source table
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        index_features (str): name for index corresponding to features across
+            rows in the novel, product table
+        groups_sequence (list<str>): unique names of groups of observations
+            corresponding to the separate tables in the original sequence
+            of instances of parameters
+        translations_feature (dict<str>): translations for names of features
+        translations_group (dict<str>): translations for names of groups
+        path_directory_parent ((str): path to parent directory within which to
+            write files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Extract values for current feature across groups of observations in
+    # separate, stratified tables.
+    pail_extract = (
+        porg.extract_array_values_from_column_by_separate_tables_rows(
+            entries_tables=entries_tables,
+            column_feature=column_feature,
+            groups_sequence=groups_sequence,
+            report=False,
+    ))
+    groups_values_nonmissing = pail_extract["groups_values_nonmissing"]
+
+    # Determine title.
+    if (
+        (translations_feature is not None) and
+        (column_feature in translations_feature.keys())
+    ):
+        title = translations_feature[column_feature]
+    else:
+        title = column_feature
+        pass
+
+    # Determine names of groups for visual representation on plot chart.
+    if (
+        (translations_group is not None) and
+        (putly.compare_lists_by_inclusion(
+            items_dominant=list(translations_group.keys()),
+            items_subordinate=pail_extract["names_groups"],
+        ))
+    ):
+        names_groups = list(map(
+            lambda name: translations_group[name],
+            copy.deepcopy(pail_extract["names_groups"])
+        ))
+    else:
+        names_groups = copy.deepcopy(pail_extract["names_groups"])
+        pass
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+    # Extract parameters for colors.
+    colors_names_groups = [
+        #"purple_violet",
+        #"blue_sky",
+        #"green_mint",
+        #"yellow_sunshine",
+        #"purple_violet_faint",
+        #"blue_sky_faint",
+        #"green_mint_faint",
+        #"yellow_sunshine_faint",
+        "firebrick",
+        "tomato",
+        "orange",
+        "gold",
+        "mediumorchid",
+        "mediumslateblue",
+        "dodgerblue",
+        "mediumturquoise",
+    ]
+    if (
+        (colors_names_groups is not None) and
+        (len(colors_names_groups) > 0)
+    ):
+        #colors_groups = list(map(
+        #    lambda color_name: copy.deepcopy(colors[color_name]),
+        #    colors_names_groups
+        #))
+        colors_groups = list(map(
+            lambda color_name: matplotlib.colors.to_rgba(color_name),
+            colors_names_groups
+        ))
+    else:
+        colors_groups = None
+        pass
+
+    # Create figure.
+    figure_violin = pplot.plot_boxes_groups(
+        values_groups=pail_extract["values_nonmissing_groups"],
+        names_groups=names_groups,
+        title_ordinate=title,
+        title_abscissa="",
+        title_chart_top_center="",
+        colors_groups=colors_groups,
+        label_top_center="",
+        label_top_left="",
+        label_top_right="",
+        aspect="landscape",
+        orientation_box="vertical",
+        axis_linear_minimum=0.0,
+        fonts=fonts,
+        colors=colors,
+        report=report,
+    )
+
+    ##########
+    # Collect information.
+    pail_write_plot_box = dict()
+    #pail_write_plot_box[column_feature] = figure_box
+    pail_write_plot_violin = dict()
+    pail_write_plot_violin[column_feature] = figure_violin
+
+    ##########
+    # Write product information to file.
+
+    # Define paths to directories.
+    path_directory_box = os.path.join(
+        path_directory_parent, "box",
+    )
+    path_directory_violin = os.path.join(
+        path_directory_parent, "violin",
+    )
+    # Create directories.
+    putly.create_directories(
+        path=path_directory_box,
+    )
+    putly.create_directories(
+        path=path_directory_violin,
+    )
+    # Write figures to file.
+    #pplot.write_product_plots_parent_directory(
+    #    pail_write=pail_write_plot_box,
+    #    format="svg", # jpg, png, svg
+    #    resolution=300,
+    #    path_directory=path_directory_box,
+    #)
+    pplot.write_product_plots_parent_directory(
+        pail_write=pail_write_plot_violin,
+        format="svg", # jpg, png, svg
+        resolution=300,
+        path_directory=path_directory_violin,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: compare_groups.py")
+        function = str(
+            "manage_create_write_plot_box_violin_feature_groups()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+
+    # Return information.
+    pass
+
+
+def manage_create_write_plots_box_violin_features_groups(
+    entries_tables=None,
+    index_columns=None,
+    index_rows=None,
+    index_features=None,
+    columns_features=None,
+    groups_sequence=None,
+    translations_feature=None,
+    translations_group=None,
+    path_directory_parent=None,
+    report=None,
+):
+    """
+    Manage creation and write to file of box or violin plots to represent
+    visually features on quantitative, continuous scales of measurement
+    within and between groups of observations.
+
+    Review: TCW; 1 May 2025
+
+    arguments:
+        entries_tables (dict<object>): entries with names as keys and as
+            values, Pandas data-frame tables with features across columns and
+            observations across rows
+        index_columns (str): name for index corresponding to features across
+            columns in the original source table
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        index_features (str): name for index corresponding to features across
+            rows in the novel, product table
+        columns_features (list<str>): names of columns in original source
+            table for a selection of features on a quantitative, continuous,
+            interval or ratio scale of measurement
+        groups_sequence (list<str>): unique names of groups of observations
+            corresponding to the separate tables in the original sequence
+            of instances of parameters
+        translations_feature (dict<str>): translations for names of features
+        translations_group (dict<str>): translations for names of groups
+        path_directory_parent ((str): path to parent directory within which to
+            write files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Copy information.
+    entries_tables = copy.deepcopy(entries_tables)
+    columns_features = copy.deepcopy(columns_features)
+    groups_sequence = copy.deepcopy(groups_sequence)
+    translations_feature = copy.deepcopy(translations_feature)
+    translations_group = copy.deepcopy(translations_group)
+
+    # Iterate on features, apply operations, and collect information.
+    for column_feature in columns_features:
+        # Manage creation and write to file of plot charts for current feature.
+        manage_create_write_plot_box_violin_feature_groups(
+            column_feature=column_feature,
+            entries_tables=entries_tables,
+            index_columns=index_columns,
+            index_rows=index_rows,
+            index_features=index_features,
+            groups_sequence=groups_sequence,
+            translations_feature=translations_feature,
+            translations_group=translations_group,
+            path_directory_parent=path_directory_parent,
+            report=report,
+        )
+        pass
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: compare_groups.py")
+        function = str(
+            "describe_quantitative_features_by_observations_groups()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    pass
+
+
 ###############################################################################
 # Procedure
 
@@ -1651,28 +1784,12 @@ def execute_procedure(
     #pail_parts["identifiers_rows_super"]
     #pail_parts["identifiers_rows"]
     #pail_parts["sequence_groups_observations"]
-    print(pail_parts["table_group"])
+    #print(pail_parts["table_group"])
+    #print(list(pail_parts["entries_tables"].keys()))
     #print(pail_parts["entries_tables"]["younger_older"])
 
     ##########
-    # 4. Create plot charts for quantitative features in groups of observations.
-    # Plot.
-    if False:
-        for column_quantitative in pail_source["features_quantitative"]:
-            manage_plot_write_groups_observations_box_violin(
-                table=pail_parts["table_group"],
-                column_feature=column_quantitative,
-                column_group="group",
-                column_directory="group_group",
-                translations_feature=pail["translations_feature_reverse"],
-                path_directory_parent=paths["out_procedure_plot"],
-                report=False,
-            )
-            pass
-        pass
-
-    ##########
-    # 5. Describe quantitative features in groups of observations.
+    # 4. Describe quantitative features in groups of observations.
     pail_description = describe_quantitative_features_by_observations_groups(
         entries_tables=pail_parts["entries_tables"],
         groups_sequence=pail_parts["groups_sequence"],
@@ -1715,7 +1832,7 @@ def execute_procedure(
     )
 
     ##########
-    # 6. Prepare clean version of the description table for report.
+    # 5. Prepare clean version of the description table for report.
     table_description_clean = prepare_clean_table_description(
         table=pail_description["table_priority"],
         features_sequence=pail_source["features_quantitative"],
@@ -1729,14 +1846,7 @@ def execute_procedure(
     )
 
     ##########
-    # Perform T-test, ANOVA, and regression analyses.
-
-    # T-tests and regressions for features against age cohorts.
-    #entries_tables["1_adipose_age_younger_older"]
-    # T-tests and regressions for features against omega-3 intervention.
-    #entries_tables["8_adipose_diet_older_placebo_omega3"]
-
-
+    # 5. Write information to file.
     # Collect information.
     # Collections of files.
     #pail_write_lists = dict()
@@ -1753,7 +1863,6 @@ def execute_procedure(
     )
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
-
     # Write product information to file.
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
@@ -1765,6 +1874,65 @@ def execute_procedure(
         delimiter="\t",
         suffix=".tsv",
     )
+
+    ##########
+    # 6. Create plot charts for visual representations of quantitative features
+    # within and between groups of observations.
+    groups_sequence_selection = [
+        "adipose_age_-_younger_female",
+        "adipose_age_-_older_female",
+        "adipose_placebo_-_older_female_placebo_after",
+        "adipose_omega3_-_older_female_omega3_after",
+        "adipose_age_-_younger_male",
+        "adipose_age_-_older_male",
+        "adipose_placebo_-_older_male_placebo_after",
+        "adipose_omega3_-_older_male_omega3_after",
+    ]
+    translations_group = {
+        "adipose_age_-_younger_female": "F-Younger",
+        "adipose_age_-_younger_male": "M-Younger",
+        "adipose_age_-_older_female": "F-Older",
+        "adipose_age_-_older_male": "M-Older",
+        "adipose_placebo_-_older_female_placebo_after": "F-Placebo",
+        "adipose_placebo_-_older_male_placebo_after": "M-Placebo",
+        "adipose_omega3_-_older_female_omega3_after": "F-Omega3",
+        "adipose_omega3_-_older_male_omega3_after": "M-Omega3",
+    }
+
+    # features_sequence=pail_source["features_quantitative"],
+    manage_create_write_plots_box_violin_features_groups(
+        entries_tables=pail_parts["entries_tables"],
+        index_columns="features",
+        index_rows="observations",
+        index_features="features",
+        columns_features=pail_source["features_quantitative"],
+        groups_sequence=groups_sequence_selection,
+        translations_feature=pail_source["translations_feature_reverse"],
+        translations_group=translations_group,
+        path_directory_parent=paths["out_procedure_plot"],
+        report=False,
+    )
+    if False:
+        for column_quantitative in pail_source["features_quantitative"]:
+            manage_plot_write_groups_observations_box_violin(
+                table=pail_parts["table_group"],
+                column_feature=column_quantitative,
+                column_group="group",
+                column_directory="group_group",
+                translations_feature=pail["translations_feature_reverse"],
+                path_directory_parent=paths["out_procedure_plot"],
+                report=False,
+            )
+            pass
+        pass
+
+    ##########
+    # Perform T-test, ANOVA, and regression analyses.
+
+    # T-tests and regressions for features against age cohorts.
+    #entries_tables["1_adipose_age_younger_older"]
+    # T-tests and regressions for features against omega-3 intervention.
+    #entries_tables["8_adipose_diet_older_placebo_omega3"]
 
     pass
 

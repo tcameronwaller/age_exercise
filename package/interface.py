@@ -55,6 +55,8 @@ import age_exercise.phenotypes.compare_groups
 import age_exercise.proteomics.organize_olink
 import age_exercise.proteomics.organize_spectroscopy
 import age_exercise.transcriptomics.organize_signal
+import age_exercise.transcriptomics.merge_phenotype
+
 import age_exercise.transcriptomics.select_gene_sets
 import age_exercise.transcriptomics.compare_sets_groups
 import age_exercise.transcriptomics.operate_sets
@@ -447,6 +449,15 @@ def define_subparser_transcriptomics(
         )
     )
     parser_routine.add_argument(
+        "-merge_phenotype",
+        "--merge_phenotype",
+        dest="merge_phenotype",
+        action="store_true",
+        help=(
+            "Merge information about phenotypes with signals for genes."
+        )
+    )
+    parser_routine.add_argument(
         "-select_gene_sets",
         "--select_gene_sets",
         dest="select_gene_sets",
@@ -696,6 +707,16 @@ def evaluate_parameters_transcriptomics(arguments):
         )
         # Execute procedure.
         age_exercise.transcriptomics.organize_signal.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+    if arguments.merge_phenotype:
+        # Report status.
+        print(
+           "... executing age_exercise.transcriptomics.merge_phenotype " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        age_exercise.transcriptomics.merge_phenotype.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
     if arguments.select_gene_sets:
