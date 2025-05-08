@@ -448,7 +448,7 @@ def define_sequence_columns_table_sample_file():
         "tissue",
         "condition_correction",
         "visit_text",
-        "exercise_time_point",
+        "exercise_duration_text",
         "match_subject_sample_file_transcriptomics",
         #"path_file",
         #"sample_plate",
@@ -515,7 +515,7 @@ def determine_sample_visit_text(
     return indicator
 
 
-def determine_muscle_exercise_time_point(
+def determine_muscle_exercise_duration_text(
     tissue=None,
     instance=None,
 ):
@@ -678,9 +678,9 @@ def organize_table_sample_file(
         axis="columns", # apply function to each row
     )
     # Determine designation of time point from the study of exercise in muscle.
-    table["exercise_time_point"] = table.apply(
+    table["exercise_duration_text"] = table.apply(
         lambda row:
-            determine_muscle_exercise_time_point(
+            determine_muscle_exercise_duration_text(
                 tissue=row["tissue"],
                 instance=row["condition_correction"],
             ),
@@ -764,7 +764,7 @@ def combine_table_subject_sample_file_property(
             "sex_y",
             "identifier_subject",
             "visit_text",
-            "exercise_time_point",
+            "exercise_duration_text",
         ],
         axis="index",
         ascending=True,
@@ -811,10 +811,10 @@ def define_interaction_combination_categorical_factor():
     # Specify sequence of columns within table.
     columns_sequence = dict()
     columns_sequence["age_cohort_text_by_sex_text"] = "elder_by_male"
-    columns_sequence["age_cohort_text_by_exercise_time_point"] = (
+    columns_sequence["age_cohort_text_by_exercise_duration_text"] = (
         "elder_by_3_hour"
     )
-    columns_sequence["sex_text_by_exercise_time_point"] = "male_by_3_hour"
+    columns_sequence["sex_text_by_exercise_duration_text"] = "male_by_3_hour"
     columns_sequence["intervention_text_by_visit_text"] = (
         "omega3_by_second"
     )
@@ -971,205 +971,6 @@ def describe_table_sample_factors(
 
 ##########
 # 7. Describe sets of samples for specific analyses.
-
-
-# TODO: TCW; 9 September 2024
-# TODO: obsolete
-def define_selections_sample_set():
-    """
-    Defines selection criteria for sets of samples in specific analyses.
-
-    arguments:
-
-    raises:
-
-    returns:
-        (list<dict<str>>): names and values of features for selection of
-            samples in sets for specific analyses
-
-    """
-
-    # Define instances that determine sets of samples.
-
-    # format for 'name_set': {tissue}_{cohort-details}_{condition-details}
-
-    instances = [
-        {
-            "name_set": "muscle_elder_exercise-3hr",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "age_cohort_text": ["elder",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-        {
-            "name_set": "muscle_elder_exercise-48hr",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "age_cohort_text": ["elder",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "48_hour",],
-            },
-        },
-        {
-            "name_set": "muscle_younger_exercise-3hr",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "age_cohort_text": ["younger",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "3_hour",],
-            },
-        },
-        {
-            "name_set": "muscle_younger_exercise-48hr",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "age_cohort_text": ["younger",],
-            },
-            "factor_availability": {
-                "exercise_time_point": ["0_hour", "48_hour",],
-            },
-        },
-        {
-            "name_set": "muscle_exercise-0hr_age",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "exercise_time_point": ["0_hour",],
-            },
-            "factor_availability": {
-                "age_cohort_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": "muscle_exercise-3hr_age",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "exercise_time_point": ["3_hour",],
-            },
-            "factor_availability": {
-                "age_cohort_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": "muscle_exercise-48hr_age",
-            "tissue": "muscle",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["muscle",],
-                "exercise_time_point": ["48_hour",],
-            },
-            "factor_availability": {
-                "age_cohort_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": "adipose_visit-first_age",
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "visit_text": ["first",],
-            },
-            "factor_availability": {
-                "age_cohort_text": ["younger", "elder",],
-            },
-        },
-        {
-            "name_set": str(
-                "adipose_elder_visit-intervention"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "age_cohort_text": ["elder",],
-            },
-            "factor_availability": {
-                "visit_text": ["first", "second",],
-                "intervention_text": ["placebo", "omega3",],
-            },
-        },
-
-
-        {
-            "name_set": str(
-                "adipose_elder-visit-first_intervention"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "age_cohort_text": ["elder",],
-                "visit_text": ["first",],
-            },
-            "factor_availability": {
-                "intervention_text": ["placebo", "omega3",],
-            },
-        },
-        {
-            "name_set": str(
-                "adipose_elder-visit-second_intervention"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "age_cohort_text": ["elder",],
-                "visit_text": ["second",],
-            },
-            "factor_availability": {
-                "intervention_text": ["placebo", "omega3",],
-            },
-        },
-        {
-            "name_set": str(
-                "adipose_elder-placebo_visit"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "age_cohort_text": ["elder",],
-                "intervention_text": ["placebo",],
-            },
-            "factor_availability": {
-                "visit_text": ["first", "second",],
-            },
-        },
-        {
-            "name_set": str(
-                "adipose_elder-omega3_visit"
-            ),
-            "tissue": "adipose",
-            "cohort_selection": {
-                "inclusion": [1,],
-                "tissue": ["adipose",],
-                "age_cohort_text": ["elder",],
-                "intervention_text": ["omega3",],
-            },
-            "factor_availability": {
-                "visit_text": ["first", "second",],
-            },
-        },
-    ]
-    # Return information.
-    return instances
 
 
 # TODO: TCW; 9 September 2024

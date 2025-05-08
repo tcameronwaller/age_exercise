@@ -852,6 +852,20 @@ def execute_procedure(
     table_merge = pail_merge["table_merge"].copy(deep=True)
 
     ##########
+    # 6. Adjust scale of signals for genes.
+    features_continuity_scale = [
+        "TXNRD1", # ENSG00000198431
+        "PRDX6", # ENSG00000117592
+    ]
+    table_merge = pscl.manage_transform_scale_feature_by_table_columns(
+        table=table_merge,
+        features_continuity_scale=features_continuity_scale,
+        adjust_scale=True,
+        method_scale="z_score",
+        report=report,
+    )
+
+    ##########
     # 6. Calculate predictor terms for interaction effects.
     selection_genes = [
         "TXNRD1", # ENSG00000198431
