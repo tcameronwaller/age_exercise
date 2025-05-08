@@ -454,7 +454,7 @@ def define_sequence_columns_priority():
         "tissue",
         "intervention_text",
         "intervention_omega3",
-        "exercise_time_point",
+        "exercise_duration_text",
     ]
     # Return information.
     return columns_sequence
@@ -466,6 +466,7 @@ def merge_organize_table_signal_tissues(
     table_gene_adipose=None,
     table_gene_muscle=None,
     selection_genes=None,
+    prefix_name_gene=None,
     report=None,
 ):
     """
@@ -479,6 +480,7 @@ def merge_organize_table_signal_tissues(
         table_gene_muscle (object): Pandas data-frame table
         selection_genes (list<str>): identifiers of genes for which to include
             signals across samples
+        prefix_name_gene (str): prefix for name of columns in table for genes
         report (bool): whether to print reports
 
     raises:
@@ -519,6 +521,12 @@ def merge_organize_table_signal_tissues(
     )
     translations_gene = series_translations.to_dict()
 
+    # Append prefix to names of columns in table for genes.
+    for key in translations_gene.keys():
+        name = str(translations_gene[key])
+        name_prefix = str(prefix_name_gene + name)
+        translations_gene[key] = name_prefix
+        pass
     # Filter signals for selection of genes.
     if (len(selection_genes) > 0):
         table_signal_adipose = table_signal_adipose.loc[
@@ -563,7 +571,6 @@ def merge_organize_table_signal_tissues(
             explicate_indices=True,
             report=report,
     ))
-
     # Transpose table.
     table_merge = table_merge.transpose(copy=True)
     # Organize indices of table.
@@ -827,14 +834,19 @@ def execute_procedure(
         table_gene_adipose=pail_source["table_gene_adipose"],
         table_gene_muscle=pail_source["table_gene_muscle"],
         selection_genes=selection_genes,
+        prefix_name_gene="rnaseq_",
         report=report,
     )
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+    print(pail_merge_signal["table_merge"])
 
     ##########
     # 4. Merge phenotypes for subjects or samples to signals of genes.
     selection_genes = [
-        "TXNRD1", # ENSG00000198431
-        "PRDX6", # ENSG00000117592
+        "rnaseq_TXNRD1", # ENSG00000198431
+        "rnaseq_PRDX6", # ENSG00000117592
     ]
     columns_sequence_priority = define_sequence_columns_priority()
     pail_merge = merge_organize_tables_phenotype_signal(
@@ -854,8 +866,8 @@ def execute_procedure(
     ##########
     # 6. Adjust scale of signals for genes.
     features_continuity_scale = [
-        "TXNRD1", # ENSG00000198431
-        "PRDX6", # ENSG00000117592
+        "rnaseq_TXNRD1", # ENSG00000198431
+        "rnaseq_PRDX6", # ENSG00000117592
     ]
     table_merge = pscl.manage_transform_scale_feature_by_table_columns(
         table=table_merge,
@@ -868,8 +880,8 @@ def execute_procedure(
     ##########
     # 6. Calculate predictor terms for interaction effects.
     selection_genes = [
-        "TXNRD1", # ENSG00000198431
-        "PRDX6", # ENSG00000117592
+        "rnaseq_TXNRD1", # ENSG00000198431
+        "rnaseq_PRDX6", # ENSG00000117592
     ]
     pail_interaction = calculate_product_terms_interaction_effect(
         table=table_merge,
