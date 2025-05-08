@@ -443,10 +443,12 @@ def define_sequence_columns_priority():
         "identifier_subject",
         "identifier_sample",
         "identifier_signal",
+        "age",
+        "age_cohort_text",
+        "age_cohort_elder",
         "sex_text",
         "sex_female",
         "sex_y",
-        "age_cohort_text",
         "visit_text",
         "visit_second",
         "tissue",
@@ -605,7 +607,7 @@ def merge_organize_tables_phenotype_signal(
 ):
     """
     Merge together tables of information for phenotypes of samples and signals
-    oif genes.
+    of genes.
 
     arguments:
         table_sample (object): Pandas data-frame table
@@ -673,6 +675,72 @@ def merge_organize_tables_phenotype_signal(
         print("subpackage: transcriptomics")
         print("module: merge_phenotype.py")
         print("function: merge_tables_sample_gene_signal()")
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return pail
+
+
+##########
+# 4. Calculate product interaction.
+
+
+def calculate_product_terms_interaction_effect(
+    table=None,
+    features_first=None,
+    features_second=None,
+    delimiter_name=None,
+    report=None,
+):
+    """
+    Calculate product of quantitative values between pairs of features for
+    evaluation of interaction effects in regression.
+
+    arguments:
+        table (object): Pandas data-frame table
+        features_first (list<str>): identifiers or names of features for which
+            to calculate products
+        features_second (list<str>): identifiers or names of features for which
+            to calculate products
+        delimiter_name (str): delimiter to place between text items when
+            combining identifiers or names of features
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information.
+    table = table.copy(deep=True)
+    features_first = copy.deepcopy(features_first)
+    features_second = copy.deepcopy(features_second)
+
+    # Iterate across combinations of features.
+    for feature_first in features_first:
+        for feature_second in features_second:
+            name = str(feature_first + delimiter_name + feature_second)
+            table[name] = table.apply(
+                lambda series_row: float(
+                    series_row[feature_first] * series_row[feature_second]
+                ),
+                axis="columns", # apply function to each row
+            )
+            pass
+        pass
+
+    # Collect information.
+    pail = dict()
+    pail["table"] = table
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise")
+        print("subpackage: transcriptomics")
+        print("module: merge_phenotype.py")
+        print("function: calculate_product_terms_interaction_effect()")
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
@@ -778,39 +846,34 @@ def execute_procedure(
     )
 
     ##########
-    # 4. Copy information.
+    # 5. Copy information.
     table_sample = pail_source["table_sample"].copy(deep=True)
     table_signal = pail_merge_signal["table_merge"].copy(deep=True)
     table_merge = pail_merge["table_merge"].copy(deep=True)
 
-    if False:
-
-        print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-        print(table_sample)
-        print(table_sample.columns.to_list())
-        print(table_sample["identifier_signal"])
-
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print(table_signal)
-        print(table_signal.columns.to_list())
-        print(table_signal["identifier_signal"])
-
-        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-        print(table_merge)
-        print(table_merge.columns.to_list())
-        print(table_merge["identifier_signal"])
-
-
+    ##########
+    # 6. Calculate predictor terms for interaction effects.
+    selection_genes = [
+        "TXNRD1", # ENSG00000198431
+        "PRDX6", # ENSG00000117592
+    ]
+    pail_interaction = calculate_product_terms_interaction_effect(
+        table=table_merge,
+        features_first=["age_cohort_elder",],
+        features_second=selection_genes,
+        delimiter_name="_-_",
+        report=report,
+    )
 
     ##########
-    # 4. Write information to file.
+    # 7. Write information to file.
     # Collect information.
     # Collections of files.
     #pail_write_lists = dict()
     pail_write_tables = dict()
-    pail_write_tables[str("table_sample")] = pail_source["table_sample"]
-    pail_write_tables[str("table_signal")] = pail_merge_signal["table_merge"]
-    pail_write_tables[str("table_merge")] = pail_merge["table_merge"]
+    pail_write_tables[str("table_sample")] = table_sample
+    pail_write_tables[str("table_signal")] = table_signal
+    pail_write_tables[str("table_merge")] = pail_interaction["table"]
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
     # Write product information to file.
