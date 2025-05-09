@@ -649,8 +649,11 @@ def define_sequence_columns_novel_subject_feature():
         "age_cohort_elder",
         "sex_text",
         "sex_female",
+        "sex_male",
         "sex_y",
-        "age_younger_sex_female_text",
+        "age_cohort_younger_sex_female_text",
+        "age_cohort_elder_sex_male_text",
+        "age_cohort_elder_sex_male",
         "intervention_text",
         "intervention_placebo",
         "intervention_omega3",
@@ -1157,6 +1160,15 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
+    table["sex_male"] = table.apply(
+        lambda row:
+            putly.determine_category_text_logical_binary(
+                category_text=row["sex_text"],
+                values_1=["male",],
+                values_0=["female",],
+            ),
+        axis="columns", # apply function to each row
+    )
     table["sex_y"] = table.apply(
         lambda row:
             putly.determine_category_text_logical_binary(
@@ -1185,7 +1197,7 @@ def organize_table_subject_property(
         axis="columns", # apply function to each row
     )
     # Intersection, interaction of sex and age.
-    table["age_younger_sex_female_text"] = table.apply(
+    table["age_cohort_younger_sex_female_text"] = table.apply(
         lambda row:
             putly.determine_category_text_two_intersection_interaction(
                 value_intersection="younger_female",
@@ -1197,6 +1209,31 @@ def organize_table_subject_property(
                 category_two=row["sex_text"],
                 values_two_intersection=["female",], # tested first
                 values_two_other=["female", "male",], # tested second
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["age_cohort_elder_sex_male_text"] = table.apply(
+        lambda row:
+            putly.determine_category_text_two_intersection_interaction(
+                value_intersection="elder_male",
+                value_other="other",
+                value_else="none",
+                category_one=row["age_cohort_text"],
+                values_one_intersection=["elder",], # tested first
+                values_one_other=["younger", "elder",], # tested second
+                category_two=row["sex_text"],
+                values_two_intersection=["male",], # tested first
+                values_two_other=["female", "male",], # tested second
+            ),
+        axis="columns", # apply function to each row
+    )
+    abbreviation = "age_cohort_elder_sex_male_text"
+    table["age_cohort_elder_sex_male"] = table.apply(
+        lambda row:
+            putly.determine_category_text_logical_binary(
+                category_text=row[abbreviation],
+                values_1=["elder_male",],
+                values_0=["other",],
             ),
         axis="columns", # apply function to each row
     )

@@ -35,7 +35,7 @@ path_directory_parameters_private="$path_directory_dock/in_parameters_private/ag
 path_directory_product_parent="$path_directory_dock/out_age_exercise/transcriptomics/deseq2"
 
 # Files.
-path_file_table_parameter="$path_directory_parameters_private/table_differential_expressions_genes_samples.tsv"
+path_file_table_parameter="$path_directory_parameters_private/table_parameters_signal_stratification_deseq2_analyses.tsv"
 
 # Scripts.
 path_script_deseq2="${path_directory_repository_partner}/scripts/r/analyze_rnaseq_deseq2.R"

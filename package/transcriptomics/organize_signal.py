@@ -570,7 +570,7 @@ def read_organize_source_parameter_instances(
     # Define paths to child files.
     path_file_table_parameter = os.path.join(
         paths["in_parameters_private"], "age_exercise", "transcriptomics",
-        "table_differential_expressions_genes_samples.tsv",
+        "table_parameters_signal_stratification_deseq2_analyses.tsv",
     )
 
     # Read information from file.

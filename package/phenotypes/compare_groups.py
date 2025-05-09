@@ -374,7 +374,7 @@ def define_type_table_columns_subject_sample():
     types_columns["intervention_after_placebo"] = "float32"
     types_columns["intervention_after_omega3"] = "float32"
     #types_columns["tissue"] = "string"
-    #types_columns["exercise_time_point"] = "string"
+    #types_columns["exercise_duration_text"] = "string"
 
     pail_quantitative = (
         define_type_table_columns_subject_sample_quantitative_continuous()
