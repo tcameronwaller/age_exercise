@@ -43,7 +43,7 @@ path_directory_product="${path_directory_dock}/out_regression/age_exercise"
 # Files.
 #path_file_table_parameters="${path_directory_demonstration}/partner/table_regression_parameters.tsv"
 #path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression.tsv"
-path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_2025-05-09.tsv"
+path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_redox_genes.tsv"
 
 # Scripts.
 path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"

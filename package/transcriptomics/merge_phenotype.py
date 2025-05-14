@@ -826,22 +826,26 @@ def execute_procedure(
     ##########
     # 3. Merge signals of genes from samples in tissue of adipose and muscle.
     selection_genes = [
-        "ENSG00000198431", # TXNRD1
+        "ENSG00000116701", # NCF2
         "ENSG00000117592", # PRDX6
-        "ENSG00000183671", # CMKLR2; significant adipose age, age*sex
-        "ENSG00000164530", # PI16; significant adipose age, age*sex
-        "ENSG00000100344", # PNPLA3; significant adipose age, age*sex
-        "ENSG00000196169", # KIF19; significant adipose age, age*sex
-        #"ENSG00000101405", # OXT; significant adipose age, age*sex; unavailable
-        "ENSG00000166923", # GREM1; significant muscle age, age*sex
-        "ENSG00000188001", # TPRG1; significant muscle age, age*sex
-        #"ENSG00000105639", # JAK3; pub DE BMI; significant in our own adipose data
-        #"ENSG00000184557", # SOCS3; pub DE BMI
-        #"ENSG00000137193", # PIM1; pub DE BMI
-        #"ENSG00000203867", # RBM20; pub DE BMI
-        #"ENSG00000003400", # CASP10; pub DE BMI
-        #"ENSG00000142279", # WTIP; pub DE BMI
-        #"ENSG00000140623", # SEP12; pub DE BMI; unavailable
+        "ENSG00000265972", # TXNIP
+        "ENSG00000233276", # GPX1
+        "ENSG00000113811", # SELENOK
+        "ENSG00000001084", # GCLC
+        "ENSG00000291237", # SOD2
+        "ENSG00000158517", # NCF1
+        "ENSG00000121691", # CAT
+        "ENSG00000086991", # NOX4
+        "ENSG00000066336", # SPI1
+        "ENSG00000198431", # TXNRD1
+        "ENSG00000051523", # CYBA
+        "ENSG00000181019", # NQO1
+        "ENSG00000167468", # GPX4
+        "ENSG00000142168", # SOD1
+        "ENSG00000100365", # NCF4
+        "ENSG00000198832", # SELENOM
+        "ENSG00000073169", # SELENOO
+        "ENSG00000165168", # CYBB
     ]
     pail_merge_signal = merge_organize_table_signal_tissues(
         table_signal_adipose=pail_source["table_signal_adipose"],
@@ -859,14 +863,26 @@ def execute_procedure(
     ##########
     # 4. Merge phenotypes for subjects or samples to signals of genes.
     selection_genes = [
-        "rnaseq_TXNRD1", # ENSG00000198431
-        "rnaseq_PRDX6", # ENSG00000117592
-        "rnaseq_CMKLR2",
-        "rnaseq_PI16",
-        "rnaseq_PNPLA3",
-        "rnaseq_KIF19",
-        "rnaseq_GREM1",
-        "rnaseq_TPRG1",
+        "rnaseq_NCF2",
+        "rnaseq_PRDX6",
+        "rnaseq_TXNIP",
+        "rnaseq_GPX1",
+        "rnaseq_SELENOK",
+        "rnaseq_GCLC",
+        "rnaseq_SOD2",
+        "rnaseq_NCF1",
+        "rnaseq_CAT",
+        "rnaseq_NOX4",
+        "rnaseq_SPI1",
+        "rnaseq_TXNRD1",
+        "rnaseq_CYBA",
+        "rnaseq_NQO1",
+        "rnaseq_GPX4",
+        "rnaseq_SOD1",
+        "rnaseq_NCF4",
+        "rnaseq_SELENOM",
+        "rnaseq_SELENOO",
+        "rnaseq_CYBB",
     ]
     columns_sequence_priority = define_sequence_columns_priority()
     pail_merge = merge_organize_tables_phenotype_signal(
@@ -886,14 +902,26 @@ def execute_procedure(
     ##########
     # 6. Adjust scale of signals for genes.
     features_continuity_scale = [
-        "rnaseq_TXNRD1", # ENSG00000198431
-        "rnaseq_PRDX6", # ENSG00000117592
-        "rnaseq_CMKLR2",
-        "rnaseq_PI16",
-        "rnaseq_PNPLA3",
-        "rnaseq_KIF19",
-        "rnaseq_GREM1",
-        "rnaseq_TPRG1",
+        "rnaseq_NCF2",
+        "rnaseq_PRDX6",
+        "rnaseq_TXNIP",
+        "rnaseq_GPX1",
+        "rnaseq_SELENOK",
+        "rnaseq_GCLC",
+        "rnaseq_SOD2",
+        "rnaseq_NCF1",
+        "rnaseq_CAT",
+        "rnaseq_NOX4",
+        "rnaseq_SPI1",
+        "rnaseq_TXNRD1",
+        "rnaseq_CYBA",
+        "rnaseq_NQO1",
+        "rnaseq_GPX4",
+        "rnaseq_SOD1",
+        "rnaseq_NCF4",
+        "rnaseq_SELENOM",
+        "rnaseq_SELENOO",
+        "rnaseq_CYBB",
     ]
     table_merge = pscl.manage_transform_scale_feature_by_table_columns(
         table=table_merge,
@@ -906,19 +934,38 @@ def execute_procedure(
     ##########
     # 6. Calculate predictor terms for interaction effects.
     selection_genes = [
-        "rnaseq_TXNRD1", # ENSG00000198431
-        "rnaseq_PRDX6", # ENSG00000117592
-        "rnaseq_CMKLR2",
-        "rnaseq_PI16",
-        "rnaseq_PNPLA3",
-        "rnaseq_KIF19",
-        "rnaseq_GREM1",
-        "rnaseq_TPRG1",
+        "rnaseq_NCF2",
+        "rnaseq_PRDX6",
+        "rnaseq_TXNIP",
+        "rnaseq_GPX1",
+        "rnaseq_SELENOK",
+        "rnaseq_GCLC",
+        "rnaseq_SOD2",
+        "rnaseq_NCF1",
+        "rnaseq_CAT",
+        "rnaseq_NOX4",
+        "rnaseq_SPI1",
+        "rnaseq_TXNRD1",
+        "rnaseq_CYBA",
+        "rnaseq_NQO1",
+        "rnaseq_GPX4",
+        "rnaseq_SOD1",
+        "rnaseq_NCF4",
+        "rnaseq_SELENOM",
+        "rnaseq_SELENOO",
+        "rnaseq_CYBB",
     ]
     pail_interaction = calculate_product_terms_interaction_effect(
         table=table_merge,
         features_first=selection_genes,
         features_second=["age_cohort_elder",],
+        delimiter_name="_-_",
+        report=report,
+    )
+    pail_interaction = calculate_product_terms_interaction_effect(
+        table=pail_interaction["table"],
+        features_first=selection_genes,
+        features_second=["age",],
         delimiter_name="_-_",
         report=report,
     )

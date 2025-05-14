@@ -249,13 +249,14 @@ def read_organize_source_parameter(
     return pail
 
 
+# Important parameter!
 # The features in this list determines the inclusion and sequence of features
 # in the product table "table_description_clean".
 def define_type_table_columns_subject_sample_quantitative_continuous():
     """
     Defines the types of variables for columns in table.
 
-    Review: TCW; 14 April 2025
+    Review: TCW; 13 May 2025
 
     arguments:
 
@@ -271,6 +272,7 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
     names_features = [
         "age",
         "body_mass_index",
+        "body_fat_percent",
         "body_skeletal_muscle_index",
         "activity_moderate_vigorous",
         "activity_steps",
@@ -280,6 +282,21 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "pressure_blood_systolic",
         "pressure_blood_diastolic",
 
+        "glucose",
+        "insulin",
+        "insulin_sensitivity",
+        "homa_insulin_resist",
+        "alanine_transaminase",
+        "aspartate_transaminase",
+        "red_blood_cells",
+        "hemoglobin",
+        "hematocrit",
+        "mean_corpuscular_volume",
+        "rbc_distribution_width",
+        "platelets",
+        "prothrombin_time",
+        "blood_clot_inr",
+
         "omega3_eicosapentaenoate",
         "omega3_docosahexaenoate",
         "triglyceride",
@@ -287,23 +304,13 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "lipoprotein_hdl",
         "lipoprotein_nonhdl",
         "lipoprotein_ldl",
-
-        "glucose",
-        "insulin",
-        "insulin_sensitivity",
-        "homa_insulin_resist",
-        "thyroid_stimulate_hormone",
+        "adipocyte_lipid_content",
+        "cd68_adipose_percent",
+        "cd14_adipose_percent",
+        "cd206_adipose_percent",
+        "p16_adipose_percent",
         "c_react_protein",
-
-        "red_blood_cells",
-        "hemoglobin",
-        "hematocrit",
-        "mean_corpuscular_volume",
-        "rbc_distribution_width",
         "erythrocyte_sedimentation_rate",
-        "platelets",
-        "prothrombin_time",
-        "blood_clot_inr",
         "white_blood_cells",
         "neutrophils",
         "lymphocytes",
@@ -311,14 +318,8 @@ def define_type_table_columns_subject_sample_quantitative_continuous():
         "eosinophils",
         "basophils",
 
+        "thyroid_stimulate_hormone",
         "mitochondrial_respiration_maximum",
-        "adipocyte_diameter",
-        "adipocyte_lipid_content",
-        "cd68_adipose_percent",
-        "cd14_adipose_percent",
-        "cd206_adipose_percent",
-        "p16_adipose_percent",
-
     ]
 
     # Specify types of variables in columns of table.
