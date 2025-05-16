@@ -5,12 +5,14 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 28 March 2025
-# Date, last execution or modification: 17 April 2025
-# Review: 17 April 2025
+# Date, first execution: 14 May 2025
+# Date, last execution or modification: 14 May 2025
+# Review: 14 May 2025
 ###############################################################################
 # Note
 
+# TODO: TCW; 9 May 2025
+# pass a new parameter for the name of the file for the plot chart
 
 
 ###############################################################################
@@ -35,27 +37,24 @@ path_directory_demonstration="$path_directory_dock/in_demonstration"
 path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
+
 path_directory_source="${path_directory_parameters_private}/age_exercise/regression"
-path_directory_product="${path_directory_dock}/out_regression/age_exercise/table_1_results"
+path_directory_product="${path_directory_dock}/out_regression/age_exercise"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
-#path_file_table_parameters="${path_directory_demonstration}/partner/table_regression_parameters.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression.tsv"
 
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_age.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3.tsv"
-path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_omega3_mix.tsv"
-
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3_female.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3_male.tsv"
-
-path_file_table_results="${path_directory_product}/table_results_regression.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_body_mass_index.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_glucose.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_insulin_sensitivity.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_homa_insulin_resist.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_cd68_adipose_percent.tsv"
+path_file_table_data="${path_directory_source}/table_results_regression_p16_adipose_percent.tsv"
 
 # Scripts.
-path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"
-path_file_script_product="${path_directory_package}/drive_regressions_from_table_parameters.py"
+path_file_script_source="${path_directory_scripts}/partner/python/drive_plot_dot_forest_from_table_data.py"
+path_file_script_product="${path_directory_package}/drive_plot_dot_forest_from_table_data.py"
 
 # Copy Python script to package directory.
 cp $path_file_script_source $path_file_script_product
@@ -82,7 +81,35 @@ set +x # disable print commands to standard error
 #set -v # enable print input to standard error
 set +v # disable print input to standard error
 
+# For "title", "legend_series_primary", and "legend_series_secondary", replace
+# character "#" with white space.
 
+# Format of parameters for names of columns.
+# name_product: name_source
+
+# Format of parameters for names of features.
+# name_source: name_product
+
+#title="response:#Body#Mass#Index#(kg/m^2)" # cannot accommodate white space
+#title="response:#Glucose#(mg/dL)" # cannot accommodate white space
+#title="response:#Insulin#Sensitivity#(?)" # cannot accommodate white space
+#title="response:#HOMA#Insulin#Resistance#(?)" # cannot accommodate white space
+#title="response:#CD68+#per#100#Adipocytes#(%)" # cannot accommodate white space
+title="response:#p16+#per#100#Adipocytes#(%)" # cannot accommodate white space
+#feature="feature:feature_response"
+#feature="feature:name_combination"
+feature="feature:name"
+#features="none"
+features="adipose_TXNRD1,adipose_TXNIP,adipose_SPI1,adipose_SOD2,adipose_SOD1,adipose_SELENOO,adipose_SELENOM,adipose_SELENOK,adipose_PRDX6,adipose_NQO1,adipose_NOX4,adipose_NCF4,adipose_NCF2,adipose_NCF1,adipose_GPX4,adipose_GPX1,adipose_GCLC,adipose_CYBB,adipose_CYBA,adipose_CAT"
+translation_features="none"
+legend_series_primary="gene_signal"
+legend_series_secondary="gene_signal*age_scale" # or "none"
+legend_series_tertiary="age_scale" # or "none"
+values_intervals_primary="value_primary:predictor_2_parameter;interval_low_primary:predictor_2_interval_95;interval_high_primary:predictor_2_interval_95_copy"
+#values_intervals_secondary="none"
+values_intervals_secondary="value_secondary:predictor_1_parameter;interval_low_secondary:predictor_1_interval_95;interval_high_secondary:predictor_1_interval_95_copy"
+#values_intervals_tertiary="none"
+values_intervals_tertiary="value_tertiary:predictor_3_parameter;interval_low_tertiary:predictor_3_interval_95;interval_high_tertiary:predictor_3_interval_95_copy"
 
 ###############################################################################
 # Activate Python virtual environment.
@@ -112,17 +139,22 @@ if [ "$report" == "true" ]; then
   echo "----------"
 fi
 
-
-
 ###############################################################################
 # Execute procedure.
 
 # Execute program process in Python.
 python3 $path_file_script_product \
-$groups \
-$path_file_table_parameters \
-$path_file_table_results \
-$path_directory_source \
+$path_file_table_data \
+$title \
+$feature \
+$features \
+$translation_features \
+$legend_series_primary \
+$legend_series_secondary \
+$legend_series_tertiary \
+$values_intervals_primary \
+$values_intervals_secondary \
+$values_intervals_tertiary \
 $path_directory_product \
 $path_directory_dock \
 $report
@@ -147,12 +179,11 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "----------"
   echo "----------"
-  echo "script: template_drive_regressions.sh"
+  echo "script: template_drive_plot_dot_forest.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"
-  echo "Convert identifiers or names of genes by query to MyGene.info"
-  echo "path to file for table of parameters: " $path_file_table_parameters
+  echo "path to file for table of data: " $path_file_table_data
   echo "path to dock directory: " $path_directory_dock
   echo "----------"
   echo "----------"

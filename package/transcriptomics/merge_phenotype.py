@@ -826,26 +826,26 @@ def execute_procedure(
     ##########
     # 3. Merge signals of genes from samples in tissue of adipose and muscle.
     selection_genes = [
-        "ENSG00000116701", # NCF2
-        "ENSG00000117592", # PRDX6
-        "ENSG00000265972", # TXNIP
-        "ENSG00000233276", # GPX1
-        "ENSG00000113811", # SELENOK
-        "ENSG00000001084", # GCLC
-        "ENSG00000291237", # SOD2
-        "ENSG00000158517", # NCF1
-        "ENSG00000121691", # CAT
-        "ENSG00000086991", # NOX4
-        "ENSG00000066336", # SPI1
         "ENSG00000198431", # TXNRD1
-        "ENSG00000051523", # CYBA
-        "ENSG00000181019", # NQO1
-        "ENSG00000167468", # GPX4
+        "ENSG00000265972", # TXNIP
+        "ENSG00000066336", # SPI1
+        "ENSG00000291237", # SOD2
         "ENSG00000142168", # SOD1
-        "ENSG00000100365", # NCF4
-        "ENSG00000198832", # SELENOM
         "ENSG00000073169", # SELENOO
+        "ENSG00000198832", # SELENOM
+        "ENSG00000113811", # SELENOK
+        "ENSG00000117592", # PRDX6
+        "ENSG00000181019", # NQO1
+        "ENSG00000086991", # NOX4
+        "ENSG00000100365", # NCF4
+        "ENSG00000116701", # NCF2
+        "ENSG00000158517", # NCF1
+        "ENSG00000167468", # GPX4
+        "ENSG00000233276", # GPX1
+        "ENSG00000001084", # GCLC
         "ENSG00000165168", # CYBB
+        "ENSG00000051523", # CYBA
+        "ENSG00000121691", # CAT
     ]
     pail_merge_signal = merge_organize_table_signal_tissues(
         table_signal_adipose=pail_source["table_signal_adipose"],
@@ -863,26 +863,26 @@ def execute_procedure(
     ##########
     # 4. Merge phenotypes for subjects or samples to signals of genes.
     selection_genes = [
-        "rnaseq_NCF2",
-        "rnaseq_PRDX6",
-        "rnaseq_TXNIP",
-        "rnaseq_GPX1",
-        "rnaseq_SELENOK",
-        "rnaseq_GCLC",
-        "rnaseq_SOD2",
-        "rnaseq_NCF1",
-        "rnaseq_CAT",
-        "rnaseq_NOX4",
-        "rnaseq_SPI1",
         "rnaseq_TXNRD1",
-        "rnaseq_CYBA",
-        "rnaseq_NQO1",
-        "rnaseq_GPX4",
+        "rnaseq_TXNIP",
+        "rnaseq_SPI1",
+        "rnaseq_SOD2",
         "rnaseq_SOD1",
-        "rnaseq_NCF4",
-        "rnaseq_SELENOM",
         "rnaseq_SELENOO",
+        "rnaseq_SELENOM",
+        "rnaseq_SELENOK",
+        "rnaseq_PRDX6",
+        "rnaseq_NQO1",
+        "rnaseq_NOX4",
+        "rnaseq_NCF4",
+        "rnaseq_NCF2",
+        "rnaseq_NCF1",
+        "rnaseq_GPX4",
+        "rnaseq_GPX1",
+        "rnaseq_GCLC",
         "rnaseq_CYBB",
+        "rnaseq_CYBA",
+        "rnaseq_CAT",
     ]
     columns_sequence_priority = define_sequence_columns_priority()
     pail_merge = merge_organize_tables_phenotype_signal(
@@ -898,30 +898,32 @@ def execute_procedure(
     table_sample = pail_source["table_sample"].copy(deep=True)
     table_signal = pail_merge_signal["table_merge"].copy(deep=True)
     table_merge = pail_merge["table_merge"].copy(deep=True)
+    table_merge["age_scale"] = table_merge["age"].copy(deep=True)
 
     ##########
     # 6. Adjust scale of signals for genes.
     features_continuity_scale = [
-        "rnaseq_NCF2",
-        "rnaseq_PRDX6",
-        "rnaseq_TXNIP",
-        "rnaseq_GPX1",
-        "rnaseq_SELENOK",
-        "rnaseq_GCLC",
-        "rnaseq_SOD2",
-        "rnaseq_NCF1",
-        "rnaseq_CAT",
-        "rnaseq_NOX4",
-        "rnaseq_SPI1",
+        "age_scale",
         "rnaseq_TXNRD1",
-        "rnaseq_CYBA",
-        "rnaseq_NQO1",
-        "rnaseq_GPX4",
+        "rnaseq_TXNIP",
+        "rnaseq_SPI1",
+        "rnaseq_SOD2",
         "rnaseq_SOD1",
-        "rnaseq_NCF4",
-        "rnaseq_SELENOM",
         "rnaseq_SELENOO",
+        "rnaseq_SELENOM",
+        "rnaseq_SELENOK",
+        "rnaseq_PRDX6",
+        "rnaseq_NQO1",
+        "rnaseq_NOX4",
+        "rnaseq_NCF4",
+        "rnaseq_NCF2",
+        "rnaseq_NCF1",
+        "rnaseq_GPX4",
+        "rnaseq_GPX1",
+        "rnaseq_GCLC",
         "rnaseq_CYBB",
+        "rnaseq_CYBA",
+        "rnaseq_CAT",
     ]
     table_merge = pscl.manage_transform_scale_feature_by_table_columns(
         table=table_merge,
@@ -934,26 +936,26 @@ def execute_procedure(
     ##########
     # 6. Calculate predictor terms for interaction effects.
     selection_genes = [
-        "rnaseq_NCF2",
-        "rnaseq_PRDX6",
-        "rnaseq_TXNIP",
-        "rnaseq_GPX1",
-        "rnaseq_SELENOK",
-        "rnaseq_GCLC",
-        "rnaseq_SOD2",
-        "rnaseq_NCF1",
-        "rnaseq_CAT",
-        "rnaseq_NOX4",
-        "rnaseq_SPI1",
         "rnaseq_TXNRD1",
-        "rnaseq_CYBA",
-        "rnaseq_NQO1",
-        "rnaseq_GPX4",
+        "rnaseq_TXNIP",
+        "rnaseq_SPI1",
+        "rnaseq_SOD2",
         "rnaseq_SOD1",
-        "rnaseq_NCF4",
-        "rnaseq_SELENOM",
         "rnaseq_SELENOO",
+        "rnaseq_SELENOM",
+        "rnaseq_SELENOK",
+        "rnaseq_PRDX6",
+        "rnaseq_NQO1",
+        "rnaseq_NOX4",
+        "rnaseq_NCF4",
+        "rnaseq_NCF2",
+        "rnaseq_NCF1",
+        "rnaseq_GPX4",
+        "rnaseq_GPX1",
+        "rnaseq_GCLC",
         "rnaseq_CYBB",
+        "rnaseq_CYBA",
+        "rnaseq_CAT",
     ]
     pail_interaction = calculate_product_terms_interaction_effect(
         table=table_merge,
@@ -965,7 +967,7 @@ def execute_procedure(
     pail_interaction = calculate_product_terms_interaction_effect(
         table=pail_interaction["table"],
         features_first=selection_genes,
-        features_second=["age",],
+        features_second=["age_scale",],
         delimiter_name="_-_",
         report=report,
     )

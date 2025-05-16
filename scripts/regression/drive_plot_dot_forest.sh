@@ -85,12 +85,17 @@ set +v # disable print input to standard error
 # Format of parameters for names of features.
 # name_source: name_product
 
-title="response:#Body#Mass#Index" # cannot accommodate white space
+title="response:#Body#Mass#Index#(kg/m^2)" # cannot accommodate white space
+#title="response:#Glucose#(mg/dL)" # cannot accommodate white space
+#title="response:#Insulin#Sensitivity#(?)" # cannot accommodate white space
+#title="response:#HOMA#Insulin#Resistance#(?)" # cannot accommodate white space
+#title="response:#CD68+#per#100#Adipocytes#(%)" # cannot accommodate white space
+#title="response:#p16+#per#100#Adipocytes#(%)" # cannot accommodate white space
 #feature="feature:feature_response"
 #feature="feature:name_combination"
 feature="feature:name"
 #features="none"
-features="adipose_CAT,adipose_CYBA,adipose_CYBB,adipose_GCLC,adipose_GPX1,adipose_GPX4,adipose_NCF1,adipose_NCF2,adipose_NCF4,adipose_NOX4,adipose_NQO1,adipose_PRDX6,adipose_SELENOK,adipose_SELENOM,adipose_SELENOO,adipose_SOD1,adipose_SOD2,adipose_SPI1,adipose_TXNIP,adipose_TXNRD1"
+features="adipose_TXNRD1,adipose_TXNIP,adipose_SPI1,adipose_SOD2,adipose_SOD1,adipose_SELENOO,adipose_SELENOM,adipose_SELENOK,adipose_PRDX6,adipose_NQO1,adipose_NOX4,adipose_NCF4,adipose_NCF2,adipose_NCF1,adipose_GPX4,adipose_GPX1,adipose_GCLC,adipose_CYBB,adipose_CYBA,adipose_CAT"
 translation_features="none"
 legend_series_primary="gene_signal"
 legend_series_secondary="gene_signal*age_group" # or "none"

@@ -5,12 +5,11 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 28 March 2025
-# Date, last execution or modification: 17 April 2025
-# Review: 17 April 2025
+# Date, first execution: 14 May 2025
+# Date, last execution or modification: 14 May 2025
+# Review: 14 May 2025
 ###############################################################################
 # Note
-
 
 
 ###############################################################################
@@ -36,22 +35,20 @@ path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
 path_directory_source="${path_directory_parameters_private}/age_exercise/regression"
-path_directory_product="${path_directory_dock}/out_regression/age_exercise/table_1_results"
+path_directory_product="${path_directory_dock}/out_regression/age_exercise/phenotypes_genes_redox"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
-#path_file_table_parameters="${path_directory_demonstration}/partner/table_regression_parameters.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression.tsv"
 
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_age.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3.tsv"
-path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_omega3_mix.tsv"
+path_file_table_parameters="${path_directory_source}/table_parameters_regression_phenotypes_genes_redox.tsv"
 
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3_female.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3_male.tsv"
-
-path_file_table_results="${path_directory_product}/table_results_regression.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_body_mass_index.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_glucose.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_insulin_sensitivity.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_homa_insulin_resist.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_cd68_adipose_percent.tsv"
+path_file_table_results="${path_directory_product}/table_results_regression_p16_adipose_percent.tsv"
 
 # Scripts.
 path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"
@@ -76,12 +73,19 @@ mkdir -p $path_directory_product
 
 # Parameters.
 threads=6
-report="true"
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error
 #set -v # enable print input to standard error
 set +v # disable print input to standard error
 
+#groups="body_mass_index"
+#groups="glucose"
+#groups="insulin_sensitivity"
+#groups="homa_insulin_resist"
+#groups="cd68_adipose_percent"
+groups="p16_adipose_percent"
+
+report="true"
 
 
 ###############################################################################

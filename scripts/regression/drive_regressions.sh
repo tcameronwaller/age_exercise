@@ -12,6 +12,14 @@
 # Note
 
 
+# TODO: TCW; 14 May 2025
+# New parameter from script that determines the name of the table of regression results
+# That'll be convenient when calling the script multiple times with variations on the parameters
+
+# TODO: TCW; 14 May 2025
+# New parameter to filter "parameter instances (ie rows)" in the parameter table by some value, such as name of group
+
+
 
 ###############################################################################
 # Organize arguments.
@@ -35,15 +43,18 @@ path_directory_demonstration="$path_directory_dock/in_demonstration"
 path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
-#path_directory_source="${path_directory_dock}/${demonstration}/source"
+path_directory_source="${path_directory_parameters_private}/age_exercise/regression"
 path_directory_product="${path_directory_dock}/out_regression/age_exercise"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
+
 #path_file_table_parameters="${path_directory_demonstration}/partner/table_regression_parameters.tsv"
 #path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression.tsv"
-path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_redox_genes.tsv"
+path_file_table_parameters="${path_directory_source}/table_parameters_regression_redox_genes.tsv"
+
+path_file_table_results="${path_directory_product}/table_results_regression.tsv"
 
 # Scripts.
 path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"
@@ -57,7 +68,7 @@ path_environment_main="$path_directory_tools/python/environments/main"
 echo $path_environment_main
 
 # Initialize directory.
-rm -r $path_directory_product # caution
+#rm -r $path_directory_product # caution
 mkdir -p $path_directory_product
 #mkdir -p $path_directory_temporary
 
@@ -111,12 +122,13 @@ fi
 
 # Execute program process in Python.
 python3 $path_file_script_product \
+$groups \
 $path_file_table_parameters \
+$path_file_table_results \
+$path_directory_source \
 $path_directory_product \
 $path_directory_dock \
 $report
-
-
 
 ###############################################################################
 # Deactivate Python virtual environment.
