@@ -5,20 +5,11 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 28 March 2025
-# Date, last execution or modification: 17 April 2025
-# Review: 17 April 2025
+# Date, first execution: 16 May 2025
+# Date, last execution or modification: 16 May 2025
+# Review: 16 May 2025
 ###############################################################################
 # Note
-
-
-# TODO: TCW; 14 May 2025
-# New parameter from script that determines the name of the table of regression results
-# That'll be convenient when calling the script multiple times with variations on the parameters
-
-# TODO: TCW; 14 May 2025
-# New parameter to filter "parameter instances (ie rows)" in the parameter table by some value, such as name of group
-
 
 
 ###############################################################################
@@ -44,17 +35,15 @@ path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
 path_directory_source="${path_directory_parameters_private}/age_exercise/regression"
-path_directory_product="${path_directory_dock}/out_regression/age_exercise"
+path_directory_product="${path_directory_dock}/out_regression/age_exercise/figure_2"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
 
-#path_file_table_parameters="${path_directory_demonstration}/partner/table_regression_parameters.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression.tsv"
-path_file_table_parameters="${path_directory_source}/table_parameters_regression_redox_genes.tsv"
+path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_placebo_omega3.tsv"
 
-path_file_table_results="${path_directory_product}/table_results_regression.tsv"
+path_file_table_results="${path_directory_product}/table_results_regression_placebo_omega3.tsv"
 
 # Scripts.
 path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"
@@ -85,7 +74,9 @@ set +x # disable print commands to standard error
 set +v # disable print input to standard error
 
 groups="group_automatic"
+
 report="true"
+
 
 ###############################################################################
 # Activate Python virtual environment.
