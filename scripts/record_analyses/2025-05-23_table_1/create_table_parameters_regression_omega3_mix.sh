@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 4 April 2025
-# Date, last execution or modification: 17 April 2025
-# Review: 17 April 2025
+# Date, last execution or modification: 23 May 2025
+# Review: 23 May 2025
 ###############################################################################
 # Note
 
@@ -51,8 +51,8 @@ path_directory_product="${path_directory_dock}/out_regression/age_exercise/table
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
-path_file_source="${path_directory_source}/list_sequence_phenotype_features.txt"
-path_file_product="${path_directory_product}/table_parameters_regression_automatic_omega3.tsv"
+path_file_source="${path_directory_source}/list_sequence_phenotype_features_logarithm.txt"
+path_file_product="${path_directory_product}/table_parameters_regression_automatic_omega3_mix.tsv"
 
 # Initialize directory.
 mkdir -p $path_directory_product
@@ -76,18 +76,18 @@ sequence=1
 group="group_automatic"
 name="name_automatic" # name for instance of parameters
 selection_observations="age_cohort_text:elder;sex_text:female,male;intervention_text:placebo,omega3;visit_text:first,second"
-type_regression="continuous_ols"
-formula_text="response ~ intervention_after_omega3 + intervention_omega3 + visit_second  + sex_male"
+type_regression="continuous_mix"
+formula_text="response ~ intervention_after_omega3 + intervention_omega3 + visit_second + identifier_subject"
 #feature_response="${response}" # this parameter varies
-features_predictor_fixed="intervention_after_omega3,intervention_omega3,visit_second,sex_male"
+features_predictor_fixed="intervention_after_omega3,intervention_omega3,visit_second"
 features_predictor_random="none"
-groups_random="none"
+groups_random="identifier_subject"
 features_continuity_scale="none"
 identifier_observations="identifier_observation_trial"
 method_scale="none"
 data_path_directory="dock,in_data,regression,age_exercise"
 data_file="table_subject.tsv"
-review="2025-05-13"
+review="2025-05-23"
 note="a script prepared this table of parameters automatically"
 
 

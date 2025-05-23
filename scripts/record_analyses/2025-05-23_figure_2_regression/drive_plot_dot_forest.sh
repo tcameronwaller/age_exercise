@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 16 May 2025
-# Date, last execution or modification: 16 May 2025
-# Review: 16 May 2025
+# Date, last execution or modification: 23 May 2025
+# Review: 23 May 2025
 ###############################################################################
 # Note
 
@@ -45,7 +45,10 @@ path_directory_product="${path_directory_dock}/out_regression/age_exercise/figur
 
 # Files.
 
-path_file_table_data="${path_directory_source}/table_results_regression_placebo_omega3.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_placebo_omega3_ols_no_scale.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_placebo_omega3_ols_yes_scale.tsv"
+#path_file_table_data="${path_directory_source}/table_results_regression_placebo_omega3_mix_no_scale.tsv"
+path_file_table_data="${path_directory_source}/table_results_regression_placebo_omega3_mix_yes_scale.tsv"
 
 # Scripts.
 path_file_script_source="${path_directory_scripts}/partner/python/drive_plot_dot_forest_from_table_data.py"
@@ -76,6 +79,9 @@ set +x # disable print commands to standard error
 #set -v # enable print input to standard error
 set +v # disable print input to standard error
 
+#type="ols"
+type="mix"
+
 # For "title", "legend_series_primary", and "legend_series_secondary", replace
 # character "#" with white space.
 
@@ -85,21 +91,51 @@ set +v # disable print input to standard error
 # Format of parameters for names of features.
 # name_source: name_product
 
-title="Effect#Placebo#Omega-3" # cannot accommodate white space
-feature="feature:feature_response"
-#feature="feature:name_combination"
-#feature="feature:name"
-#features="none"
-features="age,body_mass_index,body_fat_percent,body_skeletal_muscle_index,activity_moderate_vigorous,activity_steps,oxygen_consumption,temperature,heart_rate,pressure_blood_systolic,pressure_blood_diastolic,glucose,insulin,insulin_sensitivity,homa_insulin_resist,alanine_transaminase,aspartate_transaminase,red_blood_cells,hemoglobin,hematocrit,mean_corpuscular_volume,rbc_distribution_width,platelets,prothrombin_time,blood_clot_inr,omega3_eicosapentaenoate,omega3_docosahexaenoate,triglyceride,cholesterol,lipoprotein_hdl,lipoprotein_nonhdl,lipoprotein_ldl,adipocyte_lipid_content,cd68_adipose_percent,cd14_adipose_percent,cd206_adipose_percent,p16_adipose_percent,c_react_protein,erythrocyte_sedimentation_rate,white_blood_cells,neutrophils,lymphocytes,monocytes,eosinophils,basophils,thyroid_stimulate_hormone,mitochondrial_respiration_maximum"
-translation_features="none"
-legend_series_primary="omega-3"
-legend_series_secondary="placebo" # or "none"
-legend_series_tertiary="none" # or "none"
-values_intervals_primary="value_primary:predictor_0_parameter;interval_low_primary:predictor_0_interval_95;interval_high_primary:predictor_0_interval_95_copy"
-#values_intervals_secondary="none"
-values_intervals_secondary="value_secondary:predictor_1_parameter;interval_low_secondary:predictor_1_interval_95;interval_high_secondary:predictor_1_interval_95_copy"
-values_intervals_tertiary="none"
-#values_intervals_tertiary="value_tertiary:predictor_3_parameter;interval_low_tertiary:predictor_3_interval_95;interval_high_tertiary:predictor_3_interval_95_copy"
+##########
+# Ordinary Least Squares (OLS) Linear Regression
+if [ "$type" == "ols" ]; then
+  title="Placebo#Omega-3;#OLS" # cannot accommodate white space
+  feature="feature:feature_response"
+  #feature="feature:name_combination"
+  #feature="feature:name"
+  #features="none"
+  # all features from regression
+  features="age_log,body_mass_index_log,body_fat_percent_log,body_skeletal_muscle_index_log,activity_moderate_vigorous_log,activity_steps_log,oxygen_consumption_log,temperature_log,heart_rate_log,pressure_blood_systolic_log,pressure_blood_diastolic_log,red_blood_cells_log,hemoglobin_log,hematocrit_log,mean_corpuscular_volume_log,rbc_distribution_width_log,erythrocyte_sedimentation_rate_log,platelets_log,prothrombin_time_log,blood_clot_inr_log,white_blood_cells_log,neutrophils_log,lymphocytes_log,monocytes_log,eosinophils_log,basophils_log,glucose_log,insulin_log,insulin_sensitivity_log,homa_insulin_resist_log,alanine_transaminase_log,aspartate_transaminase_log,ratio_ast_alt_log,thyroid_stimulate_hormone_log,c_react_protein_log,omega3_eicosapentaenoate_log,omega3_docosahexaenoate_log,triglyceride_log,cholesterol_log,lipoprotein_hdl_log,lipoprotein_nonhdl_log,lipoprotein_ldl_log,adipocyte_lipid_content_log,cd68_adipose_percent_log,cd14_adipose_percent_log,cd206_adipose_percent_log,p16_adipose_percent_log,mitochondrial_respiration_maximum_log"
+  # selection of features from regression
+  #features=""
+  translation_features="none"
+  legend_series_primary="omega-3"
+  legend_series_secondary="placebo" # or "none"
+  legend_series_tertiary="none" # or "none"
+  values_intervals_primary="value_primary:predictor_1_parameter;interval_low_primary:predictor_1_interval_95;interval_high_primary:predictor_1_interval_95_copy"
+  #values_intervals_secondary="none"
+  values_intervals_secondary="value_secondary:predictor_2_parameter;interval_low_secondary:predictor_2_interval_95;interval_high_secondary:predictor_2_interval_95_copy"
+  values_intervals_tertiary="none"
+  #values_intervals_tertiary="value_tertiary:predictor_3_parameter;interval_low_tertiary:predictor_3_interval_95;interval_high_tertiary:predictor_3_interval_95_copy"
+fi
+
+##########
+# Mixed Effects Linear Regression
+if [ "$type" == "mix" ]; then
+  title="Placebo#Omega-3;#Mixed#Effects" # cannot accommodate white space
+  feature="feature:feature_response"
+  #feature="feature:name_combination"
+  #feature="feature:name"
+  #features="none"
+  # all features from regression
+  features="age_log,body_mass_index_log,body_fat_percent_log,body_skeletal_muscle_index_log,activity_moderate_vigorous_log,activity_steps_log,oxygen_consumption_log,temperature_log,heart_rate_log,pressure_blood_systolic_log,pressure_blood_diastolic_log,red_blood_cells_log,hemoglobin_log,hematocrit_log,mean_corpuscular_volume_log,rbc_distribution_width_log,erythrocyte_sedimentation_rate_log,platelets_log,prothrombin_time_log,blood_clot_inr_log,white_blood_cells_log,neutrophils_log,lymphocytes_log,monocytes_log,eosinophils_log,basophils_log,glucose_log,insulin_log,insulin_sensitivity_log,homa_insulin_resist_log,alanine_transaminase_log,aspartate_transaminase_log,ratio_ast_alt_log,thyroid_stimulate_hormone_log,c_react_protein_log,omega3_eicosapentaenoate_log,omega3_docosahexaenoate_log,triglyceride_log,cholesterol_log,lipoprotein_hdl_log,lipoprotein_nonhdl_log,lipoprotein_ldl_log,adipocyte_lipid_content_log,cd68_adipose_percent_log,cd14_adipose_percent_log,cd206_adipose_percent_log,p16_adipose_percent_log,mitochondrial_respiration_maximum_log"
+  # selection of features from regression
+  #features=""
+  translation_features="none"
+  legend_series_primary="omega-3"
+  legend_series_secondary="placebo" # or "none"
+  legend_series_tertiary="none" # or "none"
+  values_intervals_primary="value_primary:predictor_0_parameter;interval_low_primary:predictor_0_interval_95;interval_high_primary:predictor_0_interval_95_copy"
+  #values_intervals_secondary="none"
+  values_intervals_secondary="value_secondary:predictor_1_parameter;interval_low_secondary:predictor_1_interval_95;interval_high_secondary:predictor_1_interval_95_copy"
+  values_intervals_tertiary="none"
+  #values_intervals_tertiary="value_tertiary:predictor_3_parameter;interval_low_tertiary:predictor_3_interval_95;interval_high_tertiary:predictor_3_interval_95_copy"
+fi
 
 ###############################################################################
 # Activate Python virtual environment.

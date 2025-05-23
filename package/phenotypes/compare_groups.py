@@ -249,93 +249,6 @@ def read_organize_source_parameter(
     return pail
 
 
-# Important parameter!
-# The features in this list determines the inclusion and sequence of features
-# in the product table "table_description_clean".
-def define_type_table_columns_subject_sample_quantitative_continuous():
-    """
-    Defines the types of variables for columns in table.
-
-    Review: TCW; 13 May 2025
-
-    arguments:
-
-    raises:
-
-    returns:
-        (dict<str>): variable types of columns within table
-
-    """
-
-    # Define names of columns for features on quantitative, continuous scales
-    # of measurement.
-    names_features = [
-        "age",
-        "body_mass_index",
-        "body_fat_percent",
-        "body_skeletal_muscle_index",
-        "activity_moderate_vigorous",
-        "activity_steps",
-        "oxygen_consumption",
-        "temperature",
-        "heart_rate",
-        "pressure_blood_systolic",
-        "pressure_blood_diastolic",
-
-        "glucose",
-        "insulin",
-        "insulin_sensitivity",
-        "homa_insulin_resist",
-        "alanine_transaminase",
-        "aspartate_transaminase",
-        "red_blood_cells",
-        "hemoglobin",
-        "hematocrit",
-        "mean_corpuscular_volume",
-        "rbc_distribution_width",
-        "platelets",
-        "prothrombin_time",
-        "blood_clot_inr",
-
-        "omega3_eicosapentaenoate",
-        "omega3_docosahexaenoate",
-        "triglyceride",
-        "cholesterol",
-        "lipoprotein_hdl",
-        "lipoprotein_nonhdl",
-        "lipoprotein_ldl",
-        "adipocyte_lipid_content",
-        "cd68_adipose_percent",
-        "cd14_adipose_percent",
-        "cd206_adipose_percent",
-        "p16_adipose_percent",
-        "c_react_protein",
-        "erythrocyte_sedimentation_rate",
-        "white_blood_cells",
-        "neutrophils",
-        "lymphocytes",
-        "monocytes",
-        "eosinophils",
-        "basophils",
-
-        "thyroid_stimulate_hormone",
-        "mitochondrial_respiration_maximum",
-    ]
-
-    # Specify types of variables in columns of table.
-    types_columns = dict()
-    for name in names_features:
-        types_columns[name] = "float32"
-        pass
-
-    # Collect information.
-    pail = dict()
-    pail["names_features"] = names_features
-    pail["types"] = types_columns
-    # Return information.
-    return pail
-
-
 def define_type_table_columns_subject_sample():
     """
     Defines the types of variables for columns in table.
@@ -378,7 +291,7 @@ def define_type_table_columns_subject_sample():
     #types_columns["exercise_duration_text"] = "string"
 
     pail_quantitative = (
-        define_type_table_columns_subject_sample_quantitative_continuous()
+        aexph_sub.organize_selection_type_features_quantitative_continuous()
     )
     types_columns_quantitative = pail_quantitative["types"]
     types_columns.update(types_columns_quantitative)
@@ -462,7 +375,7 @@ def read_organize_source_subject_sample(
     # list, giving these priority in subsequent sorts of columns in the table.
     features_relevant = list(types_columns.keys())
     pail_quantitative = (
-        define_type_table_columns_subject_sample_quantitative_continuous()
+        aexph_sub.organize_selection_type_features_quantitative_continuous()
     )
     features_quantitative = pail_quantitative["names_features"]
     #features_relevant.extend(pail_feature["columns_quantitative"])
@@ -538,7 +451,7 @@ def read_source(
 
     # Collect information.
     pail = dict()
-    pail["table_sample"] = pail_sample["table_subject_sample"]
+    pail["table_subject_sample"] = pail_sample["table_subject_sample"]
     pail["features_relevant"] = pail_sample["features_relevant"]
     pail["features_quantitative"] = pail_sample["features_quantitative"]
     pail["instances_parameter"] = pail_parameter["records"]
@@ -1261,6 +1174,7 @@ def prepare_clean_table_description(
     table=None,
     features_sequence=None,
     names_pvalue=None,
+    set_threshold_pvalue=None,
     threshold_low_pvalue=None,
     report=None,
 ):
@@ -1290,7 +1204,7 @@ def prepare_clean_table_description(
     feature_2 group_4 0.01 0.001          0.001              0.015  0.5
     ----------
 
-    Review: TCW; 16 April 2025
+    Review: TCW; 23 May 2025
 
     arguments:
         table (object): Pandas data-frame table of features and groups of
@@ -1300,6 +1214,8 @@ def prepare_clean_table_description(
             sequence across rows in table
         names_pvalue (list<str>): names of columns in table for p-values for
             which to manage custom representation, such as '< 0.0001'
+        set_threshold_pvalue (bool): whether to apply threshold and text
+            replacement of p-values
         threshold_low_pvalue (float): minimal value of p-value to represent as
             a number, with a textual representation (i.e. '< 0.0001') of any
             value below threshold
@@ -1369,14 +1285,16 @@ def prepare_clean_table_description(
     )
 
     # Manage representation of p-values.
-    for name_pvalue in names_pvalue:
-        table[name_pvalue] = table.apply(
-            lambda row: determine_pvalue_below_threshold(
-                pvalue=row[name_pvalue],
-                threshold_low=threshold_low_pvalue,
-            ),
-            axis="columns", # apply function to each row
-        )
+    if (set_threshold_pvalue):
+        for name_pvalue in names_pvalue:
+            table[name_pvalue] = table.apply(
+                lambda row: determine_pvalue_below_threshold(
+                    pvalue=row[name_pvalue],
+                    threshold_low=threshold_low_pvalue,
+                ),
+                axis="columns", # apply function to each row
+            )
+            pass
         pass
 
     # Report.
@@ -1395,6 +1313,222 @@ def prepare_clean_table_description(
         pass
     # Return information.
     return table
+
+
+##########
+# 4. Create plot charts for features with values on quantitative, continuous
+# scales of measurement to represent their distributions across observations.
+
+
+def manage_create_write_plot_histogram(
+    column_feature=None,
+    table=None,
+    index_columns=None,
+    index_rows=None,
+    index_features=None,
+    translations_feature=None,
+    path_directory_parent=None,
+    report=None,
+):
+    """
+    Manage creation and write to file of a histogram plot to represent
+    visually the distribution of a feature with values on quantitative,
+    continuous scales of measurement, such as interval or ratio.
+
+    Review: TCW; 22 May 2025
+
+    arguments:
+        column_feature (str): name of column in original source table for a
+            feature on a quantitative, continuous, interval or ratio scale of
+            measurement
+        table (object): Pandas data-frame table with features across columns
+            and observations across rows
+        index_columns (str): name for index corresponding to features across
+            columns in the original source table
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        index_features (str): name for index corresponding to features across
+            rows in the novel, product table
+        translations_feature (dict<str>): translations for names of features
+        path_directory_parent ((str): path to parent directory within which to
+            write files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    # Extract values for current feature across observations in table.
+    values_feature = table[column_feature].to_numpy(
+        dtype="float64",
+        na_value=numpy.nan,
+        copy=True,
+    )
+    values_feature_nonmissing = numpy.copy(
+        values_feature[~numpy.isnan(values_feature)]
+    )
+
+    # Determine title.
+    if (
+        (translations_feature is not None) and
+        (column_feature in translations_feature.keys())
+    ):
+        title = translations_feature[column_feature]
+    else:
+        title = column_feature
+        pass
+
+    # Calculate mean.
+    mean_value = round(numpy.nanmean(values_feature_nonmissing), 3)
+
+    ##########
+    # Create plot chart.
+    # Define fonts.
+    fonts = pplot.define_font_properties()
+    # Define colors.
+    colors = pplot.define_color_properties()
+
+    # Create figure.
+    figure_histogram = pplot.plot_distribution_histogram(
+        array=values_feature_nonmissing,
+        title=title,
+        bin_method="count",
+        bin_count=30,
+        bar_width=0.5,
+        label_bins="Bins",
+        label_counts="Counts",
+        line=True,
+        line_position=mean_value,
+        label_title=title,
+        label_report=True,
+        aspect="landscape",
+        fonts=fonts,
+        colors=colors,
+    )
+
+    ##########
+    # Collect information.
+    pail_write_plot = dict()
+    pail_write_plot[column_feature] = figure_histogram
+
+    ##########
+    # Write product information to file.
+
+    # Define paths to directories.
+    path_directory_plot = os.path.join(
+        path_directory_parent, "histogram",
+    )
+    # Create directories.
+    putly.create_directories(
+        path=path_directory_plot,
+    )
+    # Write figures to file.
+    #pplot.write_product_plots_parent_directory(
+    #    pail_write=pail_write_plot_box,
+    #    format="svg", # jpg, png, svg
+    #    resolution=300,
+    #    path_directory=path_directory_box,
+    #)
+    pplot.write_product_plots_parent_directory(
+        pail_write=pail_write_plot,
+        format="svg", # jpg, png, svg
+        resolution=300,
+        path_directory=path_directory_plot,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: compare_groups.py")
+        function = str(
+            "manage_create_write_plot_histogram()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+
+    # Return information.
+    pass
+
+
+def manage_create_write_plots_histogram(
+    table=None,
+    index_columns=None,
+    index_rows=None,
+    index_features=None,
+    columns_features=None,
+    translations_feature=None,
+    path_directory_parent=None,
+    report=None,
+):
+    """
+    Manage creation and write to file of histogram plots to represent
+    visually the distributions of features with values on quantitative,
+    continuous scales of measurement, such as interval or ratio.
+
+    Review: TCW; 22 May 2025
+
+    arguments:
+        table (object): Pandas data-frame table with features across columns
+            and observations across rows
+        index_columns (str): name for index corresponding to features across
+            columns in the original source table
+        index_rows (str): name for index corresponding to observations across
+            rows in the original source table
+        index_features (str): name for index corresponding to features across
+            rows in the novel, product table
+        columns_features (list<str>): names of columns in original source
+            table for a selection of features on a quantitative, continuous,
+            interval or ratio scale of measurement
+        translations_feature (dict<str>): translations for names of features
+        path_directory_parent ((str): path to parent directory within which to
+            write files
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+
+    """
+
+    ##########
+    # Copy information.
+    table = table.copy(deep=True)
+    columns_features = copy.deepcopy(columns_features)
+    translations_feature = copy.deepcopy(translations_feature)
+
+    # Iterate on features, apply operations, and collect information.
+    for column_feature in columns_features:
+        # Manage creation and write to file of plot charts for current feature.
+        manage_create_write_plot_histogram(
+            column_feature=column_feature,
+            table=table,
+            index_columns=index_columns,
+            index_rows=index_rows,
+            index_features=index_features,
+            translations_feature=translations_feature,
+            path_directory_parent=path_directory_parent,
+            report=report,
+        )
+        pass
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: compare_groups.py")
+        function = str(
+            "manage_create_write_plots_histogram()"
+        )
+        print("function: " + function)
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    pass
 
 
 ##########
@@ -1754,7 +1888,7 @@ def execute_procedure(
         paths=paths,
         report=report,
     )
-    #pail_source["table_sample"]
+    #pail_source["table_subject_sample"]
     #pail_source["features_relevant"]
     #pail_source["instances_parameter"]
 
@@ -1765,7 +1899,7 @@ def execute_procedure(
         instances=pail_source["instances_parameter"],
         parameters_group=["group", "name",],
         replicate_groups=True, # caution
-        table=pail_source["table_sample"],
+        table=pail_source["table_subject_sample"],
         index_columns="features",
         index_rows="subject_visit",
         features_relevant=pail_source["features_relevant"],
@@ -1842,6 +1976,7 @@ def execute_procedure(
             "p_ttest_sex",
             "p_ttest_omega3",
         ],
+        set_threshold_pvalue=False,
         threshold_low_pvalue=0.0001,
         report=report,
     )
@@ -1876,8 +2011,34 @@ def execute_procedure(
         suffix=".tsv",
     )
 
+    ####################
+     # PROGRESS POINT #
+    ####################
+    # TCW; 22 May 2025
+    ####################
+
     ##########
-    # 6. Create plot charts for visual representations of quantitative features
+    # Plot histograms to evaluate distributions of values.
+    pail_selection = (
+        aexph_sub.organize_selection_type_features_quantitative_continuous()
+    )
+    features_sequence = pail_selection["names_features_all"]
+    translations_feature = {
+        "age": "age",
+    }
+    manage_create_write_plots_histogram(
+        table=pail_source["table_subject_sample"],
+        index_columns="features",
+        index_rows="observations",
+        index_features="features",
+        columns_features=features_sequence,
+        translations_feature=translations_feature,
+        path_directory_parent=paths["out_procedure_plot"],
+        report=report,
+    )
+
+    ##########
+    # Create plot charts for visual representations of quantitative features
     # within and between groups of observations.
     groups_sequence_selection = [
         "adipose_age_-_younger_female",

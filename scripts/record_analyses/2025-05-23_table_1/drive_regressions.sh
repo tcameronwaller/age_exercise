@@ -5,11 +5,12 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 16 May 2025
-# Date, last execution or modification: 16 May 2025
-# Review: 16 May 2025
+# Date, first execution: 28 March 2025
+# Date, last execution or modification: 23 May 2025
+# Review: 23 May 2025
 ###############################################################################
 # Note
+
 
 
 ###############################################################################
@@ -35,15 +36,24 @@ path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
 path_directory_source="${path_directory_parameters_private}/age_exercise/regression"
-path_directory_product="${path_directory_dock}/out_regression/age_exercise/figure_2"
+path_directory_product="${path_directory_dock}/out_regression/age_exercise/table_1_results"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
+#path_file_table_parameters="${path_directory_demonstration}/partner/table_regression_parameters.tsv"
+#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression.tsv"
 
-path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_placebo_omega3.tsv"
+#path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_age_ols.tsv"
+#path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_omega3_ols.tsv"
+path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_omega3_mix.tsv"
 
-path_file_table_results="${path_directory_product}/table_results_regression_placebo_omega3.tsv"
+#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3_female.tsv"
+#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_regression_automatic_omega3_male.tsv"
+
+#path_file_table_results="${path_directory_product}/table_results_regression_age_ols.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_omega3_ols.tsv"
+path_file_table_results="${path_directory_product}/table_results_regression_omega3_mix.tsv"
 
 # Scripts.
 path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"
@@ -120,6 +130,8 @@ $path_directory_source \
 $path_directory_product \
 $path_directory_dock \
 $report
+
+
 
 ###############################################################################
 # Deactivate Python virtual environment.

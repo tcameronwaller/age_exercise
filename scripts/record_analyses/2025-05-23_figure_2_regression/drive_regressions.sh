@@ -5,12 +5,11 @@
 
 ###############################################################################
 # Author: T. Cameron Waller
-# Date, first execution: 22 April 2025
-# Date, last execution or modification: 23 April 2025
-# Review: 23 April 2025
+# Date, first execution: 16 May 2025
+# Date, last execution or modification: 23 May 2025
+# Review: 23 May 2025
 ###############################################################################
 # Note
-
 
 
 ###############################################################################
@@ -35,20 +34,26 @@ path_directory_demonstration="$path_directory_dock/in_demonstration"
 path_directory_parameters="$path_directory_dock/in_parameters"
 path_directory_parameters_private="$path_directory_dock/in_parameters_private"
 
-#path_directory_source="${path_directory_demonstration}/partner"
-path_directory_product="${path_directory_dock}/out_regression/age_exercise/table_1_results"
+path_directory_source="${path_directory_parameters_private}/age_exercise/regression"
+path_directory_product="${path_directory_dock}/out_regression/age_exercise/figure_2_results"
 #stamp_date=$(date +%Y-%m-%d)
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
-#path_file_table_parameters="${path_directory_demonstration}/partner/table_parameters_anova.tsv"
-#path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_anova.tsv"
-path_file_table_parameters="${path_directory_parameters_private}/age_exercise/regression/table_parameters_anova_automatic_omega3.tsv"
 
+#path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_placebo_omega3_ols_no_scale.tsv"
+#path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_placebo_omega3_ols_yes_scale.tsv"
+#path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_placebo_omega3_mix_no_scale.tsv"
+path_file_table_parameters="${path_directory_source}/table_parameters_regression_automatic_placebo_omega3_mix_yes_scale.tsv"
+
+#path_file_table_results="${path_directory_product}/table_results_regression_placebo_omega3_ols_no_scale.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_placebo_omega3_ols_yes_scale.tsv"
+#path_file_table_results="${path_directory_product}/table_results_regression_placebo_omega3_mix_no_scale.tsv"
+path_file_table_results="${path_directory_product}/table_results_regression_placebo_omega3_mix_yes_scale.tsv"
 
 # Scripts.
-path_file_script_source="${path_directory_scripts}/partner/python/drive_analyses_variance_from_table_parameters.py"
-path_file_script_product="${path_directory_package}/drive_analyses_variance_from_table_parameters.py"
+path_file_script_source="${path_directory_scripts}/partner/python/drive_regressions_from_table_parameters.py"
+path_file_script_product="${path_directory_package}/drive_regressions_from_table_parameters.py"
 
 # Copy Python script to package directory.
 cp $path_file_script_source $path_file_script_product
@@ -58,7 +63,7 @@ path_environment_main="$path_directory_tools/python/environments/main"
 echo $path_environment_main
 
 # Initialize directory.
-rm -r $path_directory_product # caution
+#rm -r $path_directory_product # caution
 mkdir -p $path_directory_product
 #mkdir -p $path_directory_temporary
 
@@ -69,12 +74,14 @@ mkdir -p $path_directory_product
 
 # Parameters.
 threads=6
-report="true"
 #set -x # enable print commands to standard error
 set +x # disable print commands to standard error
 #set -v # enable print input to standard error
 set +v # disable print input to standard error
 
+groups="group_automatic"
+
+report="true"
 
 
 ###############################################################################
@@ -112,12 +119,13 @@ fi
 
 # Execute program process in Python.
 python3 $path_file_script_product \
+$groups \
 $path_file_table_parameters \
+$path_file_table_results \
+$path_directory_source \
 $path_directory_product \
 $path_directory_dock \
 $report
-
-
 
 ###############################################################################
 # Deactivate Python virtual environment.
@@ -139,10 +147,11 @@ if [ "$report" == "true" ]; then
   echo "----------"
   echo "----------"
   echo "----------"
-  echo "script: template_drive_analyses_variance.sh"
+  echo "script: template_drive_regressions.sh"
   echo $0 # Print full file path to script.
   echo "done"
   echo "----------"
+  echo "Convert identifiers or names of genes by query to MyGene.info"
   echo "path to file for table of parameters: " $path_file_table_parameters
   echo "path to dock directory: " $path_directory_dock
   echo "----------"

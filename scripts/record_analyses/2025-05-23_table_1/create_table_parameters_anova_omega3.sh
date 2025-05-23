@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 22 April 2025
-# Date, last execution or modification: 22 April 2025
-# Review: 22 April 2025
+# Date, last execution or modification: 23 May 2025
+# Review: 23 May 2025
 ###############################################################################
 # Note
 
@@ -51,7 +51,7 @@ path_directory_product="${path_directory_dock}/out_regression/age_exercise/table
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
-path_file_source="${path_directory_source}/list_sequence_phenotype_features.txt"
+path_file_source="${path_directory_source}/list_sequence_phenotype_features_logarithm.txt"
 path_file_product="${path_directory_product}/table_parameters_anova_automatic_omega3.tsv"
 
 # Initialize directory.
@@ -87,7 +87,7 @@ identifier_observations="identifier_observation_trial"
 method_scale="none"
 data_path_directory="dock,in_data,regression,age_exercise"
 data_file="table_subject.tsv"
-review="2025-05-13"
+review="2025-05-23"
 note="a script prepared this table of parameters automatically"
 
 

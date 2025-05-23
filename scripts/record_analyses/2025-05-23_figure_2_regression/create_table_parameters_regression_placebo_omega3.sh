@@ -6,8 +6,8 @@
 ###############################################################################
 # Author: T. Cameron Waller
 # Date, first execution: 4 April 2025
-# Date, last execution or modification: 16 May 2025
-# Review: 16 May 2025
+# Date, last execution or modification: 23 May 2025
+# Review: 23 May 2025
 ###############################################################################
 # Note
 
@@ -50,8 +50,9 @@ path_directory_product="${path_directory_dock}/out_regression/age_exercise/figur
 #path_directory_temporary="${path_directory_product}/temporary_${stamp_date}" # hopefully unique
 
 # Files.
-path_file_source="${path_directory_source}/list_sequence_phenotype_features.txt"
-path_file_product="${path_directory_product}/table_parameters_regression_automatic_placebo_omega3.tsv"
+path_file_source="${path_directory_source}/list_sequence_phenotype_features_logarithm.txt"
+#path_file_product="${path_directory_product}/table_parameters_regression_automatic_placebo_omega3_ols_no_scale.tsv"
+path_file_product="${path_directory_product}/table_parameters_regression_automatic_placebo_omega3_mix_no_scale.tsv"
 
 # Initialize directory.
 mkdir -p $path_directory_product
@@ -69,27 +70,56 @@ set +x # disable print commands to standard error
 #set -v # enable print input to standard error
 set +v # disable print input to standard error
 
-# Common parameters for all instances of parameters for regression.
-execution="1"
-sequence=1
-group="group_automatic"
-name="name_automatic" # name for instance of parameters
-selection_observations="age_cohort_text:elder;sex_text:female,male;intervention_text:placebo,omega3;visit_text:first,second"
-type_regression="continuous_mix"
-formula_text="response ~ intervention_after_omega3 + intervention_after_placebo + identifier_subject"
-#feature_response="${response}" # this parameter varies
-features_predictor_fixed="intervention_after_omega3,intervention_after_placebo"
-features_predictor_random="none"
-groups_random="identifier_subject"
-features_continuity_scale="none"
-identifier_observations="identifier_observation_trial"
-method_scale="none"
-data_path_directory="dock,in_data,regression,age_exercise"
-data_file="table_subject.tsv"
-review="2025-05-16"
-note="a script prepared this table of parameters automatically"
+#type="ols"
+type="mix"
 
 
+# Ordinary Least Squares (OLS) Linear Regression
+if [ "$type" == "ols" ]; then
+  # Common parameters for all instances of parameters for regression.
+  execution="1"
+  sequence=1
+  group="group_automatic"
+  name="name_automatic" # name for instance of parameters
+  selection_observations="age_cohort_text:elder;sex_text:female,male;intervention_text:placebo,omega3;visit_text:first,second"
+  type_regression="continuous_ols" # "continuous_ols", "continuous_mix"
+  formula_text="response ~ intervention_after_omega3 + intervention_after_placebo + sex_male"
+  #feature_response="${response}" # this parameter varies
+  features_predictor_fixed="intervention_after_omega3,intervention_after_placebo,sex_male"
+  features_predictor_random="none"
+  groups_random="none" # "none", "identifier_subject"
+  features_continuity_scale="none" # fill in names of response features manually
+  identifier_observations="identifier_observation_trial"
+  method_scale="none"
+  data_path_directory="dock,in_data,regression,age_exercise"
+  data_file="table_subject.tsv"
+  review="2025-05-23"
+  note="a script prepared this table of parameters automatically"
+fi
+
+# Mixed Effects Linear Regression
+if [ "$type" == "mix" ]; then
+  # Common parameters for all instances of parameters for regression.
+  execution="1"
+  sequence=1
+  group="group_automatic"
+  name="name_automatic" # name for instance of parameters
+  selection_observations="age_cohort_text:elder;sex_text:female,male;intervention_text:placebo,omega3;visit_text:first,second"
+  type_regression="continuous_mix" # "continuous_ols", "continuous_mix"
+  #formula_text="response ~ intervention_after_omega3 + intervention_after_placebo + sex_male"
+  formula_text="response ~ intervention_after_omega3 + intervention_after_placebo + identifier_subject"
+  #feature_response="${response}" # this parameter varies
+  features_predictor_fixed="intervention_after_omega3,intervention_after_placebo"
+  features_predictor_random="none"
+  groups_random="identifier_subject" # "none", "identifier_subject"
+  features_continuity_scale="none" # fill in names of response features manually
+  identifier_observations="identifier_observation_trial"
+  method_scale="none"
+  data_path_directory="dock,in_data,regression,age_exercise"
+  data_file="table_subject.tsv"
+  review="2025-05-23"
+  note="a script prepared this table of parameters automatically"
+fi
 
 ###############################################################################
 # Execute procedure.

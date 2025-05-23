@@ -613,6 +613,136 @@ def read_source(
 
 
 ##########
+# Selections of features with values approximately on a quantitative,
+# continuous, interval or ratio scale of measurement.
+
+
+# Important parameter!
+# The selection of features in this list determines the inclusion and sequence
+# of features in the product table "table_description_clean" from the procedure
+# of the "compare_groups.py" module.
+def define_selection_features_quantitative_continuous():
+    """
+    Defines a selection of features.
+
+    Review: TCW; 23 May 2025
+
+    arguments:
+
+    raises:
+
+    returns:
+        (list<str>): names of features with values on a quantitative,
+            continuous scale of measurement, either interval or ratio
+
+    """
+
+    # Define names of columns for features on quantitative, continuous scales
+    # of measurement.
+    names_features = [
+        "age",
+        "body_mass_index",
+        "body_fat_percent",
+        "body_skeletal_muscle_index",
+        "activity_moderate_vigorous",
+        "activity_steps",
+        "oxygen_consumption",
+        "temperature",
+
+        "heart_rate",
+        "pressure_blood_systolic",
+        "pressure_blood_diastolic",
+        "red_blood_cells",
+        "hemoglobin",
+        "hematocrit",
+        "mean_corpuscular_volume",
+        "rbc_distribution_width",
+        "erythrocyte_sedimentation_rate",
+        "platelets",
+        "prothrombin_time",
+        "blood_clot_inr",
+        "white_blood_cells",
+        "neutrophils",
+        "lymphocytes",
+        "monocytes",
+        "eosinophils",
+        "basophils",
+
+        "glucose",
+        "insulin",
+        "insulin_sensitivity",
+        "homa_insulin_resist",
+        "alanine_transaminase",
+        "aspartate_transaminase",
+        "ratio_ast_alt",
+        "thyroid_stimulate_hormone",
+        "c_react_protein",
+
+        "omega3_eicosapentaenoate",
+        "omega3_docosahexaenoate",
+        "triglyceride",
+        "cholesterol",
+        "lipoprotein_hdl",
+        "lipoprotein_nonhdl",
+        "lipoprotein_ldl",
+        "adipocyte_lipid_content",
+        "cd68_adipose_percent",
+        "cd14_adipose_percent",
+        "cd206_adipose_percent",
+        "p16_adipose_percent",
+
+        "mitochondrial_respiration_maximum",
+    ]
+
+    # Return information.
+    return names_features
+
+
+def organize_selection_type_features_quantitative_continuous():
+    """
+    Defines a selection of features.
+
+    Review: TCW; 23 May 2025
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict): collection of information
+
+    """
+
+    # Define names of columns for features on quantitative, continuous,
+    # interval or ratio scales of measurement.
+    names_features = define_selection_features_quantitative_continuous()
+    names_features_log = list(map(
+        lambda name: str(name + "_log"),
+        names_features
+    ))
+    names_features_all = copy.deepcopy(names_features)
+    names_features_all.extend(names_features_log)
+
+    # Specify types of variables in columns of table.
+    types_columns = dict()
+    for name in names_features:
+        types_columns[name] = "float32"
+        pass
+    for name in names_features_log:
+        types_columns[name] = "float32"
+        pass
+
+    # Collect information.
+    pail = dict()
+    pail["names_features"] = names_features
+    pail["names_features_log"] = names_features_log
+    pail["names_features_all"] = names_features_all
+    pail["types"] = types_columns
+    # Return information.
+    return pail
+
+
+##########
 # 3. Organize table of properties for study subjects.
 # Exercise caution and pay attention to the definitions of the logical binary
 # features.
@@ -674,17 +804,7 @@ def define_sequence_columns_novel_subject_feature():
         "subject_visit",
         "date_visit_text",
         #"date_visit_text_raw",
-        #"age",
-        #"body_mass_index",
-        #"body_fat_percent",
-        #"body_fat_mass",
-        #"body_lean_mass",
-        #"oxygen_consumption",
-        #"tertiles_body_mass_index",
-        #"tertiles_body_skeletal_muscle_index",
-        #"tertiles_body_fat_percent",
-        #"tertiles_insulin_sensitivity",
-        #"tertiles_activity_steps",
+        "ratio_ast_alt",
     ]
     # Return information.
     return columns_sequence
@@ -1424,6 +1544,14 @@ def organize_table_subject_property(
             determine_date_visit_text(
                 date_visit_text_raw=row["date_visit_text_raw"],
             ),
+        axis="columns", # apply function to each row
+    )
+
+    # Calculate derivations of features on quantitative, continuous scale.
+    table ["ratio_ast_alt"] = table.apply(
+        lambda row: float(
+            row["aspartate_transaminase"] / row["alanine_transaminase"]
+        ),
         axis="columns", # apply function to each row
     )
 
@@ -4249,8 +4377,6 @@ def manage_plot_charts_demonstration(
     return pail_write_plot
 
 
-
-
 ###############################################################################
 # Procedure
 
@@ -4335,6 +4461,27 @@ def execute_procedure(
     )
 
     ##########
+    # Transform selection of features to logarithmic scale.
+    # Copy information.
+    table = pail_organization["table"].copy(deep=True)
+    # Define names of columns for features on quantitative, continuous,
+    # interval or ratio scales of measurement.
+    pail_selection = (
+        organize_selection_type_features_quantitative_continuous()
+    )
+    features_sequence = pail_selection["names_features"]
+    for column in pail_selection["names_features"]:
+        column_log = str(column + "_log")
+        table[column_log] = table[column]
+        pass
+    table = pscl.transform_logarithm_by_table_columns(
+        table=table,
+        columns=pail_selection["names_features_log"],
+        base=math.e,
+        report=True,
+    )
+
+    ##########
     # 5. Calculate principal components of features quantitative, continuous,
     # ratio or interval scales of measurement.
 
@@ -4351,7 +4498,7 @@ def execute_procedure(
 
     #pail_write_lists = dict()
     pail_write_tables = dict()
-    pail_write_tables[str("table_subject")] = pail_organization["table"]
+    pail_write_tables[str("table_subject")] = table
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
 
