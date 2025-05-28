@@ -743,7 +743,7 @@ def organize_selection_type_features_quantitative_continuous():
 
 
 ##########
-# 3. Organize table of properties for study subjects.
+# Organize table of properties for study subjects.
 # Exercise caution and pay attention to the definitions of the logical binary
 # features.
 # Some definitions are 'lazy', such that they have values of zero (0) when they
@@ -1605,6 +1605,95 @@ def organize_table_subject_property(
         pass
     # Return information.
     return pail
+
+
+def define_sequence_columns_priority():
+    """
+    Define the sequence of columns in table for a priority selection of
+    features.
+
+    Review: TCW; 8 May 2025
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): variable types of columns within table
+
+    """
+
+    # Define sequence of columns in table.
+    columns_sequence = [
+        "identifier_subject",
+        "age_cohort_text",
+        "sex_text",
+        "visit_text",
+        "intervention_text",
+        "age",
+    ]
+    # Return information.
+    return columns_sequence
+
+
+def organize_table_subject_property_sequence_columns_rows(
+    table_subject=None,
+    columns_sequence_priority=None,
+    columns_sort_rows=None,
+    report=None,
+):
+    """
+    Organize table of characteristic properties, phenotypes from clinic and
+    laboratory, of subjects.
+
+    arguments:
+        table_subject (object): Pandas data-frame table
+        columns_sequence_priority (list<str>): sequence of columns in table for
+            a selection of priority features
+        columns_sort_rows (list<str>): columns in table by which to sort rows
+            in table
+        report (bool): whether to print reports
+
+    raises:
+
+    returns:
+        (dict<object>): collection of information
+
+    """
+
+    # Copy information.
+    table_subject = table_subject.copy(deep=True)
+    columns_sequence_priority = copy.deepcopy(columns_sequence_priority)
+    columns_sort_rows = copy.deepcopy(columns_sort_rows)
+
+    # Sort sequence of columns in table.
+    table_subject = porg.sort_table_columns_explicit_other(
+        table=table_subject,
+        columns_sequence=columns_sequence_priority,
+        report=report,
+    )
+
+    # Sort sequence of rows in table.
+    table_subject.sort_values(
+        by=columns_sort_rows,
+        axis="index",
+        ascending=True,
+        inplace=True,
+    )
+
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: organize_subject.py")
+        print("function: organize_table_subject_property_sequence_columns_rows()")
+        putly.print_terminal_partition(level=5)
+        pass
+    # Return information.
+    return table_subject
+
+
 
 
 ##########
@@ -4491,6 +4580,20 @@ def execute_procedure(
     #pail_source["columns_olink_adipose"] # only available for second visit
 
 
+
+    # "age_cohort_text", "sex_text", "visit_text", "tissue",
+    columns_sequence_priority = define_sequence_columns_priority()
+    table = organize_table_subject_property_sequence_columns_rows(
+        table_subject=table,
+        columns_sequence_priority=columns_sequence_priority,
+        columns_sort_rows=[
+            "age_cohort_text",
+            "visit_text",
+            "intervention_text",
+            "sex_text",
+        ],
+        report=report,
+    )
 
     ##########
     # 6. Collect information.
