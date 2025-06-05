@@ -811,18 +811,19 @@ def define_interaction_combination_categorical_factor():
     # Specify sequence of columns within table.
     columns_sequence = dict()
     columns_sequence["age_cohort_text_by_sex_text"] = "elder_by_male"
-    columns_sequence["age_cohort_text_by_exercise_duration_text"] = (
-        "elder_by_3_hour"
-    )
-    columns_sequence["sex_text_by_exercise_duration_text"] = "male_by_3_hour"
-    columns_sequence["intervention_text_by_visit_text"] = (
-        "omega3_by_second"
-    )
-    columns_sequence["sex_text_by_visit_text"] = "male_by_second"
 
-    columns_sequence["age_cohort_text_by_intervention_text"] = str(
-        "elder_by_omega3"
-    ) # other: elder_by_placebo, younger_by_none
+    #columns_sequence["age_cohort_text_by_exercise_duration_text"] = (
+    #    "elder_by_3_hour"
+    #)
+    #columns_sequence["sex_text_by_exercise_duration_text"] = "male_by_3_hour"
+    #columns_sequence["intervention_text_by_visit_text"] = (
+    #    "omega3_by_second"
+    #)
+    #columns_sequence["sex_text_by_visit_text"] = "male_by_second"
+    #columns_sequence["age_cohort_text_by_intervention_text"] = str(
+    #    "elder_by_omega3"
+    #) # other: elder_by_placebo, younger_by_none
+
     # Return information.
     return columns_sequence
 

@@ -787,19 +787,17 @@ def define_sequence_columns_novel_subject_feature():
         "intervention_text",
         "intervention_placebo",
         "intervention_omega3",
-        "intervention_text_placebo_versus_other",
-        "intervention_text_omega3_versus_other",
-        "intervention_placebo_other",
-        "intervention_omega3_other",
-        "intervention_text_after_placebo_versus_other",
-        "intervention_text_after_omega3_versus_other",
-        "intervention_after_placebo",
-        "intervention_after_omega3",
-        "sex_female_intervention_after_omega3_text",
-        "sex_female_intervention_after_omega3",
+        "intervention_placebo_other_text",
+        "intervention_omega3_other_text",
+        "intervention_placebo",
+        "intervention_omega3",
         "visit_text",
         "visit_second",
         "visit_text_fill_second_for_age_younger",
+        "intervention_placebo_visit_second_text",
+        "intervention_omega3_visit_second_text",
+        "intervention_placebo_visit_second",
+        "intervention_omega3_visit_second",
         #"subject_tissue_visit",
         "subject_visit",
         "date_visit_text",
@@ -964,60 +962,6 @@ def determine_intervention_text(
     ):
         # Fill with parsable term for not applicable.
         designator = "none"
-        pass
-    # Return information.
-    return designator
-
-
-def determine_intervention_text_after_intervention_versus_other(
-    type=None,
-    intervention_text=None,
-    visit_text=None,
-):
-    """
-    Determines a designator.
-
-    arguments:
-        type (str): type of intervention to designate, either 'placebo' or
-            'omega3'
-        intervention_text (str): designator of intervention
-        visit_text (str): designator of clinical visit in the study at which
-            collection of a sample occurred, either 'first' or 'second'
-
-    raises:
-
-    returns:
-        (float): designator of intervention
-
-    """
-
-    #table["intervention_text_after_placebo_versus_other"] = table.apply(
-    #    lambda series_row: (
-    #        str("other")
-    #        if (series_row["visit_text"] in ["first",])
-    #        else series_row["intervention_text_placebo_versus_other"]
-    #    ),
-    #    axis="columns", # apply function to each row
-    #)
-    #table["intervention_text_after_omega3_versus_other"] = table.apply(
-    #    lambda series_row: (
-    #        str("other")
-    #        if (series_row["visit_text"] in ["first",])
-    #        else series_row["intervention_text_omega3_versus_other"]
-    #    ),
-    #    axis="columns", # apply function to each row
-    #)
-
-    # Determine designator.
-    if (
-        (visit_text == "second") and
-        (intervention_text == type)
-    ):
-        # Determine designator.
-        designator = type
-    else:
-        # Fill with parsable term for not applicable.
-        designator = "other"
         pass
     # Return information.
     return designator
@@ -1431,12 +1375,14 @@ def organize_table_subject_property(
             ),
         axis="columns", # apply function to each row
     )
-    # Notice that the "placebo_versus_other" and "omega3_versus_other"
-    # feature definitions assign values of "other" to subjects who did not
-    # even participate in the study of omega-3 intervention. They include
-    # subjects from the younger age cohort. Avoid problems by filtering out
-    # any subjects from the younger age cohort explicitly before analysis.
-    table["intervention_text_placebo_versus_other"] = table.apply(
+
+    # Notice that the "intervention_placebo_other_text" and
+    # "intervention_omega3_other_text" feature definitions assign values of
+    # "other" to subjects who did not participate in the study of omega-3
+    # intervention. They include subjects from the younger age cohort. Avoid
+    # problems by filtering out any subjects from the younger age cohort
+    # explicitly before analysis.
+    table["intervention_placebo_other_text"] = table.apply(
         lambda series_row: (
             str("other")
             if (series_row["intervention_text"] in ["omega3", "none",])
@@ -1444,7 +1390,7 @@ def organize_table_subject_property(
         ),
         axis="columns", # apply function to each row
     )
-    table["intervention_text_omega3_versus_other"] = table.apply(
+    table["intervention_omega3_other_text"] = table.apply(
         lambda series_row: (
             str("other")
             if (series_row["intervention_text"] in ["placebo", "none",])
@@ -1452,91 +1398,85 @@ def organize_table_subject_property(
         ),
         axis="columns", # apply function to each row
     )
-    abbreviation = "intervention_text_placebo_versus_other"
-    table["intervention_placebo_other"] = table.apply(
-        lambda row:
-            putly.determine_category_text_logical_binary(
-                category_text=row[abbreviation],
-                values_1=["placebo",],
-                values_0=["other",],
-            ),
-        axis="columns", # apply function to each row
-    )
-    abbreviation = "intervention_text_omega3_versus_other"
-    table["intervention_omega3_other"] = table.apply(
-        lambda row:
-            putly.determine_category_text_logical_binary(
-                category_text=row[abbreviation],
-                values_1=["omega3",],
-                values_0=["other",],
-            ),
-        axis="columns", # apply function to each row
-    )
-    table["intervention_text_after_placebo_versus_other"] = table.apply(
-        lambda row:
-            determine_intervention_text_after_intervention_versus_other(
-                type="placebo",
-                intervention_text=row["intervention_text"],
-                visit_text=row["visit_text"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    table["intervention_text_after_omega3_versus_other"] = table.apply(
-        lambda row:
-            determine_intervention_text_after_intervention_versus_other(
-                type="omega3",
-                intervention_text=row["intervention_text"],
-                visit_text=row["visit_text"],
-            ),
-        axis="columns", # apply function to each row
-    )
-    abbreviation = "intervention_text_after_placebo_versus_other"
-    table["intervention_after_placebo"] = table.apply(
-        lambda row:
-            putly.determine_category_text_logical_binary(
-                category_text=row[abbreviation],
-                values_1=["placebo",],
-                values_0=["other",],
-            ),
-        axis="columns", # apply function to each row
-    )
-    abbreviation = "intervention_text_after_omega3_versus_other"
-    table["intervention_after_omega3"] = table.apply(
-        lambda row:
-            putly.determine_category_text_logical_binary(
-                category_text=row[abbreviation],
-                values_1=["omega3",],
-                values_0=["other",],
-            ),
-        axis="columns", # apply function to each row
-    )
-    # Interaction of female sex and after omega-3 intervention.
-    abbreviation = "intervention_text_after_omega3_versus_other"
-    table["sex_female_intervention_after_omega3_text"] = table.apply(
+    if False:
+        # For now, do not use this definition since it includes subjects from
+        # the younger age cohort who did not participate in the intervention
+        # study.
+        abbreviation = "intervention_placebo_other_text"
+        table["intervention_placebo"] = table.apply(
+            lambda row:
+                putly.determine_category_text_logical_binary(
+                    category_text=row[abbreviation],
+                    values_1=["placebo",],
+                    values_0=["other",],
+                ),
+            axis="columns", # apply function to each row
+        )
+        abbreviation = "intervention_omega3_other_text"
+        table["intervention_omega3"] = table.apply(
+            lambda row:
+                putly.determine_category_text_logical_binary(
+                    category_text=row[abbreviation],
+                    values_1=["omega3",],
+                    values_0=["other",],
+                ),
+            axis="columns", # apply function to each row
+        )
+        pass
+
+    # Intersection, interaction of intervention and visit.
+    table["intervention_placebo_visit_second_text"] = table.apply(
         lambda row:
             putly.determine_category_text_two_intersection_interaction(
-                value_intersection="female_omega3",
+                value_intersection="placebo_after",
                 value_other="other",
                 value_else="none",
-                category_one=row["sex_text"],
-                values_one_intersection=["female",], # tested first
-                values_one_other=["female", "male",], # tested second
-                category_two=row[abbreviation],
-                values_two_intersection=["omega3",], # tested first
-                values_two_other=["omega3", "other",], # tested second
+                category_one=row["intervention_text"],
+                values_one_intersection=["placebo",], # tested first
+                values_one_other=["placebo", "omega3",], # tested second
+                category_two=row["visit_text"],
+                values_two_intersection=["second",], # tested first
+                values_two_other=["first", "second",], # tested second
             ),
         axis="columns", # apply function to each row
     )
-    abbreviation = "sex_female_intervention_after_omega3_text"
-    table["sex_female_intervention_after_omega3"] = table.apply(
+    abbreviation = "intervention_placebo_visit_second_text"
+    table["intervention_placebo_visit_second"] = table.apply(
         lambda row:
             putly.determine_category_text_logical_binary(
                 category_text=row[abbreviation],
-                values_1=["female_omega3",],
+                values_1=["placebo_after",],
                 values_0=["other",],
             ),
         axis="columns", # apply function to each row
     )
+    table["intervention_omega3_visit_second_text"] = table.apply(
+        lambda row:
+            putly.determine_category_text_two_intersection_interaction(
+                value_intersection="omega3_after",
+                value_other="other",
+                value_else="none",
+                category_one=row["intervention_text"],
+                values_one_intersection=["omega3",], # tested first
+                values_one_other=["placebo", "omega3",], # tested second
+                category_two=row["visit_text"],
+                values_two_intersection=["second",], # tested first
+                values_two_other=["first", "second",], # tested second
+            ),
+        axis="columns", # apply function to each row
+    )
+    abbreviation = "intervention_omega3_visit_second_text"
+    table["intervention_omega3_visit_second"] = table.apply(
+        lambda row:
+            putly.determine_category_text_logical_binary(
+                category_text=row[abbreviation],
+                values_1=["omega3_after",],
+                values_0=["other",],
+            ),
+        axis="columns", # apply function to each row
+    )
+
+
 
     # Determine date of visit to the clinic for study.
     table["date_visit_text"] = table.apply(
