@@ -4077,7 +4077,7 @@ def execute_procedure(
     ##########
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
-    if True:
+    if False:
         # Initialize directories.
         paths = initialize_directories_trunk(
             project=project,
@@ -4135,7 +4135,7 @@ def execute_procedure(
 
     # The current implementation requires manual switch on or off according to
     # the tissues that are included in the batch.
-    if False:
+    if True:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
             project=project,

@@ -789,8 +789,6 @@ def define_sequence_columns_novel_subject_feature():
         "intervention_omega3",
         "intervention_placebo_other_text",
         "intervention_omega3_other_text",
-        "intervention_placebo",
-        "intervention_omega3",
         "visit_text",
         "visit_second",
         "visit_text_fill_second_for_age_younger",
@@ -1476,8 +1474,6 @@ def organize_table_subject_property(
         axis="columns", # apply function to each row
     )
 
-
-
     # Determine date of visit to the clinic for study.
     table["date_visit_text"] = table.apply(
         lambda row:
@@ -1566,10 +1562,24 @@ def define_sequence_columns_priority():
     # Define sequence of columns in table.
     columns_sequence = [
         "identifier_subject",
+        "age_cohort_text_raw",
         "age_cohort_text",
+        "age_cohort_elder",
         "sex_text",
-        "visit_text",
+        "age_cohort_elder_sex_male_text",
+        "age_cohort_younger_sex_female_text",
+        "age_cohort_elder_sex_male",
+        "intervention_text_raw",
         "intervention_text",
+        "intervention_omega3_other_text",
+        "intervention_placebo_other_text",
+        "intervention_omega3",
+        "intervention_placebo",
+        "visit_text",
+        "intervention_omega3_visit_second_text",
+        "intervention_placebo_visit_second_text",
+        "intervention_omega3_visit_second",
+        "intervention_placebo_visit_second",
         "age",
     ]
     # Return information.
@@ -4518,8 +4528,6 @@ def execute_procedure(
     #pail_source["columns_olink_plasma"] # only available for second visit
     #pail_source["columns_olink_muscle"] # only available for second visit
     #pail_source["columns_olink_adipose"] # only available for second visit
-
-
 
     # "age_cohort_text", "sex_text", "visit_text", "tissue",
     columns_sequence_priority = define_sequence_columns_priority()

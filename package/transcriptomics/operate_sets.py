@@ -89,109 +89,6 @@ import age_exercise.transcriptomics.select_gene_sets as extr_select
 # the hierarchical tree structure of sub-procedures.
 
 
-def initialize_directories(
-    project=None,
-    routine=None,
-    procedure=None,
-    path_directory_dock=None,
-    restore=None,
-    report=None,
-):
-    """
-    Initialize directories for procedure's source and product files.
-
-    arguments:
-        project (str): name of project that normally corresponds to a single
-            Python package
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics' that normally corresponds to a single Python package
-            or subpackage
-        procedure (str): name of procedure, a step in the routine process that
-            normally corresponds to a single Python module within the package
-        path_directory_dock (str): path to dock directory for procedure's
-            source and product directories and files
-        restore (bool): whether to remove previous versions of data
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<str>): collection of paths to directories
-
-    """
-
-    # Collect paths.
-    paths = dict()
-    # Define paths to directories.
-    # Broad.
-    paths["dock"] = path_directory_dock
-    paths["in_data"] = os.path.join(
-        paths["dock"], "in_data",
-    )
-    paths["in_demonstration"] = os.path.join(
-        paths["dock"], "in_demonstration",
-    )
-    paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters",
-    )
-    paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private",
-    )
-    paths["out_project"] = os.path.join(
-        paths["dock"], str("out_" + project),
-    )
-    paths["out_routine"] = os.path.join(
-        paths["out_project"], str(routine),
-    )
-    paths["out_procedure"] = os.path.join(
-        paths["out_routine"], str(procedure),
-    )
-    # Specific.
-    paths["in_sets_gene"] = os.path.join(
-        paths["in_parameters_private"], project, routine,
-        "sets_gene",
-    )
-    paths["out_procedure_data"] = os.path.join(
-        paths["out_procedure"], "data",
-    )
-    paths["out_procedure_plot"] = os.path.join(
-        paths["out_procedure"], "plot",
-    )
-
-    # Initialize directories in main branch.
-    paths_initialization = [
-        #paths["out_project"],
-        #paths["out_routine"],
-        paths["out_procedure"],
-        paths["out_procedure_data"],
-        paths["out_procedure_plot"],
-    ]
-    # Remove previous directories and files to avoid version or batch
-    # confusion.
-    if restore:
-        for path in paths_initialization:
-            putly.remove_directory(path=path) # caution
-            pass
-    # Create directories.
-    for path in paths_initialization:
-        putly.create_directories(
-            path=path,
-        )
-        pass
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
-        print("function: initialize_directories_trunk()")
-        putly.print_terminal_partition(level=5)
-        print("path to dock directory for procedure's files: ")
-        print(path_directory_dock)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return paths
-
-
 ##########
 # 2. Read source information from file.
 
@@ -249,11 +146,12 @@ def execute_procedure(
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
-    paths = initialize_directories(
+    paths = aexph_sub.initialize_directories(
         project=project,
         routine=routine,
         procedure=procedure,
         path_directory_dock=path_directory_dock,
+        initialize_routine=False,
         restore=True,
         report=report,
     )
@@ -262,7 +160,8 @@ def execute_procedure(
     # Summary of available sets.
     # 2.1. Read and count unique genes in sets.
     path_directory_sets_gene = os.path.join(
-        paths["in_sets_gene"], "sets_gene_2025-02-11_operation",
+        paths["in_parameters_private"], project, routine, "sets_gene",
+        "sets_gene_deseq2_2025-06-05",
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(
@@ -275,32 +174,36 @@ def execute_procedure(
 
     ##########
     # Read and extract identifiers of genes in sets.
+
+    # age
     genes_adipose_1 = aexph_sub.read_extract_set_features(
         name_set="adipose_1_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_11 = aexph_sub.read_extract_set_features(
-        name_set="adipose_11_genes_change",
+    genes_adipose_1_down = aexph_sub.read_extract_set_features(
+        name_set="adipose_1_genes_down",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_12 = aexph_sub.read_extract_set_features(
-        name_set="adipose_12_genes_change",
+    genes_adipose_1_up = aexph_sub.read_extract_set_features(
+        name_set="adipose_1_genes_up",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_24 = aexph_sub.read_extract_set_features(
-        name_set="adipose_24_genes_change",
+
+    # placebo
+    genes_adipose_14 = aexph_sub.read_extract_set_features(
+        name_set="adipose_14_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
-    genes_adipose_25 = aexph_sub.read_extract_set_features(
-        name_set="adipose_25_genes_change",
+    genes_adipose_27 = aexph_sub.read_extract_set_features(
+        name_set="adipose_27_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
@@ -311,12 +214,62 @@ def execute_procedure(
         path_directory=path_directory_sets_gene,
         report=report,
     )
+
+    genes_adipose_15 = aexph_sub.read_extract_set_features(
+        name_set="adipose_15_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_15_down = aexph_sub.read_extract_set_features(
+        name_set="adipose_15_genes_down",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_15_up = aexph_sub.read_extract_set_features(
+        name_set="adipose_15_genes_up",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_28 = aexph_sub.read_extract_set_features(
+        name_set="adipose_28_genes_change",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_28_down = aexph_sub.read_extract_set_features(
+        name_set="adipose_28_genes_down",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_28_up = aexph_sub.read_extract_set_features(
+        name_set="adipose_28_genes_up",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
     genes_adipose_32 = aexph_sub.read_extract_set_features(
         name_set="adipose_32_genes_change",
         suffix_file=".txt",
         path_directory=path_directory_sets_gene,
         report=report,
     )
+    genes_adipose_32_down = aexph_sub.read_extract_set_features(
+        name_set="adipose_32_genes_down",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+    genes_adipose_32_up = aexph_sub.read_extract_set_features(
+        name_set="adipose_32_genes_up",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
+        report=report,
+    )
+
     ##########
     # Combine the identifiers of genes in sets.
     # Age.
@@ -333,101 +286,139 @@ def execute_procedure(
     # associated with placebo.
     # Placebo.
     print("placebo union")
-    genes_placebo = aexph_sub.combine_sets_items_union_unique(
+    genes_placebo_union = aexph_sub.combine_sets_items_union_unique(
         sets_items=[
-            genes_adipose_11,
-            genes_adipose_24,
+            genes_adipose_14,
+            genes_adipose_27,
             genes_adipose_31,
         ],
         report=True,
     )
-    # Omega-3 correction for placebo.
-    print("adipose_12 difference adipose_11")
-    genes_adipose_12_not_11 = aexph_sub.combine_sets_items_difference_unique(
-        items_inclusion=genes_adipose_12,
-        items_exclusion=genes_adipose_11,
+
+    # Omega-3.
+    print("omega-3 union triple: 15, 28, 32")
+    genes_omega3_union_triple = aexph_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_15,
+            genes_adipose_28,
+            genes_adipose_32,
+        ],
+        report=True,
+    )
+    genes_omega3_union_triple_down = aexph_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_15_down,
+            genes_adipose_28_down,
+            genes_adipose_32_down,
+        ],
+        report=True,
+    )
+    genes_omega3_union_triple_up = aexph_sub.combine_sets_items_union_unique(
+        sets_items=[
+            genes_adipose_15_up,
+            genes_adipose_28_up,
+            genes_adipose_32_up,
+        ],
         report=True,
     )
 
-    # Omega-3.
-    print("omega-3 union triple: 12-not-11, 25, 32")
-    genes_omega3_union_triple = aexph_sub.combine_sets_items_union_unique(
-        sets_items=[
-            genes_adipose_12_not_11,
-            genes_adipose_25,
-            genes_adipose_32,
-        ],
-        report=True,
-    )
-    print("omega-3 union double: 25, 32")
+    print("omega-3 union double: 28, 32")
     genes_omega3_union_double = aexph_sub.combine_sets_items_union_unique(
         sets_items=[
-            genes_adipose_25,
+            genes_adipose_28,
             genes_adipose_32,
         ],
         report=True,
     )
+
+    # Omega-3 correction for placebo.
+    print("adipose_28 difference adipose_27")
+    genes_adipose_28_not_27 = aexph_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_adipose_28,
+        items_exclusion=genes_adipose_27,
+        report=True,
+    )
+    genes_adipose_28_down_not_27 = aexph_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_adipose_28_down,
+        items_exclusion=genes_adipose_27,
+        report=True,
+    )
+    genes_adipose_28_up_not_27 = aexph_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_adipose_28_up,
+        items_exclusion=genes_adipose_27,
+        report=True,
+    )
+
     ##########
     # Combine by difference of the identifiers of genes in sets.
     # This approach is unnecessarily conservative.
     # Some genes might change in one direction in placebo and in the other
     # direction in omega-3 groups.
-    if False:
-        print("omega-3 difference placebo")
-        genes_omega3_not_placebo = aexph_sub.combine_sets_items_difference_unique(
-            items_inclusion=genes_omega3,
-            items_exclusion=genes_placebo,
-            report=True,
-        )
-        pass
+    print("omega-3 difference placebo")
+    genes_omega3_not_placebo = aexph_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_omega3_union_triple,
+        items_exclusion=genes_placebo_union,
+        report=True,
+    )
+    genes_omega3_down_not_placebo = aexph_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_omega3_union_triple_down,
+        items_exclusion=genes_placebo_union,
+        report=True,
+    )
+    genes_omega3_up_not_placebo = aexph_sub.combine_sets_items_difference_unique(
+        items_inclusion=genes_omega3_union_triple_up,
+        items_exclusion=genes_placebo_union,
+        report=True,
+    )
+
     ##########
     # Combine by intersection of the identifiers of genes in sets.
     print("age intersection omega-3 triple")
-    genes_age_omega3_triple = aexph_sub.combine_sets_items_intersection_unique(
-        items_first=genes_age,
-        items_second=genes_omega3_union_triple,
-        report=True,
-    )
-    print("age intersection omega-3 double")
-    genes_age_omega3_double = aexph_sub.combine_sets_items_intersection_unique(
-        items_first=genes_age,
-        items_second=genes_omega3_union_double,
-        report=True,
-    )
+    genes_age_and_omega3_not_placebo = (
+        aexph_sub.combine_sets_items_intersection_unique(
+            items_first=genes_age,
+            items_second=genes_omega3_not_placebo,
+            report=True,
+    ))
 
     ##########
     # Write information to file.
     # Collect information.
     # Collections of files.
     pail_write_lists = dict()
-    pail_write_lists["genes_adipose_1_age"] = genes_age
-    pail_write_lists["genes_adipose_12_not_11"] = genes_adipose_12_not_11
-    pail_write_lists["genes_adipose_25"] = genes_adipose_25
-    pail_write_lists["genes_adipose_32"] = genes_adipose_32
-    pail_write_lists["genes_adipose_12not11_25_32_omega3_union"] = (
-        genes_omega3_union_triple
+    pail_write_lists["genes_adipose_28_not_27"] = (
+        genes_adipose_28_not_27
     )
-    pail_write_lists["genes_adipose_25_32_omega3_union"] = (
-        genes_omega3_union_double
+    pail_write_lists["genes_adipose_28_down_not_27"] = (
+        genes_adipose_28_down_not_27
     )
-    pail_write_lists["genes_age_omega3_intersection_triple"] = (
-        genes_age_omega3_triple
+    pail_write_lists["genes_adipose_28_up_not_27"] = (
+        genes_adipose_28_up_not_27
     )
-    pail_write_lists["genes_age_omega3_intersection_double"] = (
-        genes_age_omega3_double
+    pail_write_lists["genes_omega3_not_placebo"] = (
+        genes_omega3_not_placebo
+    )
+    pail_write_lists["genes_omega3_down_not_placebo"] = (
+        genes_omega3_down_not_placebo
+    )
+    pail_write_lists["genes_omega3_up_not_placebo"] = (
+        genes_omega3_up_not_placebo
+    )
+    pail_write_lists["genes_age_and_omega3_not_placebo"] = (
+        genes_age_and_omega3_not_placebo
     )
     # Define paths to directories.
-    path_directory_data_sets = os.path.join(
-        paths["out_procedure_data"], "sets",
+    path_directory_write = os.path.join(
+        paths["out_procedure_lists"],
     )
     # Create directories.
     putly.create_directories(
-        path=path_directory_data_sets,
+        path=path_directory_write,
     )
     # Write product information to file.
     putly.write_lists_to_file_text(
         pail_write=pail_write_lists,
-        path_directory=path_directory_data_sets,
+        path_directory=path_directory_write,
         delimiter="\n",
     )
 

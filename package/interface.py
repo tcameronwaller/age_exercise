@@ -58,6 +58,7 @@ import age_exercise.transcriptomics.organize_signal
 import age_exercise.transcriptomics.merge_phenotype
 
 import age_exercise.transcriptomics.select_gene_sets
+import age_exercise.transcriptomics.nullify_placebo
 import age_exercise.transcriptomics.compare_sets_groups
 import age_exercise.transcriptomics.operate_sets
 
@@ -467,6 +468,16 @@ def define_subparser_transcriptomics(
         )
     )
     parser_routine.add_argument(
+        "-nullify_placebo",
+        "--nullify_placebo",
+        dest="nullify_placebo",
+        action="store_true",
+        help=(
+            "Nullify effect or rank of genes with differential expression " +
+            "in placebo."
+        )
+    )
+    parser_routine.add_argument(
         "-compare_sets_groups",
         "--compare_sets_groups",
         dest="compare_sets_groups",
@@ -727,6 +738,16 @@ def evaluate_parameters_transcriptomics(arguments):
         )
         # Execute procedure.
         age_exercise.transcriptomics.select_gene_sets.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+    if arguments.nullify_placebo:
+        # Report status.
+        print(
+           "... executing age_exercise.transcriptomics.nullify_placebo " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        age_exercise.transcriptomics.nullify_placebo.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
     if arguments.compare_sets_groups:
