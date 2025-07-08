@@ -271,12 +271,22 @@ def execute_procedure(
         report=report,
     )
 
+    # Define paths to directories.
+    paths["out_procedure_ranks"] = os.path.join(
+        paths["out_procedure"], "rank",
+    )
+    # Create directories.
+    putly.create_directories(
+        path=paths["out_procedure_ranks"],
+    )
+
     # define null value
     value_null = float(0.0)
 
     ##########
     # adipose_15
-    table = pail_source["table_adipose_15"].copy(deep=True)
+    name = "adipose_15"
+    table = pail_source[str("table_" + name)].copy(deep=True)
     genes_placebo = copy.deepcopy(pail_source["genes_adipose_14"])
     table["rank_fold_p_placebo_null"] = table.apply(
         lambda row:
@@ -296,12 +306,27 @@ def execute_procedure(
         na_position="last",
         inplace=True,
     )
+    # Export to rank format for GSEA.
+    pail_rank = extr_select.organize_rank_list_gene(
+        table=table,
+        identifiers_exclusion=list(),
+        column_identifier="gene_identifier_base",
+        column_name="gene_name",
+        column_rank="rank_fold_p_placebo_null", # (fold_change_log2 * p_value_negative_log10)
+        tissue="adipose",
+        name_instance="instance",
+        report=report,
+    )
     # Write information to file.
     # Collect information.
     # Collections of files.
     #pail_write_lists = dict()
     pail_write_tables = dict()
-    pail_write_tables[str("table_adipose_15")] = table
+    pail_write_tables[str("table_" + name + "_nullify_placebo")] = table
+    pail_write_ranks = dict()
+    pail_write_ranks[str("rank_" + name + "_nullify_placebo")] = (
+        pail_rank["table"]
+    )
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
     # Write product information to file.
@@ -309,16 +334,27 @@ def execute_procedure(
         pail_write=pail_write_tables,
         path_directory=paths["out_procedure_tables"],
         reset_index_rows=False,
-        write_index_rows=False,
+        write_index_rows=True,
         write_index_columns=True,
         type="text",
         delimiter="\t",
         suffix=".tsv",
     )
+    putly.write_tables_to_file(
+        pail_write=pail_write_ranks,
+        path_directory=paths["out_procedure_ranks"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=False,
+        type="text",
+        delimiter="\t",
+        suffix=".rnk",
+    )
 
     ##########
     # adipose_28
-    table = pail_source["table_adipose_28"].copy(deep=True)
+    name = "adipose_28"
+    table = pail_source[str("table_" + name)].copy(deep=True)
     genes_placebo = copy.deepcopy(pail_source["genes_adipose_27"])
     table["rank_fold_p_placebo_null"] = table.apply(
         lambda row:
@@ -338,12 +374,27 @@ def execute_procedure(
         na_position="last",
         inplace=True,
     )
+    # Export to rank format for GSEA.
+    pail_rank = extr_select.organize_rank_list_gene(
+        table=table,
+        identifiers_exclusion=list(),
+        column_identifier="gene_identifier_base",
+        column_name="gene_name",
+        column_rank="rank_fold_p_placebo_null", # (fold_change_log2 * p_value_negative_log10)
+        tissue="adipose",
+        name_instance="instance",
+        report=report,
+    )
     # Write information to file.
     # Collect information.
     # Collections of files.
     #pail_write_lists = dict()
     pail_write_tables = dict()
-    pail_write_tables[str("table_adipose_28")] = table
+    pail_write_tables[str("table_" + name + "_nullify_placebo")] = table
+    pail_write_ranks = dict()
+    pail_write_ranks[str("rank_" + name + "_nullify_placebo")] = (
+        pail_rank["table"]
+    )
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
     # Write product information to file.
@@ -351,16 +402,27 @@ def execute_procedure(
         pail_write=pail_write_tables,
         path_directory=paths["out_procedure_tables"],
         reset_index_rows=False,
-        write_index_rows=False,
+        write_index_rows=True,
         write_index_columns=True,
         type="text",
         delimiter="\t",
         suffix=".tsv",
     )
+    putly.write_tables_to_file(
+        pail_write=pail_write_ranks,
+        path_directory=paths["out_procedure_ranks"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=False,
+        type="text",
+        delimiter="\t",
+        suffix=".rnk",
+    )
 
     ##########
     # adipose_32
-    table = pail_source["table_adipose_32"].copy(deep=True)
+    name = "adipose_32"
+    table = pail_source[str("table_" + name)].copy(deep=True)
     genes_placebo = copy.deepcopy(pail_source["genes_adipose_31"])
     table["rank_fold_p_placebo_null"] = table.apply(
         lambda row:
@@ -380,12 +442,27 @@ def execute_procedure(
         na_position="last",
         inplace=True,
     )
+    # Export to rank format for GSEA.
+    pail_rank = extr_select.organize_rank_list_gene(
+        table=table,
+        identifiers_exclusion=list(),
+        column_identifier="gene_identifier_base",
+        column_name="gene_name",
+        column_rank="rank_fold_p_placebo_null", # (fold_change_log2 * p_value_negative_log10)
+        tissue="adipose",
+        name_instance="instance",
+        report=report,
+    )
     # Write information to file.
     # Collect information.
     # Collections of files.
     #pail_write_lists = dict()
     pail_write_tables = dict()
-    pail_write_tables[str("table_adipose_32")] = table
+    pail_write_tables[str("table_" + name + "_nullify_placebo")] = table
+    pail_write_ranks = dict()
+    pail_write_ranks[str("rank_" + name + "_nullify_placebo")] = (
+        pail_rank["table"]
+    )
     pail_write_objects = dict()
     #pail_write_objects[str("samples")]
     # Write product information to file.
@@ -393,11 +470,21 @@ def execute_procedure(
         pail_write=pail_write_tables,
         path_directory=paths["out_procedure_tables"],
         reset_index_rows=False,
-        write_index_rows=False,
+        write_index_rows=True,
         write_index_columns=True,
         type="text",
         delimiter="\t",
         suffix=".tsv",
+    )
+    putly.write_tables_to_file(
+        pail_write=pail_write_ranks,
+        path_directory=paths["out_procedure_ranks"],
+        reset_index_rows=False,
+        write_index_rows=False,
+        write_index_columns=False,
+        type="text",
+        delimiter="\t",
+        suffix=".rnk",
     )
 
 

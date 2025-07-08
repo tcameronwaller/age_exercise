@@ -303,12 +303,36 @@ def define_type_columns_table_subject_feature_organization():
     types_columns["category"] = "string"
     types_columns["name_source"] = "string"
     types_columns["name_intermediate"] = "string"
+    types_columns["name_report"] = "string"
     types_columns["name_product"] = "string"
     types_columns["type"] = "string"
     types_columns["description"] = "string"
     # ...
     # Return information.
     return types_columns
+
+
+def define_feature_name_translation_extra():
+    """
+    Defines the variable types of columns within table for organization of
+    attributes of samples.
+
+    Review: TCW; 22 August 2024
+
+    arguments:
+
+    raises:
+
+    returns:
+        (dict<str>): variable types of columns within table
+
+    """
+
+    # Specify variable types of columns within table.
+    translations = dict()
+    translations["ratio_ast_alt"] = "AST / ALT"
+    # Return information.
+    return translations
 
 
 def parse_extract_table_sample_feature_organization(
@@ -369,18 +393,20 @@ def parse_extract_table_sample_feature_organization(
     translations_feature_forward = series_translations.to_dict()
 
     # Extract information for reverse translation of names of columns.
+    translations_extra = define_feature_name_translation_extra()
     table_name_product = table_inclusion.loc[
         (table_inclusion["name_product"].str.len() > 0), :
     ].copy(deep=True)
     table_translations = table_name_product.filter(
-        items=["name_source", "name_product",],
+        items=["name_report", "name_product",],
         axis="columns",
     )
     series_translations = pandas.Series(
-        table_translations["name_source"].to_list(),
+        table_translations["name_report"].to_list(),
         index=table_translations["name_product"],
     )
     translations_feature_reverse = series_translations.to_dict()
+    translations_feature_reverse.update(translations_extra)
 
     # Extract product names of all columns.
     columns_all = copy.deepcopy(
@@ -800,6 +826,8 @@ def define_sequence_columns_novel_subject_feature():
         "subject_visit",
         "date_visit_text",
         #"date_visit_text_raw",
+        "insulin_sensitivity_text",
+        "insulin_sensitivity_high",
         "ratio_ast_alt",
     ]
     # Return information.
@@ -1483,8 +1511,31 @@ def organize_table_subject_property(
         axis="columns", # apply function to each row
     )
 
+    # Define categorical variables by applying simple thresholds to features
+    # with values on a quantitative, continuous scale of measurement.
+    table["insulin_sensitivity_text"] = table.apply(
+        lambda row:
+            putly.determine_category_text_threshold_quantitative(
+                value=row["insulin_sensitivity_text"],
+                threshold=20.0,
+                category_below="low",
+                category_above="high",
+                category_missing="none",
+            ),
+        axis="columns", # apply function to each row
+    )
+    table["insulin_sensitivity_high"] = table.apply(
+        lambda row:
+            putly.determine_category_text_logical_binary(
+                category_text=row["insulin_sensitivity_text"],
+                values_1=["high",],
+                values_0=["low",],
+            ),
+        axis="columns", # apply function to each row
+    )
+
     # Calculate derivations of features on quantitative, continuous scale.
-    table ["ratio_ast_alt"] = table.apply(
+    table["ratio_ast_alt"] = table.apply(
         lambda row: float(
             row["aspartate_transaminase"] / row["alanine_transaminase"]
         ),
@@ -1936,14 +1987,31 @@ def prepare_table_signal_summaries_features_observation_groups(
 
     # Prepare summary of descriptive statistics for features across
     # observations in groups.
-    table_long = pdesc.describe_table_features_by_groups(
-        table=table_source,
+    #table_long = pdesc.describe_table_features_by_groups(
+    #    table=table_source,
+    #    column_group=column_group,
+    #    columns_features=columns_features,
+    #    index_feature=index_columns,
+    #    translations_feature=None,
+    #    threshold_observations=5,
+    #    digits_round=3,
+    #    report=False,
+    #)
+    table_long = pdesc.describe_features_from_table_columns_by_groups_rows(
+        table_group=table_source,
+        index_columns=index_columns,
+        index_rows=index_rows,
+        index_features=index_columns,
         column_group=column_group,
+        groups_sequence=names_groups_observations_sequence,
         columns_features=columns_features,
-        index_feature=index_columns,
         translations_feature=None,
+        key_group="group",
         threshold_observations=5,
         digits_round=3,
+        ttest_one=None,
+        ttest_two=None,
+        ttest_three=None,
         report=False,
     )
 
@@ -2544,29 +2612,65 @@ def prepare_tables_signals_features_sets_observations_groups(
     ##########
     # Prepare product table 6.
     # Calculate descriptive statistics for each feature across observations.
-    table_product_6 = pdesc.describe_table_features_by_groups(
-        table=table_product_2_translation,
-        column_group="group",
-        columns_features=pail["features_available_translation"],
-        index_feature=pail["index_features"],
-        translations_feature=None,
-        threshold_observations=5,
-        digits_round=3,
-        report=False,
-    )
+    #table_product_6 = pdesc.describe_table_features_by_groups(
+    #    table=table_product_2_translation,
+    #    column_group="group",
+    #    columns_features=pail["features_available_translation"],
+    #    index_feature=pail["index_features"],
+    #    translations_feature=None,
+    #    threshold_observations=5,
+    #    digits_round=3,
+    #    report=False,
+    #)
+    table_product_6 = (
+        pdesc.describe_features_from_table_columns_by_groups_rows(
+            table_group=table_product_2_translation,
+            index_columns=pail["index_features"],
+            index_rows=pail["index_observations"],
+            index_features=pail["index_features"],
+            column_group="group",
+            groups_sequence=pail["names_groups_observations_sequence"],
+            columns_features=pail["features_available_translation"],
+            translations_feature=None,
+            key_group="group",
+            threshold_observations=5,
+            digits_round=3,
+            ttest_one=None,
+            ttest_two=None,
+            ttest_three=None,
+            report=False,
+    ))
 
     ##########
     # Prepare product table 7.
-    table_product_7 = pdesc.describe_table_features_by_groups(
-        table=table_product_3_translation,
-        column_group="group",
-        columns_features=pail["features_available_translation"],
-        index_feature=pail["index_features"],
-        translations_feature=None,
-        threshold_observations=5,
-        digits_round=3,
-        report=False,
-    )
+    #table_product_7 = pdesc.describe_table_features_by_groups(
+    #    table=table_product_3_translation,
+    #    column_group="group",
+    #    columns_features=pail["features_available_translation"],
+    #    index_feature=pail["index_features"],
+    #    translations_feature=None,
+    #    threshold_observations=5,
+    #    digits_round=3,
+    #    report=False,
+    #)
+    table_product_7 = (
+        pdesc.describe_features_from_table_columns_by_groups_rows(
+            table_group=table_product_3_translation,
+            index_columns=pail["index_features"],
+            index_rows=pail["index_observations"],
+            index_features=pail["index_features"],
+            column_group="group",
+            groups_sequence=pail["names_groups_observations_sequence"],
+            columns_features=pail["features_available_translation"],
+            translations_feature=None,
+            key_group="group",
+            threshold_observations=5,
+            digits_round=3,
+            ttest_one=None,
+            ttest_two=None,
+            ttest_three=None,
+            report=False,
+    ))
 
     ##########
     # Prepare product table 8.
@@ -3157,8 +3261,9 @@ def read_extract_set_features(
         )
         # Read information from file.
         features_set = putly.read_file_text_list(
-            delimiter="\n",
             path_file=path_file,
+            delimiter="\n",
+            unique=True,
         )
     else:
         features_set = list()
@@ -4257,10 +4362,10 @@ def plot_heatmap_features_observations_labels(
         labels_abscissa_categories=None,
         size_title_ordinate="eight",
         size_title_abscissa="eight",
-        size_title_bar="nine",
-        size_label_ordinate="fifteen", # determine automatically if "None"; "fifteen"
-        size_label_abscissa="nine", # determine automatically if "None"
-        size_label_bar="eleven",
+        size_title_bar="ten",
+        size_label_ordinate="ten", # determine automatically if "None"; "fifteen"
+        size_label_abscissa="seven", # determine automatically if "None"
+        size_label_bar="twelve",
         show_labels_ordinate=True,
         show_labels_abscissa=True,
         show_scale_bar=True,
@@ -4529,7 +4634,8 @@ def execute_procedure(
     #pail_source["columns_olink_muscle"] # only available for second visit
     #pail_source["columns_olink_adipose"] # only available for second visit
 
-    # "age_cohort_text", "sex_text", "visit_text", "tissue",
+    ##########
+    # Organize sequence of columns in table.
     columns_sequence_priority = define_sequence_columns_priority()
     table = organize_table_subject_property_sequence_columns_rows(
         table_subject=table,

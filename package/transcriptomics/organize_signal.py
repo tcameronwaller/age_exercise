@@ -109,6 +109,7 @@ def initialize_directories_trunk(
     project=None,
     routine=None,
     procedure=None,
+    tissue=None,
     path_directory_dock=None,
     restore=None,
     report=None,
@@ -122,6 +123,8 @@ def initialize_directories_trunk(
             'proteomics'
         procedure (str): name of procedure, a set or step in the routine
             process
+        tissue (str): name of tissue that distinguishes study design and
+            set of relevant samples, either 'adipose' or 'muscle'
         path_directory_dock (str): path to dock directory for procedure's
             source and product directories and files
         restore (bool): whether to remove previous versions of data
@@ -159,9 +162,14 @@ def initialize_directories_trunk(
     paths["out_whole"] = os.path.join(
         paths["out_procedure"], "whole",
     )
-    paths["out_whole_preparation"] = os.path.join(
-        paths["out_whole"], "preparation",
-    )
+    if (tissue is not None):
+        paths["out_whole_preparation"] = os.path.join(
+            paths["out_whole"], "preparation", tissue,
+        )
+    else:
+        paths["out_whole_preparation"] = os.path.join(
+            paths["out_whole"], "preparation",
+        )
     paths["out_whole_description"] = os.path.join(
         paths["out_whole"], "description",
     )
@@ -242,6 +250,7 @@ def initialize_directories_before_branch(
         project=project,
         routine=routine,
         procedure=procedure,
+        tissue=None,
         path_directory_dock=path_directory_dock,
         restore=False,
         report=report,
@@ -3202,6 +3211,7 @@ def control_procedure_whole_trunk_preparation(
         project=project,
         routine=routine,
         procedure=procedure,
+        tissue=tissue,
         path_directory_dock=path_directory_dock,
         restore=False,
         report=report,
@@ -3217,6 +3227,21 @@ def control_procedure_whole_trunk_preparation(
     table_sample = pail_source_sample["table_sample"].loc[(
         pail_source_sample["table_sample"]["tissue"] == tissue
     ), :].copy(deep=True)
+    # Subjects.
+    identifiers_subject = copy.deepcopy(
+        table_sample["identifier_subject"].to_list()
+    )
+    identifiers_subject = putly.collect_unique_items(
+        items=identifiers_subject,
+    )
+    # Samples.
+    identifiers_sample = copy.deepcopy(
+        table_sample["identifier_sample"].to_list()
+    )
+    identifiers_sample = putly.collect_unique_items(
+        items=identifiers_sample,
+    )
+    # Identifiers of signals corresponding to selection of samples.
     samples = copy.deepcopy(
         table_sample["identifier_signal"].to_list()
     )
@@ -3264,9 +3289,42 @@ def control_procedure_whole_trunk_preparation(
         report=report,
     )
 
+    # Extract identifiers of genes, samples, and signals from the table.
+    # Signals.
+    identifiers_signal = copy.deepcopy(
+        pail_signal["table_signal"].columns.to_list()
+    )
+    if ("identifier_gene" in identifiers_signal):
+        identifiers_signal = list(filter(
+            lambda identifier: (identifier != "identifier_gene"),
+            identifiers_signal,
+        ))
+        pass
+    identifiers_signal = putly.collect_unique_items(
+        items=identifiers_signal,
+    )
+    # Genes.
+    #identifiers_gene = copy.deepcopy(
+    #    pail_signal["table_signal"]["identifier_gene"].to_list()
+    #)
+    identifiers_gene = copy.deepcopy(
+        pail_signal["table_signal"].index.get_level_values(
+            "identifier_gene"
+        )
+    )
+    identifiers_gene = putly.collect_unique_items(
+        items=identifiers_gene,
+    )
+
     ##########
-    # Collect information.
-    # Collections of files.
+    # Bundle information.
+    # Bundles of information for files.
+    # Lists.
+    pail_write_lists = dict()
+    pail_write_lists["identifiers_sample"] = identifiers_sample
+    pail_write_lists["identifiers_gene"] = identifiers_gene
+    pail_write_lists["identifiers_signal"] = identifiers_signal
+    # Tables.
     pail_write_tables = dict()
     pail_write_tables[str("table_gene_" + tissue)] = (
         pail_signal["table_gene"]
@@ -3287,6 +3345,13 @@ def control_procedure_whole_trunk_preparation(
 
     ##########
     # Write product information to file.
+    # Lists.
+    putly.write_lists_to_file_text(
+        pail_write=pail_write_lists,
+        path_directory=paths["out_whole_preparation"],
+        delimiter="\n",
+    )
+    # Tables.
     putly.write_tables_to_file(
         pail_write=pail_write_tables,
         path_directory=paths["out_whole_preparation"],
@@ -4077,12 +4142,13 @@ def execute_procedure(
     ##########
     # Trunk procedure to prepare tables of signals with adjustment of scale
     # and normalization.
-    if False:
+    if True:
         # Initialize directories.
         paths = initialize_directories_trunk(
             project=project,
             routine=routine,
             procedure=procedure,
+            tissue=None,
             path_directory_dock=path_directory_dock,
             restore=True,
             report=report,
@@ -4135,7 +4201,7 @@ def execute_procedure(
 
     # The current implementation requires manual switch on or off according to
     # the tissues that are included in the batch.
-    if True:
+    if False:
         # Initialize directories before branch procedure.
         paths = initialize_directories_before_branch(
             project=project,

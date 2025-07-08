@@ -38,6 +38,13 @@ License:
 ###############################################################################
 # Notes
 
+# TCW; 2 July 2025
+# I think that this was a temporary and rudimentary adaptation of
+# "phenotypes.compare_groups.py" for the sake of preparing figures?
+# This document is not exactly the same as "phenotypes.compare_group.py", but
+# it is very similar.
+
+
 
 ###############################################################################
 # Installation and importation
@@ -118,30 +125,54 @@ def define_type_table_columns_parameter():
     return types_columns
 
 
-def parse_extract_table_parameter(
-    table=None,
+def read_organize_source_parameter(
+    paths=None,
     report=None,
 ):
     """
-    Determines the variable types of columns within table for attributes of
-    samples.
+    Reads and organizes source information from file.
 
-    Review: TCW; 26 June 2025
+    Notice that Pandas does not accommodate missing values within series of
+    integer variable types.
 
     arguments:
-        table (object): Pandas data-frame table of information about samples
+        paths (dict<str>): collection of paths to directories for procedure's
+            files
         report (bool): whether to print reports
 
     raises:
 
     returns:
-        (dict<object>): collection of information
+        (dict<object>): collection of source information read from file
 
     """
 
-    # Copy information.
-    table = table.copy(deep=True)
+    # Define paths to parent directories.
+    #paths["in_data"]
+    #paths["in_demonstration"]
+    #paths["in_parameters"]
+    #paths["in_parameters_private"]
 
+    # Define paths to child files.
+    path_file_table_parameter = os.path.join(
+        paths["in_parameters_private"], "age_exercise", "phenotypes",
+        "table_groups_observations.tsv",
+    )
+
+    # Read information from file.
+
+    # Table of parameters for instances.
+    types_columns = define_type_table_columns_parameter()
+    table = pandas.read_csv(
+        path_file_table_parameter,
+        sep="\t",
+        header=0,
+        dtype=types_columns,
+        na_values=[
+            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
+        ],
+        encoding="utf-8",
+    )
     # Organize information.
     table["execution"] = pandas.to_numeric(
         table["execution"],
@@ -196,87 +227,15 @@ def parse_extract_table_parameter(
         records.append(record)
         pass
 
-
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: compare_groups.py")
-        print("function: parse_extract_table_parameter()")
-        putly.print_terminal_partition(level=5)
-        pass
     # Collect information.
     pail = dict()
-    pail["records"] = records
-    # Return information.
-    return pail
-
-
-def read_organize_source_parameter(
-    path_file_table_parameter=None,
-    path_directory_dock=None,
-    report=None,
-):
-    """
-    Read and organize source information about parameters.
-
-    Notice that Pandas does not accommodate missing values within series of
-    integer variable types.
-
-    Review: TCW; 31 March 2025
-
-    arguments:
-        path_file_table_parameter (str): path to source file in text format as
-            a table with tab delimiters between columns and newline delimiters
-            between rows, with parameters
-        path_directory_dock (str): path to dock directory for procedure's
-            source and product directories and files
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict): collection of source information about parameters
-
-    """
-
-    # Define paths to parent directories.
-    #paths["in_data"]
-    #paths["in_demonstration"]
-    #paths["in_parameters"]
-    #paths["in_parameters_private"]
-
-    # Define paths to child files.
-
-    # Read information from file.
-
-    # Table of parameters for instances.
-    types_columns = define_type_table_columns_parameter()
-    table = pandas.read_csv(
-        path_file_table_parameter,
-        sep="\t",
-        header=0,
-        dtype=types_columns,
-        na_values=[
-            "nan", "na", "NAN", "NA", "<nan>", "<na>", "<NAN>", "<NA>",
-        ],
-        encoding="utf-8",
-    )
-    # Parse parameters from table.
-    pail_parse = parse_extract_table_parameter(
-        table=table,
-        report=report,
-    )
-
-    # Collect information.
-    pail = dict()
-    pail["types_columns"] = types_columns
     pail["table"] = table.copy(deep=True)
-    pail["records"] = copy.deepcopy(pail_parse["records"])
+    pail["records"] = copy.deepcopy(records)
 
     # Report.
     if report:
         # Organize information.
-        count_records = len(pail_parse["records"])
+        count_records = len(records)
         # Print information.
         putly.print_terminal_partition(level=3)
         print("package: age_exercise")
@@ -290,14 +249,14 @@ def read_organize_source_parameter(
         print("count of records or instances: " + str(count_records))
         putly.print_terminal_partition(level=5)
         print("instance[0]:")
-        print(pail_parse["records"][0])
+        print(records[0])
         putly.print_terminal_partition(level=5)
         pass
     # Return information.
     return pail
 
 
-def define_type_table_columns_subject_sample():
+def define_type_table_columns_subject_signal():
     """
     Defines the types of variables for columns in table.
 
@@ -331,8 +290,10 @@ def define_type_table_columns_subject_sample():
     types_columns["intervention_text"] = "string"
     types_columns["intervention_placebo"] = "float32"
     types_columns["intervention_omega3"] = "float32"
-    types_columns["intervention_placebo_visit_second"] = "float32"
-    types_columns["intervention_omega3_visit_second"] = "float32"
+    types_columns["intervention_placebo_other"] = "float32"
+    types_columns["intervention_omega3_other"] = "float32"
+    types_columns["intervention_after_placebo"] = "float32"
+    types_columns["intervention_after_omega3"] = "float32"
     #types_columns["tissue"] = "string"
     #types_columns["exercise_duration_text"] = "string"
 
@@ -348,7 +309,7 @@ def define_type_table_columns_subject_sample():
 
 # In this function it is convenient to designate additional features as
 # relevant to analyses.
-def read_organize_source_subject_sample(
+def read_organize_source_subject_signal(
     paths=None,
     report=None,
 ):
@@ -389,7 +350,7 @@ def read_organize_source_subject_sample(
     # Read information from file.
 
     # Table of properties and attributes for subjects and samples.
-    types_columns = define_type_table_columns_subject_sample()
+    types_columns = define_type_table_columns_subject_signal()
     table = pandas.read_csv(
         path_file_table_subject,
         sep="\t",
@@ -479,22 +440,16 @@ def read_source(
 
     """
 
-    # Define paths to child files.
-    path_file_table_parameter = os.path.join(
-        paths["in_parameters_private"], "age_exercise", "phenotypes",
-        "table_groups_observations.tsv",
-    )
     # Read source information for parameters.
     pail_parameter = read_organize_source_parameter(
-        path_file_table_parameter=path_file_table_parameter,
-        path_directory_dock=paths["dock"],
+        paths=paths,
         report=report,
     )
     #pail["table"]
     #pail["records"]
 
     # Read source information for parameters.
-    pail_sample = read_organize_source_subject_sample(
+    pail_subject = read_organize_source_subject_signal(
         paths=paths,
         report=False,
     )
@@ -503,13 +458,12 @@ def read_source(
 
     # Collect information.
     pail = dict()
-    pail["table_subject_sample"] = pail_sample["table_subject_sample"]
+    pail["table_subject_sample"] = pail_subject["table_subject_sample"]
+    pail["features_relevant"] = pail_subject["features_relevant"]
+    pail["features_quantitative"] = pail_subject["features_quantitative"]
     pail["instances_parameter"] = pail_parameter["records"]
-
-    pail["features_relevant"] = pail_sample["features_relevant"]
-    pail["features_quantitative"] = pail_sample["features_quantitative"]
     pail["translations_feature_reverse"] = (
-        pail_sample["translations_feature_reverse"]
+        pail_subject["translations_feature_reverse"]
     )
 
     # Report.
@@ -1679,28 +1633,24 @@ def manage_create_write_plot_box_violin_feature_groups(
     # Define colors.
     colors = pplot.define_color_properties()
     # Extract parameters for colors.
-    if False:
-        colors_names_groups = [
-            #"purple_violet",
-            #"blue_sky",
-            #"green_mint",
-            #"yellow_sunshine",
-            #"purple_violet_faint",
-            #"blue_sky_faint",
-            #"green_mint_faint",
-            #"yellow_sunshine_faint",
-            "firebrick",
-            "tomato",
-            "orange",
-            "gold",
-            "mediumorchid",
-            "mediumslateblue",
-            "dodgerblue",
-            "mediumturquoise",
-        ]
-    else:
-        colors_names_groups = None
-        pass
+    colors_names_groups = [
+        #"purple_violet",
+        #"blue_sky",
+        #"green_mint",
+        #"yellow_sunshine",
+        #"purple_violet_faint",
+        #"blue_sky_faint",
+        #"green_mint_faint",
+        #"yellow_sunshine_faint",
+        "firebrick",
+        "tomato",
+        "orange",
+        "gold",
+        "mediumorchid",
+        "mediumslateblue",
+        "dodgerblue",
+        "mediumturquoise",
+    ]
     if (
         (colors_names_groups is not None) and
         (len(colors_names_groups) > 0)
@@ -1714,14 +1664,7 @@ def manage_create_write_plot_box_violin_feature_groups(
             colors_names_groups
         ))
     else:
-        colors_groups = [
-            (1.0, 1.0, 0.588, 1.0), # r: 255; g: 255; b: 150; alpha: 1.0
-            #(1.0, 0.784, 0.392, 1.0), # r: 255; g: 200; b: 100; alpha: 1.0
-            (0.588, 1.0, 0.588, 1.0), # r: 150; g: 255; b: 150; alpha: 1.0
-            (0.392, 0.784, 0.392, 1.0), # r: 100; g: 200; b: 100; alpha: 1.0
-            (0.588, 1.0, 1.0, 1.0), # r: 150; g: 255; b: 255; alpha: 1.0
-            (0.392, 0.588, 1.0, 1.0), # r: 100; g: 200; b: 255; alpha: 1.0
-        ]
+        colors_groups = None
         pass
 
     # Create figure.
@@ -1776,8 +1719,8 @@ def manage_create_write_plot_box_violin_feature_groups(
     #)
     pplot.write_product_plots_parent_directory(
         pail_write=pail_write_plot_violin,
-        format="jpg", # jpg, png, svg
-        resolution=150,
+        format="svg", # jpg, png, svg
+        resolution=300,
         path_directory=path_directory_violin,
     )
 
@@ -1912,7 +1855,7 @@ def execute_procedure(
     ##########
     # Parameters.
     project="age_exercise"
-    routine="phenotypes"
+    routine="transcriptomics"
     procedure="compare_groups"
     report = True
 
@@ -1945,6 +1888,16 @@ def execute_procedure(
     )
     #paths["out_procedure_tables"]
     #paths["out_procedure_plot"]
+
+
+    # TODO
+    # When selecting groups of observations, assign these directly...
+
+
+    ##############
+     # PROGRESS #
+    ##############
+
 
     ##########
     # 2. Read source information from file.
@@ -2104,48 +2057,26 @@ def execute_procedure(
     ##########
     # Create plot charts for visual representations of quantitative features
     # within and between groups of observations.
-    if True:
-        # Observations for females and males together.
-        groups_sequence_selection = [
-            "adipose_age_-_younger",
-            #"adipose_age_-_older",
-            "adipose_placebo_-_older_placebo_before",
-            "adipose_placebo_-_older_placebo_after",
-            "adipose_omega3_-_older_omega3_before",
-            "adipose_omega3_-_older_omega3_after",
-        ]
-        translations_group = {
-            "adipose_age_-_younger": "Younger",
-            #"adipose_age_-_older": "Older",
-            "adipose_placebo_-_older_placebo_before": "Placebo, Before",
-            "adipose_placebo_-_older_placebo_after": "Placebo, After",
-            "adipose_omega3_-_older_omega3_before": "Omega-3, Before",
-            "adipose_omega3_-_older_omega3_after": "Omega-3, After",
-        }
-        pass
-    if False:
-        # Stratification by sex.
-        groups_sequence_selection = [
-            "adipose_age_-_younger_female",
-            "adipose_age_-_older_female",
-            "adipose_placebo_-_older_female_placebo_after",
-            "adipose_omega3_-_older_female_omega3_after",
-            "adipose_age_-_younger_male",
-            "adipose_age_-_older_male",
-            "adipose_placebo_-_older_male_placebo_after",
-            "adipose_omega3_-_older_male_omega3_after",
-        ]
-        translations_group = {
-            "adipose_age_-_younger_female": "F-Younger",
-            "adipose_age_-_younger_male": "M-Younger",
-            "adipose_age_-_older_female": "F-Older",
-            "adipose_age_-_older_male": "M-Older",
-            "adipose_placebo_-_older_female_placebo_after": "F-Placebo",
-            "adipose_placebo_-_older_male_placebo_after": "M-Placebo",
-            "adipose_omega3_-_older_female_omega3_after": "F-Omega3",
-            "adipose_omega3_-_older_male_omega3_after": "M-Omega3",
-        }
-        pass
+    groups_sequence_selection = [
+        "adipose_age_-_younger_female",
+        "adipose_age_-_older_female",
+        "adipose_placebo_-_older_female_placebo_after",
+        "adipose_omega3_-_older_female_omega3_after",
+        "adipose_age_-_younger_male",
+        "adipose_age_-_older_male",
+        "adipose_placebo_-_older_male_placebo_after",
+        "adipose_omega3_-_older_male_omega3_after",
+    ]
+    translations_group = {
+        "adipose_age_-_younger_female": "F-Younger",
+        "adipose_age_-_younger_male": "M-Younger",
+        "adipose_age_-_older_female": "F-Older",
+        "adipose_age_-_older_male": "M-Older",
+        "adipose_placebo_-_older_female_placebo_after": "F-Placebo",
+        "adipose_placebo_-_older_male_placebo_after": "M-Placebo",
+        "adipose_omega3_-_older_female_omega3_after": "F-Omega3",
+        "adipose_omega3_-_older_male_omega3_after": "M-Omega3",
+    }
 
     # features_sequence=pail_source["features_quantitative"],
     manage_create_write_plots_box_violin_features_groups(

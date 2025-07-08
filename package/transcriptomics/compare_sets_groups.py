@@ -84,115 +84,6 @@ import age_exercise.transcriptomics.select_gene_sets as extr_select
 
 
 ##########
-# 1. Initialize directories for read of source and write of product files.
-# There is a hierarchy in these functions to initialize directories to manage
-# the hierarchical tree structure of sub-procedures.
-
-
-def initialize_directories_trunk(
-    project=None,
-    routine=None,
-    procedure=None,
-    path_directory_dock=None,
-    restore=None,
-    report=None,
-):
-    """
-    Initialize directories for procedure's source and product files.
-
-    arguments:
-        project (str): name of project that normally corresponds to a single
-            Python package
-        routine (str): name of routine, either 'transcriptomics' or
-            'proteomics' that normally corresponds to a single Python package
-            or subpackage
-        procedure (str): name of procedure, a step in the routine process that
-            normally corresponds to a single Python module within the package
-        path_directory_dock (str): path to dock directory for procedure's
-            source and product directories and files
-        restore (bool): whether to remove previous versions of data
-        report (bool): whether to print reports
-
-    raises:
-
-    returns:
-        (dict<str>): collection of paths to directories
-
-    """
-
-    # Collect paths.
-    paths = dict()
-    # Define paths to directories.
-    # Broad.
-    paths["dock"] = path_directory_dock
-    paths["in_data"] = os.path.join(
-        paths["dock"], "in_data",
-    )
-    paths["in_demonstration"] = os.path.join(
-        paths["dock"], "in_demonstration",
-    )
-    paths["in_parameters"] = os.path.join(
-        paths["dock"], "in_parameters",
-    )
-    paths["in_parameters_private"] = os.path.join(
-        paths["dock"], "in_parameters_private",
-    )
-    paths["out_project"] = os.path.join(
-        paths["dock"], str("out_" + project),
-    )
-    paths["out_routine"] = os.path.join(
-        paths["out_project"], str(routine),
-    )
-    paths["out_procedure"] = os.path.join(
-        paths["out_routine"], str(procedure),
-    )
-    # Specific.
-    paths["in_sets_gene"] = os.path.join(
-        paths["in_parameters_private"], project, routine,
-        "sets_gene",
-    )
-    paths["out_procedure_data"] = os.path.join(
-        paths["out_procedure"], "data",
-    )
-    paths["out_procedure_plot"] = os.path.join(
-        paths["out_procedure"], "plot",
-    )
-
-    # Initialize directories in main branch.
-    paths_initialization = [
-        #paths["out_project"],
-        #paths["out_routine"],
-        paths["out_procedure"],
-        paths["out_procedure_data"],
-        paths["out_procedure_plot"],
-    ]
-    # Remove previous directories and files to avoid version or batch
-    # confusion.
-    if restore:
-        for path in paths_initialization:
-            putly.remove_directory(path=path) # caution
-            pass
-    # Create directories.
-    for path in paths_initialization:
-        putly.create_directories(
-            path=path,
-        )
-        pass
-    # Report.
-    if report:
-        putly.print_terminal_partition(level=3)
-        print("module: age_exercise.transcriptomics.compare_sets_groups.py")
-        print("function: initialize_directories_trunk()")
-        putly.print_terminal_partition(level=5)
-        print("path to dock directory for procedure's files: ")
-        print(path_directory_dock)
-        putly.print_terminal_partition(level=5)
-        pass
-    # Return information.
-    return paths
-
-
-##########
 # 2. Read source information from file.
 
 
@@ -256,16 +147,16 @@ def read_source(
 
     # Define paths to child files.
     path_file_table_sample = os.path.join(
-        paths["out_routine"], "organize_sample", "data",
+        paths["out_project"], "phenotypes", "organize_sample", "tables",
         "table_sample.pickle",
     )
     path_file_table_gene = os.path.join(
-        paths["out_routine"], "organize_signal", "whole", "preparation",
-        str("table_gene_" + tissue + ".pickle"),
+        paths["out_project"], "transcriptomics", "organize_signal", "whole",
+        "preparation", str("table_gene_" + tissue + ".pickle"),
     )
     path_file_table_signal = os.path.join(
         paths["out_project"], "transcriptomics", "organize_signal", "whole",
-        "preparation", str("table_signal_scale_" + tissue + ".pickle"),
+        "preparation", str("table_signal_scale_normal_" + tissue + ".pickle"),
     )
 
     # Collect information.
@@ -546,10 +437,10 @@ def create_plot_chart_box(
     colors = pplot.define_color_properties()
     # Create figure.
     figure = pplot.plot_boxes_groups(
-        values_groups=pail_extract["values_groups"],
+        values_groups=pail_extract["values_nonmissing_groups"],
+        names_groups=pail_extract["names_groups"],
         title_ordinate="scale-normal(gene signal)",
         title_abscissa="",
-        titles_abscissa_groups=pail_extract["names_groups"],
         colors_groups=None,
         label_top_center="",
         label_top_left="",
@@ -714,14 +605,6 @@ def manage_plot_charts(
         figure_heatmap_individual_2 = None
         figure_heatmap_individual_3 = None
         pass
-
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!compare manage plots")
-    print(table_heatmap_mean_set)
-    print(table_allocation_4)
-
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!compare manage plots")
-    print(table_heatmap_mean_label)
-
 
     ##########
     # Heatmap Mean
@@ -1030,20 +913,19 @@ def control_procedure_part_branch(
         pail_tables["table_8_translation"]
     )
     # Define paths to directories.
-    path_directory_data_tables = os.path.join(
-        paths["out_procedure_data"], "tables_groups",
-        str(name_group_instances),
+    path_directory_tables_group = os.path.join(
+        paths["out_procedure_tables"], str(name_group_instances),
     )
     # Create directories.
     putly.create_directories(
-        path=path_directory_data_tables,
+        path=path_directory_tables_group,
     )
 
     ##########
     # Write product information to file.
     putly.write_tables_to_file(
         pail_write=pail_write_data,
-        path_directory=path_directory_data_tables,
+        path_directory=path_directory_tables_group,
         reset_index_rows=False,
         write_index_rows=True,
         write_index_columns=True,
@@ -1106,7 +988,7 @@ def control_procedure_part_branch(
     pplot.write_product_plots_parent_directory(
         pail_write=pail_write_plot,
         format="jpg", # jpg, png, svg
-        resolution=600,
+        resolution=300,
         path_directory=path_directory_plot_group,
     )
 
@@ -1227,19 +1109,28 @@ def execute_procedure(
 
     ##########
     # 1. Initialize directories for read of source and write of product files.
-    paths = initialize_directories_trunk(
+    paths = aexph_sub.initialize_directories(
         project=project,
         routine=routine,
         procedure=procedure,
         path_directory_dock=path_directory_dock,
+        initialize_routine=False,
         restore=True,
         report=report,
+    )
+    #paths["out_procedure_lists"]
+    #paths["out_procedure_tables"]
+    #paths["out_procedure_plot"]
+    #paths["out_procedure_object"]
+    paths["in_sets_gene"] = os.path.join(
+        paths["in_parameters_private"], project, routine,
+        "sets_gene",
     )
 
     ##########
     # 2.1. Read and count unique genes in sets.
     path_directory_sets_gene = os.path.join(
-        paths["in_sets_gene"], "sets_gene_2025-01-09",
+        paths["in_sets_gene"],
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(

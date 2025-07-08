@@ -126,10 +126,14 @@ def preinitialize_directories(
     paths["in_parameters_private"] = os.path.join(
         paths["dock"], "in_parameters_private",
     )
+
+    ##########
     paths["in_sets_gene"] = os.path.join(
-        paths["in_parameters_private"], "age_exercise", "transcriptomics",
-        "sets_gene", "sets_gene_2025-02-11_volcano",
+        paths["in_parameters_private"], project, routine,
+        "sets_gene", "sets_gene_2025-06-11",
     )
+    ##########
+
     paths["out_project"] = os.path.join(
         paths["dock"], str("out_" + project),
     )
@@ -851,6 +855,10 @@ def organize_rank_list_gene(
     Prepare a ranked list of genes for analysis by gene set enrichment analysis
     (GSEA).
 
+    Exercise caution in the decision to exclude genes from the list in rank
+    format. Simple exclusion might disrupt the calculations of background
+    statistics in GSEA.
+
     arguments:
         table (object): Pandas data-frame table of information about genes
             that demonstrate differential expression
@@ -1080,8 +1088,8 @@ def plot_write_chart_fold_change_volcano(
         size_title_ordinate="seven", # ten
         size_label_abscissa="eleven", # multi-panel: ten; individual: twelve
         size_label_ordinate="eleven", # multi-panel: ten; individual: twelve
-        size_label_emphasis="eleven",
-        size_label_count="ten",
+        size_label_emphasis="thirteen", # eleven
+        size_label_count="seven",
         aspect="landscape", # square, portrait, landscape, ...
         fonts=fonts,
         colors=colors,

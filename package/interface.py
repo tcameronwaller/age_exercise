@@ -59,7 +59,9 @@ import age_exercise.transcriptomics.merge_phenotype
 
 import age_exercise.transcriptomics.select_gene_sets
 import age_exercise.transcriptomics.nullify_placebo
-import age_exercise.transcriptomics.compare_sets_groups
+import age_exercise.transcriptomics.regress_genes
+import age_exercise.transcriptomics.compare_sets_groups # old...
+import age_exercise.transcriptomics.compare_groups
 import age_exercise.transcriptomics.operate_sets
 
 #dir()
@@ -478,14 +480,14 @@ def define_subparser_transcriptomics(
         )
     )
     parser_routine.add_argument(
-        "-compare_sets_groups",
-        "--compare_sets_groups",
-        dest="compare_sets_groups",
+        "-regress_genes",
+        "--regress_genes",
+        dest="regress_genes",
         action="store_true",
-        help=(str(
-            "Compare signals across genes within sets between groups of " +
-            "samples."
-        )),
+        help=(
+            "Drive custom regression analyses across RNAseq signals for all " +
+            "genes."
+        )
     )
     parser_routine.add_argument(
         "-operate_sets",
@@ -494,6 +496,26 @@ def define_subparser_transcriptomics(
         action="store_true",
         help=(str(
             "Combine and filter sets of features by inclusion or exclusion."
+        )),
+    )
+    parser_routine.add_argument(
+        "-compare_groups",
+        "--compare_groups",
+        dest="compare_groups",
+        action="store_true",
+        help=(str(
+            "Compare signals across genes within between groups of " +
+            "observations."
+        )),
+    )
+    parser_routine.add_argument(
+        "-compare_sets_groups",
+        "--compare_sets_groups",
+        dest="compare_sets_groups",
+        action="store_true",
+        help=(str(
+            "Compare signals across genes within sets between groups of " +
+            "samples."
         )),
     )
 
@@ -750,14 +772,14 @@ def evaluate_parameters_transcriptomics(arguments):
         age_exercise.transcriptomics.nullify_placebo.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
-    if arguments.compare_sets_groups:
+    if arguments.regress_genes:
         # Report status.
         print(
-           "... executing age_exercise.transcriptomics.compare_sets_groups " +
+           "... executing age_exercise.transcriptomics.regress_genes " +
            "procedure ..."
         )
         # Execute procedure.
-        age_exercise.transcriptomics.compare_sets_groups.execute_procedure(
+        age_exercise.transcriptomics.regress_genes.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
     if arguments.operate_sets:
@@ -770,7 +792,26 @@ def evaluate_parameters_transcriptomics(arguments):
         age_exercise.transcriptomics.operate_sets.execute_procedure(
             path_directory_dock=arguments.path_directory_dock
         )
-
+    if arguments.compare_groups:
+        # Report status.
+        print(
+           "... executing age_exercise.transcriptomics.compare_groups " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        age_exercise.transcriptomics.compare_groups.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
+    if arguments.compare_sets_groups:
+        # Report status.
+        print(
+           "... executing age_exercise.transcriptomics.compare_sets_groups " +
+           "procedure ..."
+        )
+        # Execute procedure.
+        age_exercise.transcriptomics.compare_sets_groups.execute_procedure(
+            path_directory_dock=arguments.path_directory_dock
+        )
 
     pass
 

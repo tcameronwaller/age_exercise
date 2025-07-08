@@ -159,9 +159,13 @@ def execute_procedure(
     ##########
     # Summary of available sets.
     # 2.1. Read and count unique genes in sets.
+    #path_directory_sets_gene = os.path.join(
+    #    paths["in_parameters_private"], project, routine, "sets_gene",
+    #    "sets_gene_deseq2_2025-06-05",
+    #)
     path_directory_sets_gene = os.path.join(
-        paths["in_parameters_private"], project, routine, "sets_gene",
-        "sets_gene_deseq2_2025-06-05",
+        paths["out_project"], "transcriptomics", "select_gene_sets", "data",
+        "sets_gene",
     )
     table_counts_sets_gene = (
         putly.read_child_files_text_list_count_unique_items(
@@ -380,6 +384,37 @@ def execute_procedure(
             items_second=genes_omega3_not_placebo,
             report=True,
     ))
+    genes_age_and_28_omega3_not_placebo = (
+        aexph_sub.combine_sets_items_intersection_unique(
+            items_first=genes_age,
+            items_second=genes_adipose_28_not_27,
+            report=True,
+    ))
+    # adipose_1 (age) and adipose_28 (omega-3) without adipose_27 (placebo)
+    genes_adipose_1_down_28_down_not_27 = (
+        aexph_sub.combine_sets_items_intersection_unique(
+            items_first=genes_adipose_1_down,
+            items_second=genes_adipose_28_down_not_27,
+            report=True,
+    ))
+    genes_adipose_1_down_28_up_not_27 = (
+        aexph_sub.combine_sets_items_intersection_unique(
+            items_first=genes_adipose_1_down,
+            items_second=genes_adipose_28_up_not_27,
+            report=True,
+    ))
+    genes_adipose_1_up_28_down_not_27 = (
+        aexph_sub.combine_sets_items_intersection_unique(
+            items_first=genes_adipose_1_up,
+            items_second=genes_adipose_28_down_not_27,
+            report=True,
+    ))
+    genes_adipose_1_up_28_up_not_27 = (
+        aexph_sub.combine_sets_items_intersection_unique(
+            items_first=genes_adipose_1_up,
+            items_second=genes_adipose_28_up_not_27,
+            report=True,
+    ))
 
     ##########
     # Write information to file.
@@ -407,7 +442,27 @@ def execute_procedure(
     pail_write_lists["genes_age_and_omega3_not_placebo"] = (
         genes_age_and_omega3_not_placebo
     )
+    pail_write_lists["genes_age_and_28_omega3_not_placebo"] = (
+        genes_age_and_28_omega3_not_placebo
+    )
+
+    # adipose_1 (age) and adipose_28 (omega-3) without adipose_27 (placebo)
+    pail_write_lists["genes_adipose_1_down_28_down_not_27"] = (
+        genes_adipose_1_down_28_down_not_27
+    )
+    pail_write_lists["genes_adipose_1_down_28_up_not_27"] = (
+        genes_adipose_1_down_28_up_not_27
+    )
+    pail_write_lists["genes_adipose_1_up_28_down_not_27"] = (
+        genes_adipose_1_up_28_down_not_27
+    )
+    pail_write_lists["genes_adipose_1_up_28_up_not_27"] = (
+        genes_adipose_1_up_28_up_not_27
+    )
+
+
     # Define paths to directories.
+    # dock/out_age_exercise/transcriptomics/operate_sets/lists
     path_directory_write = os.path.join(
         paths["out_procedure_lists"],
     )

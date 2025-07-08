@@ -2,7 +2,7 @@
 Studies of age, exercise, and dietary omega-3 in skeletal muscle and
 subcutaneous adipose of healthy adults.
 
-This module 'merge_phenotype' is part of the 'phenotypes' subpackage
+This module 'merge_phenotype' is part of the 'transcriptomics' subpackage
 within the 'age_exercise' package.
 
 Author:
@@ -38,6 +38,15 @@ License:
 ###############################################################################
 # Notes
 
+# For subjects in a study cohort, this procedure merges together phenotype
+# features with a small number of gene features. The procedure then organizes
+# and prepares the table for analysis. The advantage of this approach is that
+# the product table is accessible for external review and for the design of
+# specific, custom analyses. The disadvantage of this approach is that it would
+# be less efficient to merge together phenotype features with the signals of
+# all 15,000 or so protein-coding genes. For an alternative approach, refer to
+# the "regress_genes.py" module within the "transcriptomics" subpackage of the
+# "age_exercise" package.
 
 ###############################################################################
 # Installation and importation
@@ -791,8 +800,8 @@ def execute_procedure(
     if report:
         putly.print_terminal_partition(level=3)
         print("package: age_exercise")
-        print("subpackage: phenotypes")
-        print("module: compare_groups.py")
+        print("subpackage: transcriptomics")
+        print("module: merge_phenotype.py")
         print("function: execute_procedure()")
         putly.print_terminal_partition(level=5)
         print("system: local")
@@ -820,6 +829,17 @@ def execute_procedure(
     # 2. Read source information from file.
     pail_source = read_source(
         paths=paths,
+        report=report,
+    )
+
+    # Read and count unique genes in sets.
+    path_directory_sets_gene = os.path.join(
+        paths["out_routine"], "operate_sets", "lists",
+    )
+    genes_age_omega3 = aexph_sub.read_extract_set_features(
+        name_set="genes_age_and_28_omega3_not_placebo",
+        suffix_file=".txt",
+        path_directory=path_directory_sets_gene,
         report=report,
     )
 
