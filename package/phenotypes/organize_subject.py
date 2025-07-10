@@ -73,6 +73,7 @@ import partner.description as pdesc
 import partner.decomposition as pdecomp
 import partner.plot as pplot
 import partner.parallelization as prall
+import age_exercise.phenotypes.compare_groups as aexph_cgr
 
 ###############################################################################
 # Functionality
@@ -827,7 +828,7 @@ def define_sequence_columns_novel_subject_feature():
         "date_visit_text",
         #"date_visit_text_raw",
         "insulin_sensitivity_text",
-        "insulin_sensitivity_high",
+        "insulin_sensitivity_low_high",
         "ratio_ast_alt",
     ]
     # Return information.
@@ -1516,23 +1517,81 @@ def organize_table_subject_property(
     table["insulin_sensitivity_text"] = table.apply(
         lambda row:
             putly.determine_category_text_threshold_quantitative(
-                value=row["insulin_sensitivity_text"],
-                threshold=20.0,
-                category_below="low",
-                category_above="high",
+                value=row["insulin_sensitivity"],
+                threshold_low=10.0,
+                threshold_high=20.0,
+                category_low="low",
+                category_middle="middle",
+                category_high="high",
                 category_missing="none",
             ),
         axis="columns", # apply function to each row
     )
-    table["insulin_sensitivity_high"] = table.apply(
+    table["insulin_sensitivity_low_high"] = table.apply(
         lambda row:
             putly.determine_category_text_logical_binary(
                 category_text=row["insulin_sensitivity_text"],
-                values_1=["high",],
-                values_0=["low",],
+                values_1=["low",],
+                values_0=["high",],
             ),
         axis="columns", # apply function to each row
     )
+
+    ##########
+    # Report.
+    if report:
+        # Copy information.
+        table_report = table.copy(deep=True)
+        # Prepare information.
+        table_report = porg.filter_select_table_rows_by_columns_categories(
+            table=table_report,
+            columns_categories={
+                "age_cohort_text": ["elder",],
+                "sex_text": ["female", "male",],
+                "visit_text": ["first",],
+            },
+            report=False,
+        )
+        alias = "insulin_sensitivity_text"
+        count_low = int(table_report.loc[
+            (
+                (table_report[alias] == "low")
+            ), :
+        ].shape[0])
+        count_middle = int(table_report.loc[
+            (
+                (table_report[alias] == "middle")
+            ), :
+        ].shape[0])
+        count_high = int(table_report.loc[
+            (
+                (table_report[alias] == "high")
+            ), :
+        ].shape[0])
+        count_missing = int(table_report.loc[
+            (
+                (table_report[alias] == "none")
+            ), :
+        ].shape[0])
+        # Print information.
+        putly.print_terminal_partition(level=3)
+        print("package: age_exercise")
+        print("subpackage: phenotypes")
+        print("module: organize_subject.py")
+        function = "organize_table_subject_property()"
+        print("function: " + function)
+        print("report: thresholds on insulin sensitivity")
+        putly.print_terminal_partition(level=5)
+        print("counts of values for 'insulin_sensitivity_text':")
+        print(table_report["insulin_sensitivity_text"].value_counts())
+        putly.print_terminal_partition(level=5)
+        print("count, low: " + str(count_low))
+        print("count, middle: " + str(count_middle))
+        print("count, high: " + str(count_high))
+        print("count, missing: " + str(count_missing))
+        putly.print_terminal_partition(level=5)
+        pass
+    #sys.exit()
 
     # Calculate derivations of features on quantitative, continuous scale.
     table["ratio_ast_alt"] = table.apply(
@@ -1613,25 +1672,29 @@ def define_sequence_columns_priority():
     # Define sequence of columns in table.
     columns_sequence = [
         "identifier_subject",
-        "age_cohort_text_raw",
+        #"age_cohort_text_raw",
         "age_cohort_text",
-        "age_cohort_elder",
+        #"age_cohort_elder",
         "sex_text",
-        "age_cohort_elder_sex_male_text",
-        "age_cohort_younger_sex_female_text",
-        "age_cohort_elder_sex_male",
-        "intervention_text_raw",
+        #"age_cohort_elder_sex_male_text",
+        #"age_cohort_younger_sex_female_text",
+        #"age_cohort_elder_sex_male",
+        #"intervention_text_raw",
         "intervention_text",
-        "intervention_omega3_other_text",
-        "intervention_placebo_other_text",
-        "intervention_omega3",
-        "intervention_placebo",
+        #"intervention_omega3_other_text",
+        #"intervention_placebo_other_text",
+        #"intervention_omega3",
+        #"intervention_placebo",
         "visit_text",
-        "intervention_omega3_visit_second_text",
-        "intervention_placebo_visit_second_text",
-        "intervention_omega3_visit_second",
-        "intervention_placebo_visit_second",
+        #"intervention_omega3_visit_second_text",
+        #"intervention_placebo_visit_second_text",
+        #"intervention_omega3_visit_second",
+        #"intervention_placebo_visit_second",
         "age",
+        "insulin_sensitivity",
+        "insulin_sensitivity_text",
+        "insulin_sensitivity_low_high",
+
     ]
     # Return information.
     return columns_sequence
@@ -4624,6 +4687,26 @@ def execute_procedure(
         base=math.e,
         report=True,
     )
+
+
+
+    aexph_cgr.manage_create_write_plots_histogram(
+        table=table,
+        index_columns="features",
+        index_rows="subject_visit",
+        index_features="features",
+        columns_features=[
+            "insulin_sensitivity",
+            "insulin_sensitivity_log",
+        ],
+        translations_feature=None,
+        path_directory_parent=paths["out_procedure_plot"],
+        report=report,
+    )
+
+
+
+
 
     ##########
     # 5. Calculate principal components of features quantitative, continuous,

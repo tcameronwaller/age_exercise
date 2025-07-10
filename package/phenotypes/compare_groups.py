@@ -297,6 +297,8 @@ def read_organize_source_parameter(
     return pail
 
 
+# In this function it is necessary and convenient to designate additional
+# features as relevant to analyses.
 def define_type_table_columns_subject_sample():
     """
     Defines the types of variables for columns in table.
@@ -335,6 +337,7 @@ def define_type_table_columns_subject_sample():
     types_columns["intervention_omega3_visit_second"] = "float32"
     #types_columns["tissue"] = "string"
     #types_columns["exercise_duration_text"] = "string"
+    types_columns["insulin_sensitivity_text"] = "string"
 
     pail_quantitative = (
         aexph_sub.organize_selection_type_features_quantitative_continuous()
@@ -346,8 +349,6 @@ def define_type_table_columns_subject_sample():
     return types_columns
 
 
-# In this function it is convenient to designate additional features as
-# relevant to analyses.
 def read_organize_source_subject_sample(
     paths=None,
     report=None,
@@ -1173,7 +1174,7 @@ def describe_quantitative_features_by_observations_groups(
             ttest_one=ttest_one,
             ttest_two=ttest_two,
             ttest_three=ttest_three,
-            report=report,
+            report=False,
     ))
     table_description_check = (
         pdesc.describe_features_from_table_columns_by_groups_rows(
@@ -1191,7 +1192,7 @@ def describe_quantitative_features_by_observations_groups(
             ttest_one=ttest_one,
             ttest_two=ttest_two,
             ttest_three=ttest_three,
-            report=report,
+            report=False,
     ))
 
     # Collect information.
@@ -1974,6 +1975,7 @@ def execute_procedure(
             "visit_text",
             #"intervention_text",
             "age",
+            "insulin_sensitivity_text",
         ],
         paths=paths,
         report=report,
@@ -1987,6 +1989,14 @@ def execute_procedure(
     #print(list(pail_parts["entries_tables"].keys()))
     #print(pail_parts["entries_tables"]["younger_older"])
 
+    print("$$$$$$$$$$$$")
+    #print(table)
+    #print(table.columns.to_list())
+    print(pail_parts["table_group"])
+    print(pail_parts["table_group"].columns.to_list())
+
+
+
     ##########
     # 4. Describe quantitative features in groups of observations.
     pail_description = describe_quantitative_features_by_observations_groups(
@@ -1999,47 +2009,59 @@ def execute_procedure(
         translations_feature=pail_source["translations_feature_reverse"],
         table_group=pail_parts["table_group"],
         column_group="group",
-        ttest_one={
-            "name": "p_ttest_age",
-            "groups": [
-                "adipose_age_-_younger", "adipose_age_-_older",
-            ],
-            "equal_variances": True,
-            "independent_groups": True,
-            "hypothesis_alternative": "two-sided",
-        }, # or None
-        ttest_two={
-            "name": "p_ttest_sex",
-            "groups": [
-                "adipose_age_-_older_female", "adipose_age_-_older_male",
-            ],
-            "equal_variances": True,
-            "independent_groups": True,
-            "hypothesis_alternative": "two-sided",
-        }, # or None
-        ttest_three={
-            "name": "p_ttest_omega3",
-            "groups": [
-                "adipose_placebo_-_older_placebo_after",
-                "adipose_omega3_-_older_omega3_after",
-            ],
-            "equal_variances": True,
-            "independent_groups": True,
-            "hypothesis_alternative": "two-sided",
-        }, # or None
+        ttest_one=None,
+        ttest_two=None,
+        ttest_three=None,
+        #ttest_one={
+        #    "name": "p_ttest_age",
+        #    "groups": [
+        #        "adipose_age_-_younger", "adipose_age_-_older",
+        #    ],
+        #    "equal_variances": True,
+        #    "independent_groups": True,
+        #    "hypothesis_alternative": "two-sided",
+        #}, # or None
+        #ttest_two={
+        #    "name": "p_ttest_sex",
+        #    "groups": [
+        #        "adipose_age_-_older_female", "adipose_age_-_older_male",
+        #    ],
+        #    "equal_variances": True,
+        #    "independent_groups": True,
+        #    "hypothesis_alternative": "two-sided",
+        #}, # or None
+        #ttest_three={
+        #    "name": "p_ttest_omega3",
+        #    "groups": [
+        #        "adipose_placebo_-_older_placebo_after",
+        #        "adipose_omega3_-_older_omega3_after",
+        #    ],
+        #    "equal_variances": True,
+        #    "independent_groups": True,
+        #    "hypothesis_alternative": "two-sided",
+        #}, # or None
         report=report,
     )
+
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    #print(table)
+    #print(table.columns.to_list())
+    print(pail_description["table_priority"])
+    print(pail_description["table_priority"].columns.to_list())
+
 
     ##########
     # 5. Prepare clean version of the description table for report.
     table_description_clean = prepare_clean_table_description(
         table=pail_description["table_priority"],
         features_sequence=pail_source["features_quantitative"],
-        names_pvalue=[
-            "p_ttest_age",
-            "p_ttest_sex",
-            "p_ttest_omega3",
-        ],
+        names_pvalue=None,
+        #names_pvalue=[
+        #    "p_ttest_age",
+        #    "p_ttest_sex",
+        #    "p_ttest_omega3",
+        #],
         set_threshold_pvalue=False,
         threshold_low_pvalue=0.0001,
         report=report,
@@ -2081,106 +2103,108 @@ def execute_procedure(
     # TCW; 22 May 2025
     ####################
 
-    ##########
-    # Plot histograms to evaluate distributions of values.
-    pail_selection = (
-        aexph_sub.organize_selection_type_features_quantitative_continuous()
-    )
-    features_sequence = pail_selection["names_features_all"]
-    translations_feature = {
-        "age": "age",
-    }
-    manage_create_write_plots_histogram(
-        table=pail_source["table_subject_sample"],
-        index_columns="features",
-        index_rows="observations",
-        index_features="features",
-        columns_features=features_sequence,
-        translations_feature=translations_feature,
-        path_directory_parent=paths["out_procedure_plot"],
-        report=report,
-    )
-
-    ##########
-    # Create plot charts for visual representations of quantitative features
-    # within and between groups of observations.
-    if True:
-        # Observations for females and males together.
-        groups_sequence_selection = [
-            "adipose_age_-_younger",
-            #"adipose_age_-_older",
-            "adipose_placebo_-_older_placebo_before",
-            "adipose_placebo_-_older_placebo_after",
-            "adipose_omega3_-_older_omega3_before",
-            "adipose_omega3_-_older_omega3_after",
-        ]
-        translations_group = {
-            "adipose_age_-_younger": "Younger",
-            #"adipose_age_-_older": "Older",
-            "adipose_placebo_-_older_placebo_before": "Placebo, Before",
-            "adipose_placebo_-_older_placebo_after": "Placebo, After",
-            "adipose_omega3_-_older_omega3_before": "Omega-3, Before",
-            "adipose_omega3_-_older_omega3_after": "Omega-3, After",
-        }
-        pass
     if False:
-        # Stratification by sex.
-        groups_sequence_selection = [
-            "adipose_age_-_younger_female",
-            "adipose_age_-_older_female",
-            "adipose_placebo_-_older_female_placebo_after",
-            "adipose_omega3_-_older_female_omega3_after",
-            "adipose_age_-_younger_male",
-            "adipose_age_-_older_male",
-            "adipose_placebo_-_older_male_placebo_after",
-            "adipose_omega3_-_older_male_omega3_after",
-        ]
-        translations_group = {
-            "adipose_age_-_younger_female": "F-Younger",
-            "adipose_age_-_younger_male": "M-Younger",
-            "adipose_age_-_older_female": "F-Older",
-            "adipose_age_-_older_male": "M-Older",
-            "adipose_placebo_-_older_female_placebo_after": "F-Placebo",
-            "adipose_placebo_-_older_male_placebo_after": "M-Placebo",
-            "adipose_omega3_-_older_female_omega3_after": "F-Omega3",
-            "adipose_omega3_-_older_male_omega3_after": "M-Omega3",
-        }
-        pass
 
-    # features_sequence=pail_source["features_quantitative"],
-    manage_create_write_plots_box_violin_features_groups(
-        entries_tables=pail_parts["entries_tables"],
-        index_columns="features",
-        index_rows="observations",
-        index_features="features",
-        columns_features=pail_source["features_quantitative"],
-        groups_sequence=groups_sequence_selection,
-        translations_feature=pail_source["translations_feature_reverse"],
-        translations_group=translations_group,
-        path_directory_parent=paths["out_procedure_plot"],
-        report=False,
-    )
-    if False:
-        for column_quantitative in pail_source["features_quantitative"]:
-            manage_plot_write_groups_observations_box_violin(
-                table=pail_parts["table_group"],
-                column_feature=column_quantitative,
-                column_group="group",
-                column_directory="group_group",
-                translations_feature=pail["translations_feature_reverse"],
-                path_directory_parent=paths["out_procedure_plot"],
-                report=False,
-            )
+        ##########
+        # Plot histograms to evaluate distributions of values.
+        pail_selection = (
+            aexph_sub.organize_selection_type_features_quantitative_continuous()
+        )
+        features_sequence = pail_selection["names_features_all"]
+        translations_feature = {
+            "age": "age",
+        }
+        manage_create_write_plots_histogram(
+            table=pail_source["table_subject_sample"],
+            index_columns="features",
+            index_rows="observations",
+            index_features="features",
+            columns_features=features_sequence,
+            translations_feature=translations_feature,
+            path_directory_parent=paths["out_procedure_plot"],
+            report=report,
+        )
+
+        ##########
+        # Create plot charts for visual representations of quantitative features
+        # within and between groups of observations.
+        if False:
+            # Observations for females and males together.
+            groups_sequence_selection = [
+                "adipose_age_-_younger",
+                #"adipose_age_-_older",
+                "adipose_placebo_-_older_placebo_before",
+                "adipose_placebo_-_older_placebo_after",
+                "adipose_omega3_-_older_omega3_before",
+                "adipose_omega3_-_older_omega3_after",
+            ]
+            translations_group = {
+                "adipose_age_-_younger": "Younger",
+                #"adipose_age_-_older": "Older",
+                "adipose_placebo_-_older_placebo_before": "Placebo, Before",
+                "adipose_placebo_-_older_placebo_after": "Placebo, After",
+                "adipose_omega3_-_older_omega3_before": "Omega-3, Before",
+                "adipose_omega3_-_older_omega3_after": "Omega-3, After",
+            }
             pass
-        pass
+        if False:
+            # Stratification by sex.
+            groups_sequence_selection = [
+                "adipose_age_-_younger_female",
+                "adipose_age_-_older_female",
+                "adipose_placebo_-_older_female_placebo_after",
+                "adipose_omega3_-_older_female_omega3_after",
+                "adipose_age_-_younger_male",
+                "adipose_age_-_older_male",
+                "adipose_placebo_-_older_male_placebo_after",
+                "adipose_omega3_-_older_male_omega3_after",
+            ]
+            translations_group = {
+                "adipose_age_-_younger_female": "F-Younger",
+                "adipose_age_-_younger_male": "M-Younger",
+                "adipose_age_-_older_female": "F-Older",
+                "adipose_age_-_older_male": "M-Older",
+                "adipose_placebo_-_older_female_placebo_after": "F-Placebo",
+                "adipose_placebo_-_older_male_placebo_after": "M-Placebo",
+                "adipose_omega3_-_older_female_omega3_after": "F-Omega3",
+                "adipose_omega3_-_older_male_omega3_after": "M-Omega3",
+            }
+            pass
 
-    ##########
-    # Perform T-test, ANOVA, and regression analyses.
+        # features_sequence=pail_source["features_quantitative"],
+        manage_create_write_plots_box_violin_features_groups(
+            entries_tables=pail_parts["entries_tables"],
+            index_columns="features",
+            index_rows="observations",
+            index_features="features",
+            columns_features=pail_source["features_quantitative"],
+            groups_sequence=groups_sequence_selection,
+            translations_feature=pail_source["translations_feature_reverse"],
+            translations_group=translations_group,
+            path_directory_parent=paths["out_procedure_plot"],
+            report=False,
+        )
+        if False:
+            for column_quantitative in pail_source["features_quantitative"]:
+                manage_plot_write_groups_observations_box_violin(
+                    table=pail_parts["table_group"],
+                    column_feature=column_quantitative,
+                    column_group="group",
+                    column_directory="group_group",
+                    translations_feature=pail["translations_feature_reverse"],
+                    path_directory_parent=paths["out_procedure_plot"],
+                    report=False,
+                )
+                pass
+            pass
 
-    # T-tests and regressions for features against age cohorts.
-    #entries_tables["1_adipose_age_younger_older"]
-    # T-tests and regressions for features against omega-3 intervention.
-    #entries_tables["8_adipose_diet_older_placebo_omega3"]
+        ##########
+        # Perform T-test, ANOVA, and regression analyses.
+
+        # T-tests and regressions for features against age cohorts.
+        #entries_tables["1_adipose_age_younger_older"]
+        # T-tests and regressions for features against omega-3 intervention.
+        #entries_tables["8_adipose_diet_older_placebo_omega3"]
 
     pass
 

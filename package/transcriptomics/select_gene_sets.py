@@ -1098,7 +1098,7 @@ def plot_write_chart_fold_change_volcano(
     # Write figure to file.
     pplot.write_product_plot_figure(
         figure=figure,
-        format="svg", # jpg, png, svg
+        format="jpg", # jpg, png, svg
         resolution=150,
         name_file=name_figure,
         path_directory=path_directory,

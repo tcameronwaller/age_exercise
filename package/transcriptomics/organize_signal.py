@@ -2600,10 +2600,75 @@ def scale_normalize_values_intensity_signal_table(
         )),
         axis="columns", # apply function to each row
     )
+
+    ##############################
+    # Trial: TCW; 9 July 2025
+    # Calculate the standard z-score of values in each row of table.
+    # This method inserts missing values if the standard deviation is zero.
+    table_scale_normal_z = table_scale_normal.transform(
+        lambda row: scipy.stats.zscore(
+            row.to_numpy(
+                dtype="float64",
+                na_value=numpy.nan,
+                copy=True,
+            ),
+            axis=0,
+            ddof=1, # divisor is (n - 1) for sample standard deviation
+            nan_policy="omit", # ignore missing values in calculation
+        ),
+        axis="columns", # apply function to each row
+    )
+    # Report.
+    if report:
+        putly.print_terminal_partition(level=4)
+        print("package: age_exercise")
+        print("subpackage: transcriptomics")
+        print("module: organize_signal.py")
+        function = (
+            "scale_normalize_values_intensity_signal_table()"
+        )
+        print(str("function: " + function))
+
+        putly.print_terminal_partition(level=3)
+        table_report = table_scale_normal.copy(deep=True)
+        table_scale_report = table_scale_normal_z.copy(deep=True)
+        print("... summary statistics before standardization ...")
+        table_mean = table_report.aggregate(
+            lambda series: series.mean(),
+            axis="columns", # apply function to each row
+        )
+        print("mean:")
+        print(table_mean.iloc[0:10])
+        putly.print_terminal_partition(level=5)
+        table_deviation = table_report.aggregate(
+            lambda series: series.std(),
+            axis="columns", # apply function to each row
+        )
+        print("standard deviation:")
+        print(table_deviation.iloc[0:10])
+        putly.print_terminal_partition(level=4)
+        print("... summary statistics after standardization ...")
+        table_mean = table_scale_report.aggregate(
+            lambda series: series.mean(),
+            axis="columns", # apply function to each row
+        )
+        print("mean:")
+        print(table_mean.iloc[0:10])
+        putly.print_terminal_partition(level=5)
+        table_deviation = table_scale_report.aggregate(
+            lambda series: series.std(),
+            axis="columns", # apply function to each row
+        )
+        print("standard deviation:")
+        print(table_deviation.iloc[0:10])
+        pass
+    ##################################################
+
     # Collect information.
     pail = dict()
     pail["table_scale"] = table_scale
     pail["table_scale_normal"] = table_scale_normal
+    pail["table_scale_normal_z"] = table_scale_normal_z
 
     # Report.
     if report:
@@ -2616,6 +2681,9 @@ def scale_normalize_values_intensity_signal_table(
         putly.print_terminal_partition(level=4)
         print("table_scale_normal:")
         print(table_scale_normal)
+        putly.print_terminal_partition(level=4)
+        print("table_scale_normal_z:")
+        print(table_scale_normal_z)
         putly.print_terminal_partition(level=4)
     # Return information.
     return pail
@@ -3321,9 +3389,9 @@ def control_procedure_whole_trunk_preparation(
     # Bundles of information for files.
     # Lists.
     pail_write_lists = dict()
-    pail_write_lists["identifiers_sample"] = identifiers_sample
-    pail_write_lists["identifiers_gene"] = identifiers_gene
-    pail_write_lists["identifiers_signal"] = identifiers_signal
+    pail_write_lists[str("identifiers_sample_" + tissue)] = identifiers_sample
+    pail_write_lists[str("identifiers_gene_" + tissue)] = identifiers_gene
+    pail_write_lists[str("identifiers_signal_" + tissue)] = identifiers_signal
     # Tables.
     pail_write_tables = dict()
     pail_write_tables[str("table_gene_" + tissue)] = (
@@ -3338,7 +3406,9 @@ def control_procedure_whole_trunk_preparation(
     pail_write_tables[str("table_signal_scale_normal_" + tissue)] = (
         pail_signal["table_signal_scale_normal"]
     )
-
+    pail_write_tables[str("table_signal_scale_normal_z_" + tissue)] = (
+        pail_signal["table_signal_scale_normal_z"]
+    )
     pail_write_tables[str("table_signal_scale_gene_sample_" + tissue)] = (
         pail_signal["table_combination"]
     )
@@ -3543,6 +3613,10 @@ def control_procedure_part_branch_sample(
         paths=paths,
         report=report,
     )
+
+    print("##########################")
+    print(selection_samples_primary)
+
     # Select set of samples relevant for analysis.
     pail_sample_primary = select_sets_identifier_table_sample(
         table_sample=pail_source_sample["table_sample"],
@@ -3742,7 +3816,7 @@ def control_procedure_part_branch_signal(
         # Combine and organize signals across samples and genes with supplemental
         # information about genes.
         table_combination = combine_organize_table_signal_genes_samples(
-            table_signal=pail_scale["table_scale_normal"],
+            table_signal=pail_scale["table_scale_normal_z"],
             table_gene=pail_separate["table_gene"],
             table_sample=pail_source_sample["table_sample_file"],
             columns_signal=samples,
@@ -3753,7 +3827,8 @@ def control_procedure_part_branch_signal(
     else:
         pail_scale = {
             "table_scale": pandas.DataFrame(),
-            "table_normal": pandas.DataFrame(),
+            "table_scale_normal": pandas.DataFrame(),
+            "table_scale_normal_z": pandas.DataFrame(),
         }
         table_combination = pandas.DataFrame()
         pass
@@ -3765,10 +3840,17 @@ def control_procedure_part_branch_signal(
     pail["table_signal"] = table_signal
     pail["table_signal_scale"] = pail_scale["table_scale"]
     pail["table_signal_scale_normal"] = pail_scale["table_scale_normal"]
+    pail["table_signal_scale_normal_z"] = pail_scale["table_scale_normal_z"]
     pail["table_combination"] = table_combination
     # Return information.
     return pail
 
+
+# TODO: TCW; 8 July 2025
+# Implement sanity checks at specific progress points
+# - after "control_procedure_part_branch_sample()," check that there are
+# multiple samples after selection
+#
 
 def control_procedure_part_branch(
     sequence=None,
@@ -3870,6 +3952,9 @@ def control_procedure_part_branch(
         paths=paths,
         report=report,
     )
+    #print(pail_sample["table_selection"])
+    #print(pail_sample["samples_selection"])
+
 
     ##########
     # 3. Prepare data for signals across genes and samples with stratification
@@ -3912,6 +3997,9 @@ def control_procedure_part_branch(
         )
         pail_write_tables[str("table_signal_scale_normal")] = (
             pail_signal["table_signal_scale_normal"]
+        )
+        pail_write_tables[str("table_signal_scale_normal_z")] = (
+            pail_signal["table_signal_scale_normal_z"]
         )
         pass
 
@@ -4092,7 +4180,7 @@ def control_parallel_instances(
     else:
         # Execute procedure directly for testing.
         control_parallel_instance(
-            instance=instances[2],
+            instance=instances[0],
             parameters=parameters,
         )
     pass
@@ -4248,13 +4336,13 @@ def execute_procedure(
         )
         ##########
         # Organize summary information about all instances overall.
-        if True:
+        if False:
             read_organize_write_summary_instances_tissue(
                 tissue="muscle",
                 paths=paths_muscle,
                 report=report,
             )
-        if True:
+        if False:
             read_organize_write_summary_instances_tissue(
                 tissue="adipose",
                 paths=paths_adipose,
